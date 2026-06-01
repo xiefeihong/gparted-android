@@ -1,0 +1,1394 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+<!ENTITY appversion "1.6.0">
+<!ENTITY manrevision "1.13">
+<!ENTITY date "September 2023">
+<!ENTITY app "gparted">
+<!ENTITY appname "GParted">
+<!-- Information about the entities:
+       Use the appversion entity to specify the version of the application.
+       Use the manrevision entity to specify the revision number of this manual.
+       Use the date entity to specify the release date of this manual.
+       Use the app entity to specify the command name of the application.
+       Use the appname entity to specify the formal name of the application.
+  -->]>
+<!-- Remember to update the revision history -->
+<!--
+      To generate a single html file of this document, use the command:
+        xmlto html-nochunks index.docbook
+
+      To test this document in a viewer, use the command:
+        yelp file:/full-path-to-index.docbook
+ -->
+<!-- ============= Document Header =================================== -->
+<?db.chunk.max_depth 4?>
+<article id="index" lang="id">
+<!-- Please do not change the id. -->
+<!-- For translations, change lang to appropriate code -->
+  <articleinfo>
+    <title>Manual GParted</title>
+    <publisher>
+      <publishername>Proyek GParted</publishername>
+    </publisher>
+
+    <abstract role="description">
+      <para>GParted adalah Penyunting Partisi GNOME untuk membuat, mengatur ulang, dan menghapus partisi disk. GParted memungkinkan Anda untuk mengubah organisasi partisi sambil mempertahankan konten partisi.</para>
+    </abstract>
+
+    <copyright><year>2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017</year> <holder>Curtis Gedak</holder></copyright>
+    <copyright lang="en">
+      <year>2014, 2015, 2017, 2018, 2023</year>
+      <holder>Mike Fleetwood</holder>
+    </copyright>
+
+<!-- translators: uncomment this:
+    <copyright>
+      <year>2009</year>
+      <holder>ME-THE-TRANSLATOR (Latin translation)</holder>
+    </copyright>
+-->
+
+    <legalnotice>
+      <para>Izin diberikan untuk menyalin, mendistribusikan, dan/atau memodifikasi dokumen ini berdasarkan ketentuan GNU Free Documentation License, Versi 1.2 atau versi yang lebih baru yang diterbitkan oleh Free Software Foundation; tanpa Bagian Invariant, tanpa Teks Sampul Depan, dan tanpa Teks Sampul Belakang. Anda dapat menemukan salinan GFDL di <ulink type="help" url="help:fdl">tautan</ulink> ini atau di <ulink type="http" url="https://www.fsf.org/licensing/licenses/fdl.html"/> atau di berkas COPYING-DOCS yang didistribusikan dengan manual ini.</para>
+    </legalnotice>
+
+    <authorgroup>
+      <author role="maintainer"><firstname>Curtis</firstname> <surname>Gedak</surname> <affiliation> <orgname>Proyek GParted</orgname> <address> <email>gedakc@users.sf.net</email> </address> </affiliation></author>
+      <author role="developer"><firstname>Mike</firstname> <surname>Fleetwood</surname> <affiliation> <orgname>Proyek GParted</orgname> <address> <email>mike.fleetwood@googlemail.com</email> </address> </affiliation></author>
+
+<!-- This is appropriate place for other contributors: translators,
+     maintainers,  etc. Commented out by default.
+      <othercredit role="translator">
+        <firstname>Latin</firstname>
+        <surname>Translator 1</surname>
+        <affiliation>
+          <orgname>Latin Translation Team</orgname>
+          <address> <email>translator@gnome.org</email> </address>
+        </affiliation>
+        <contrib>Latin translation</contrib>
+      </othercredit>
+-->
+    </authorgroup>
+
+<!-- According to GNU FDL, revision history is mandatory if you are -->
+<!-- modifying/reusing someone else's document.  If not, you can omit it. -->
+    <revhistory>
+      <revision lang="en">
+        <revnumber>GParted Manual V1.13</revnumber>
+        <date>September 2023</date>
+        <revdescription>
+          <para role="author" lang="en">Mike Fleetwood</para>
+          <para role="publisher" lang="en">GParted Project</para>
+          <para role="annotations" lang="en">Describes version 1.6.0 of GParted</para>
+        </revdescription>
+      </revision>
+      <revision><revnumber>Manual GParted V1.12</revnumber> <date>Mei 2018</date> <revdescription>
+          <para role="author">Mike Fleetwood</para>
+          <para role="publisher">Proyek GParted</para>
+          <para role="annotations">Menjelaskan versi 0.31.0 dari GParted</para>
+        </revdescription></revision>
+      <revision><revnumber>Manual GParted V1.11</revnumber> <date>September 2017</date> <revdescription>
+          <para role="author">Curtis Gedak &amp; Mike Fleetwood</para>
+          <para role="publisher">Proyek GParted</para>
+          <para role="annotations">Menjelaskan versi 0.29.0 dari GParted</para>
+        </revdescription></revision>
+      <revision><revnumber>Manual GParted V1.10</revnumber> <date>Januari 2017</date> <revdescription>
+          <para role="author">Curtis Gedak &amp; Mike Fleetwood</para>
+          <para role="publisher">Proyek GParted</para>
+          <para role="annotations">Menjelaskan versi 0.28.0 dari GParted</para>
+        </revdescription></revision>
+      <revision><revnumber>Manual GParted V1.9</revnumber> <date>Maret 2015</date> <revdescription>
+          <para role="author">Curtis Gedak &amp; Mike Fleetwood</para>
+          <para role="publisher">Proyek GParted</para>
+          <para role="annotations">Menjelaskan versi 0.22.0 dari GParted</para>
+        </revdescription></revision>
+      <revision><revnumber>Manual GParted V1.8</revnumber> <date>September 2014</date> <revdescription>
+          <para role="author">Curtis Gedak</para>
+          <para role="publisher">Proyek GParted</para>
+          <para role="annotations">Menjelaskan versi 0.20.0 dari GParted</para>
+        </revdescription></revision>
+      <revision><revnumber>Manual GParted V1.7</revnumber> <date>Februari 2014</date> <revdescription>
+          <para role="author">Curtis Gedak</para>
+          <para role="publisher">Proyek GParted</para>
+          <para role="annotations">Menjelaskan versi 0.18.0 dari GParted</para>
+        </revdescription></revision>
+      <revision><revnumber>Manual GParted V1.6</revnumber> <date>Desember 2013</date> <revdescription>
+          <para role="author">Curtis Gedak</para>
+          <para role="publisher">Proyek GParted</para>
+          <para role="annotations">Menjelaskan versi 0.17.0 dari GParted</para>
+        </revdescription></revision>
+      <revision><revnumber>Manual GParted V1.5</revnumber> <date>September 2013</date> <revdescription>
+          <para role="author">Curtis Gedak</para>
+          <para role="publisher">Proyek GParted</para>
+          <para role="annotations">Menjelaskan versi 0.16.2 dari GParted</para>
+        </revdescription></revision>
+      <revision><revnumber>Manual GParted V1.4</revnumber> <date>Februari 2012</date> <revdescription>
+          <para role="author">Curtis Gedak</para>
+          <para role="publisher">Proyek GParted</para>
+          <para role="annotations">Menjelaskan versi 0.12.0 dari GParted</para>
+        </revdescription></revision>
+      <revision><revnumber>Manual GParted V1.3</revnumber> <date>Januari 2011</date> <revdescription>
+          <para role="author">Curtis Gedak</para>
+          <para role="publisher">Proyek GParted</para>
+          <para role="annotations">Menjelaskan versi 0.8.0 dari GParted</para>
+        </revdescription></revision>
+      <revision><revnumber>Manual GParted V1.2</revnumber> <date>Juni 2010</date> <revdescription>
+          <para role="author">Curtis Gedak</para>
+          <para role="publisher">Proyek GParted</para>
+          <para role="annotations">Menjelaskan versi 0.6.0 dari GParted</para>
+        </revdescription></revision>
+      <revision><revnumber>Manual GParted V1.1</revnumber> <date>Juli 2009</date> <revdescription>
+          <para role="author">Curtis Gedak</para>
+          <para role="publisher">Proyek GParted</para>
+          <para role="annotations">Menjelaskan versi 0.4.6 dari GParted</para>
+        </revdescription></revision>
+      <revision><revnumber>Manual GParted V1.0</revnumber> <date>Januari 2009</date> <revdescription>
+          <para role="author">Curtis Gedak</para>
+          <para role="publisher">Proyek GParted</para>
+          <para role="annotations">Menjelaskan versi 0.4.2 dari GParted</para>
+        </revdescription></revision>
+      <revision><revnumber>Manual GParted V0.3.9</revnumber> <date>September 2008</date> <revdescription>
+          <para role="author">Curtis Gedak</para>
+          <para role="publisher">Proyek GParted</para>
+          <para role="annotations">Menjelaskan versi 0.3.9 dari GParted</para>
+        </revdescription></revision>
+    </revhistory>
+
+    <releaseinfo lang="en">
+    This manual describes version 1.6.0 of GParted
+    </releaseinfo>
+
+    <legalnotice>
+      <title>Umpan balik</title>
+      <para>Untuk melaporkan bug atau membuat saran mengenai aplikasi <application>gparted</application> atau manual ini, ikuti petunjuk di <ulink type="http" url="https://gparted.org/bugs.php"/>.</para>
+<!-- Translators may also add here feedback address for translations -->
+    </legalnotice>
+
+  
+    <othercredit class="translator">
+      <personname>
+        <firstname>Andika Triwidada</firstname>
+      </personname>
+      <email>andika@gmail.com</email>
+    </othercredit>
+    <copyright>
+      
+        <year>2020</year>
+      
+        <year>2022</year>
+      
+      <holder>Andika Triwidada</holder>
+    </copyright>
+  </articleinfo>
+
+<!-- ============= Document Body ===================================== -->
+<!-- ============= Introduction ====================================== -->
+  <sect1 id="gparted-introduction">
+    <title>Perkenalan</title>
+    <para>Aplikasi <application>gparted</application> adalah Penyunting Partisi GNOME untuk membuat, mengatur ulang, dan menghapus partisi disk.</para>
+    <para>Perangkat disk dapat dibagi menjadi satu atau beberapa partisi. Aplikasi <application>gparted</application> memungkinkan Anda untuk mengubah organisasi partisi pada perangkat disk sambil mempertahankan isi partisi.</para>
+    <para>Dengan <application>gparted</application> Anda dapat menyelesaikan tugas-tugas berikut: <itemizedlist>
+        <listitem>
+          <para>Membuat tabel partisi pada perangkat disk.</para>
+        </listitem>
+        <listitem>
+          <para>Aktifkan dan nonaktifkan flag partisi seperti boot dan tersembunyi.</para>
+        </listitem>
+        <listitem>
+          <para>Melakukan tindakan dengan partisi seperti membuat, menghapus, mengubah ukuran, memindahkan, memeriksa, melabeli, menyalin, dan menempel.</para>
+        </listitem>
+      </itemizedlist></para>
+    <caution>
+      <para>Menyunting partisi berpotensi menyebabkan HILANGNYA DATA.</para>
+      <para>Aplikasi <application>gparted</application> dirancang untuk memungkinkan Anda menyunting partisi sambil mengurangi risiko kehilangan data. Aplikasi ini diuji dengan hati-hati dan digunakan oleh tim proyek GParted. Namun, hilangnya data mungkin terjadi karena bug perangkat lunak, masalah perangkat keras, atau kegagalan daya.</para>
+      <para>Anda dapat membantu mengurangi risiko kehilangan data dengan tidak memasang atau melepas kait partisi di luar aplikasi <application>gparted</application> saat <application>gparted</application> sedang berjalan.</para>
+      <para>Anda disarankan untuk MEMBUAT CADANGAN DATA Anda sebelum menggunakan aplikasi <application>gparted</application>. Ini terutama berlaku untuk data terenkripsi di mana semua data dapat menjadi tidak dapat diakses secara permanen setelah kegagalan. Silakan lihat <ulink type="http" url="https://gitlab.com/cryptsetup/cryptsetup/wikis/FrequentlyAskedQuestions">FAQ Cryptsetup</ulink> untuk saran pencadangan dan pemulihan data terenkripsi.</para>
+    </caution>
+  </sect1>
+  
+<!-- ============= Getting Started =================================== -->
+  <sect1 id="gparted-getting-started">
+    <title>Mulai Memakai</title>
+    <para>
+    </para>
+
+<!-- ============= To Start gparted ================================== -->
+    <sect2 id="gparted-to-start">
+      <title>Memulai gparted</title>
+      <para>Anda dapat memulai <application>gparted</application> dengan cara berikut:</para>
+      <variablelist>
+        <varlistentry>
+          <term>Menu <guimenu>Aplikasi</guimenu></term>
+          <listitem>
+            <para>Pilih <menuchoice><guisubmenu>Perkakas Sistem</guisubmenu><guimenuitem>GParted Penyunting Partisi</guimenuitem></menuchoice>.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>Baris perintah</term>
+          <listitem>
+            <para>Jalankan perintah berikut: <command>gparted</command></para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+      <para>Pada saat awal mula, <application>gparted</application> akan memindai komputer Anda untuk perangkat disk.</para>
+    </sect2>
+
+<!-- ============= When You Start gparted ============================ -->
+    <sect2 id="gparted-when-you-start">
+
+      <title>Jendela gparted</title>
+      <para>Saat Anda memulai <application>gparted</application>, jendela berikut ditampilkan:</para>
+
+      <!-- ==== Figure ==== -->
+      <!-- The GNOME Documentation Project recommends a maximum image
+           width of 510 pixels.
+           http://library.gnome.org/devel/gdp-style-guide/stable/screenshot-4.html.en
+      -->
+      <figure id="gparted-window">
+        <title>Jendela gparted</title>
+        <screenshot>
+          <mediaobject><imageobject> <imagedata fileref="figures/gparted_window.png" format="PNG"/> </imageobject> <textobject> <phrase>Memperlihatkan jendela utama gparted.</phrase> </textobject></mediaobject>
+        </screenshot>
+      </figure>
+
+      <para>Jendela <application>gparted</application> berisi elemen berikut:</para>
+      <variablelist>
+        <varlistentry>
+          <term>Bilah Menu</term>
+          <listitem>
+            <para>Menu pada bilah menu berisi semua perintah yang Anda butuhkan untuk bekerja dengan perangkat disk dan partisi di <application>gparted</application>.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>Bilah Alat</term>
+          <listitem>
+            <para>Bilah alat berisi kumpulan perintah yang dapat Anda akses dari bilah menu.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>Area Tampilan Grafik</term>
+          <listitem>
+            <para>Area tampilan grafis berisi representasi visual partisi pada perangkat disk yang dipilih.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>Area Tampilan Teks</term>
+          <listitem>
+            <para>Area tampilan teks berisi daftar teks partisi pada perangkat disk yang dipilih.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>Bilah Status</term>
+          <listitem>
+            <para>Bilah status menampilkan informasi tentang aktivitas <application>gparted</application> saat ini atau banyaknya operasi yang tertunda.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>Panel Informasi Perangkat</term>
+          <listitem>
+            <para>Panel informasi perangkat menampilkan detail tentang perangkat disk yang dipilih.</para>
+            <para>Secara default panel informasi perangkat tidak diperlihatkan. Untuk memperlihatkan panel informasi perangkat, pilih <menuchoice><guimenu>Tampilan</guimenu><guimenuitem>Informasi Perangkat</guimenuitem></menuchoice>.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>Panel Operasi Tertunda</term>
+          <listitem>
+            <para>Panel operasi yang tertunda menampilkan daftar operasi partisi saat ini dalam antrean.</para>
+            <para>Secara default panel operasi tertunda tidak diperlihatkan ketika ada 0 operasi yang tertunda. Untuk memperlihatkan panel operasi yang tertunda, pilih <menuchoice><guimenu>Tampilan</guimenu><guimenuitem>Operasi Tertunda</guimenuitem></menuchoice>.</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+      <para>Saat Anda mengklik kiri di salah satu area tampilan, Anda memilih partisi yang akan digunakan untuk tindakan penyuntingan partisi.</para>
+      <para>Saat Anda mengklik kanan di salah satu area tampilan, aplikasi menampilkan menu popup. Menu popup berisi tindakan penyuntingan partisi yang paling umum.</para>
+
+      <para>Seperti aplikasi GNOME lainnya, tindakan dalam <application>gparted</application> dapat dilakukan dengan beberapa cara: dengan menu, dengan bilah alat, atau dengan tombol pintasan.</para>
+    </sect2>
+
+<!-- ============= To Specify Devices on the Command Line ============ -->
+    <sect2 id="gparted-run-from-cmd-line">
+      <title>Menjalankan gparted dari Baris Perintah</title>
+      <para>Anda dapat menjalankan <application>gparted</application> dari baris perintah dan menentukan satu atau beberapa perangkat disk.</para>
+      <para>Untuk bekerja dengan beberapa perangkat disk dari baris perintah, ketik perintah berikut, lalu tekan <keycap>Enter</keycap>:</para>
+      <para>
+      <screen><prompt>$ </prompt><command>gparted <replaceable>/path-peranti-anda-1 /path-peranti-anda-2</replaceable></command></screen>
+      </para>
+    </sect2>
+  </sect1>
+
+<!-- ============= Usage ============================================= -->
+<!-- ============= Viewing File System Support ======================= -->
+  <sect1 id="gparted-usage">
+    <title>Melihat Dukungan Sistem Berkas</title>
+      <para>Untuk melihat tindakan yang didukung pada sistem berkas, pilih: <menuchoice><guimenu>Tampilan</guimenu><guimenuitem>Dukungan Sistem Berkas</guimenuitem></menuchoice>. Aplikasi menampilkan dialog <guilabel>Dukungan Sistem Berkas</guilabel>.</para>
+      <para>Jika Anda telah menginstal perangkat lunak saat <application>gparted</application> berjalan, klik <guibutton>Pindai Ulang Untuk Tindakan yang Didukung</guibutton> untuk menyegarkan bagan. Aplikasi menyegarkan tampilan bagan.</para>
+      <para>Untuk menutup dialog <guilabel>Dukungan Sistem Berkas</guilabel>, klik <guibutton>Tutup</guibutton>.</para>
+  </sect1>
+
+<!-- ============= Working With Devices ============================== -->
+  <sect1 id="gparted-devices">
+    <title>Bekerja dengan Perangkat</title>
+
+<!-- ============= To Select a Device ================================ -->
+    <sect2 id="gparted-select-device">
+      <title>Memilih Perangkat</title>
+      <para>Untuk memilih perangkat disk, pilih: <menuchoice><guimenu>GParted</guimenu><guimenuitem>Perangkat</guimenuitem></menuchoice> dan pilih perangkat dari daftar. Aplikasi menampilkan tata letak partisi perangkat di jendela <application>gparted</application>.</para>
+    </sect2>
+
+<!-- ============= To View Device Information ======================== -->
+    <sect2 id="gparted-view-device-information">
+      <title>Melihat Informasi Perangkat</title>
+      <para>Untuk melihat informasi tentang perangkat disk: <orderedlist>
+          <listitem>
+            <para>Pilih perangkat cakram. Lihat <xref linkend="gparted-select-device"/>.</para>
+          </listitem>
+          <listitem>
+            <para>Pilih: <menuchoice><guimenu>Tampilan</guimenu><guimenuitem>Informasi Perangkat</guimenuitem></menuchoice>. Aplikasi membuka panel samping di jendela <application>gparted</application> dan menampilkan informasi tentang perangkat.</para>
+         </listitem>
+       </orderedlist></para>
+      <para>Untuk menutup panel sisi <guilabel>Informasi Perangkat</guilabel>, batal pilih: <menuchoice><guimenu>Tampilan</guimenu><guimenuitem>Informasi Perangkat</guimenuitem></menuchoice>.</para>
+    </sect2>
+
+<!-- ============= To Refresh a Device =============================== -->
+    <sect2 id="gparted-refresh-device">
+      <title>Menyegarkan Semua Perangkat</title>
+      <para>Untuk menyegarkan semua perangkat disk, pilih: <menuchoice><guimenu>GParted</guimenu><guimenuitem>Segarkan Perangkat</guimenuitem></menuchoice>. Aplikasi ini memindai ulang semua perangkat disk dan menyegarkan tata letak partisi perangkat di jendela <application>gparted</application>.</para>
+    </sect2>
+
+<!-- ============= To Create a New Partition Table =================== -->
+    <sect2 id="gparted-create-partition-table">
+      <title>Membuat Tabel Partisi Baru</title>
+      <para>Untuk membuat tabel partisi baru di perangkat disk: <orderedlist>
+          <listitem>
+            <para>Pilih perangkat cakram. Lihat <xref linkend="gparted-select-device"/>.</para>
+          </listitem>
+          <listitem>
+            <para>Pilih: <menuchoice><guimenu>Perangkat</guimenu><guimenuitem>Buat Tabel Partisi</guimenuitem></menuchoice>. Aplikasi menampilkan dialog <guilabel>Buat tabel partisi pada <replaceable>/path-ke-perangkat</replaceable></guilabel>.</para>
+          </listitem>
+          <listitem>
+            <para>Secara opsional pilih tipe tabel partisi yang berbeda dari daftar.</para>
+            <note>
+              <para>Jenis tabel partisi default adalah <guimenuitem>msdos</guimenuitem> untuk disk berukuran lebih kecil dari 2 Tebibyte (dengan asumsi ukuran sektor byte 512) dan <guimenuitem>gpt</guimenuitem> untuk disk 2 Tebibyte dan lebih besar.</para>
+              <para>Lihat <xref linkend="gparted-specify-partition-type"/> untuk batasan tabel partisi <guimenuitem>msdos</guimenuitem>.</para>
+            </note>
+            <note>
+              <para>Untuk menggunakan disk tanpa tabel partisi, pilih <guimenuitem>loop</guimenuitem> untuk membuat partisi virtual yang membentang disk. Kemudian format ke sistem berkas yang diinginkan.</para>
+              <para>Lihat <xref linkend="gparted-format-partition"/> untuk memformat partisi virtual dengan sistem berkas.</para>
+            </note>
+            <caution>
+              <para>Banyak sistem operasi mengenali tabel partisi <guimenuitem>gpt</guimenuitem> dan <guimenuitem>msdos</guimenuitem>, tetapi tidak mengenali semua jenis sistem berkas. Kurangnya pengenalan sistem berkas ini berarti bahwa menggunakan disk tanpa tabel partisi melibatkan lebih banyak risiko. Misalnya, beberapa sistem operasi mungkin meminta untuk memformat disk yang tidak dipartisi jika sistem berkas tidak dikenali.</para>
+            </caution>
+          </listitem>
+          <listitem>
+            <para>Klik <guibutton>Terapkan</guibutton> untuk membuat tabel partisi baru. Aplikasi menulis tabel partisi baru ke perangkat disk. Aplikasi ini menyegarkan tata letak partisi perangkat di jendela <application>gparted</application>.</para>
+          </listitem>
+        </orderedlist></para>
+      <caution>
+        <para>PERINGATAN: Ini akan MENGHAPUS SEMUA DATA pada SELURUH PERANGKAT DISK.</para>
+        <para>Jika Anda secara tidak sengaja menimpa tabel partisi Anda, lihat <xref linkend="gparted-recover-partition-table"/>.</para>
+      </caution>
+    </sect2>
+
+  </sect1>
+
+<!-- ============= Working with Partitions =========================== -->
+  <sect1 id="gparted-partitions">
+    <title>Bekerja dengan Partisi</title>
+
+<!-- ============= Basic Partition Actions =========================== -->
+    <sect2 id="gparted-basic-partition-actions">
+      <title>Tindakan Partisi Dasar</title>
+      <para>Tindakan ini tidak akan mengubah partisi pada perangkat disk Anda.</para>
+
+<!-- ============= To Select a Partition ============================= -->
+      <sect3 id="gparted-select-partition">
+        <title>Memilih Partisi</title>
+        <para>Untuk memilih partisi, gunakan salah satu hal berikut: <itemizedlist>
+            <listitem>
+              <para>Klik pada partisi di area tampilan grafis.</para>
+            </listitem>
+            <listitem>
+              <para>Klik pada partisi di area tampilan teks.</para>
+            </listitem>
+          </itemizedlist></para>
+        <para>Aplikasi menyoroti partisi di area tampilan grafis dan area tampilan teks di jendela <application>gparted</application>.</para>
+        <note>
+          <para>Operasi partisi seperti menghapus, memindahkan, menyalin, memformat, memeriksa, label, dan sering mengubah ukuran mengharuskan partisi untuk dilepas kait. Lihat <xref linkend="gparted-unmount-partition"/>.</para>
+        </note>
+      </sect3>
+
+<!-- ============= To Select Unallocated Space ======================= -->
+      <sect3 id="gparted-select-unallocated">
+        <title>Memilih Ruang Tak Dialokasikan</title>
+        <para>Untuk memilih ruang yang tidak dialokasikan, gunakan salah satu hal berikut: <itemizedlist>
+            <listitem>
+              <para>Klik pada <guilabel>tidak dialokasikan</guilabel> di area tampilan grafik.</para>
+            </listitem>
+            <listitem>
+              <para>Klik pada <guilabel>tidak dialokasikan</guilabel> di area tampilan teks.</para>
+            </listitem>
+          </itemizedlist></para>
+        <para>Aplikasi ini menyoroti ruang yang tidak dialokasikan di area tampilan grafis dan area tampilan teks di jendela <application>gparted</application>.</para>
+        <tip>
+          <para>Jika Anda tidak memiliki perangkat disk dengan ruang yang tidak dialokasikan, Anda dapat mencoba yang berikut ini:</para>
+          <itemizedlist>
+            <listitem>
+              <para>Menambahkan perangkat diska baru ke komputer Anda.</para>
+            </listitem>
+            <listitem>
+              <para>Perkecil partisi yang berisi ruang tak terpakai. Lihat <xref linkend="gparted-resize-partition"/>.</para>
+            </listitem>
+          </itemizedlist>
+        </tip>
+      </sect3>
+
+<!-- ============= To View Partition Information ===================== -->
+    <sect3 id="gparted-view-partition-information">
+        <title>Melihat Informasi Partisi</title>
+        <para>Untuk melihat informasi tentang suatu partisi: <orderedlist>
+            <listitem>
+              <para>Pilih suatu partisi. Lihat <xref linkend="gparted-select-partition"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Pilih: <menuchoice><guimenu>Partisi</guimenu><guimenuitem>Informasi</guimenuitem></menuchoice>. Aplikasi membuka sebuah dialog <guilabel>Informasi tentang <replaceable>/path-ke-partisi</replaceable></guilabel>.</para>
+            </listitem>
+          </orderedlist></para>
+        <para>Untuk menutup dialog <guilabel>Informasi tentang <replaceable>/path-ke-partisi</replaceable></guilabel>, klik <guibutton>Tutup</guibutton>.</para>
+      </sect3>
+
+<!-- ============= To Mount a Partition ============================== -->
+      <sect3 id="gparted-mount-partition">
+        <title>Mengait suatu Partisi</title>
+        <para>Untuk mengait suatu partisi: <orderedlist>
+            <listitem>
+              <para>Pilih suatu partisi yang tidak dikait. Lihat <xref linkend="gparted-select-partition"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Pilih: <menuchoice><guimenu>Partisi</guimenu><guimenuitem>Kait</guimenuitem></menuchoice> dan pilih titik kait dari daftar. Aplikasi ini mengait partisi pada titik kait dan menyegarkan tata letak partisi perangkat dalam jendela <application>gparted</application>.</para>
+            </listitem>
+          </orderedlist></para>
+        <note>
+          <para>Jika <menuchoice> <guimenu>Partisi</guimenu><guimenuitem>Kait</guimenuitem> </menuchoice> tidak terlihat, maka <application>gparted</application> tidak tahu di mana partisi harus dikait.</para>
+        </note>
+      </sect3>
+
+<!-- ============= To Unmount a Partition ============================ -->
+      <sect3 id="gparted-unmount-partition">
+        <title>Melepas Kait Partisi</title>
+        <para>Untuk melepas kait partisi: <orderedlist>
+            <listitem>
+              <para>Pilih partisi yang dikait. Lihat <xref linkend="gparted-select-partition"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Pilih: <menuchoice><guimenu>Partisi</guimenu><guimenuitem>Lepas Kait</guimenuitem></menuchoice>. Aplikasi melepas kait partisi dari titik kait dan menyegarkan tata letak partisi perangkat di jendela <application>gparted</application>.</para>
+            </listitem>
+          </orderedlist></para>
+        <tip>
+          <para>Jika <menuchoice> <guimenu>Partisi</guimenu><guimenuitem>Lepas Kait</guimenuitem></menuchoice> tidak berhasil, maka partisi mungkin sedang digunakan.</para>
+          <para>Agar semua partisi dilepas kait dan tersedia untuk tindakan penyuntingan partisi, boot dari Live CD dan gunakan <application>gparted</application>. Lihat <xref linkend="gparted-acquire-livecd"/></para>
+        </tip>
+      </sect3>
+
+<!-- ============= To Open an Encrypted Partition ==================== -->
+      <sect3 id="gparted-open-encrypted-partition">
+        <title>Membuka Partisi Terenkripsi</title>
+        <para>Untuk membuka partisi terenkripsi LUKS: <orderedlist>
+            <listitem>
+              <para>Pilih partisi terenkripsi LUKS yang tertutup. Lihat <xref linkend="gparted-select-partition"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Pilih: <menuchoice><guimenu>Partisi</guimenu><guimenuitem>Buka Enkripsi</guimenuitem></menuchoice>.</para>
+              <para>Jika <application>gparted</application> belum mengetahui Frasa Sandi LUKS, itu akan membuka dialog <guilabel>Frasa Sandi LUKS <replaceable>/path-ke-partisi</replaceable></guilabel>. Ketik Frasa Sandi LUKS ke dalam kotak teks <guilabel>Frasa Sandi</guilabel> dan klik <guibutton>Buka Kunci</guibutton>.</para>
+              <para>Aplikasi ini membuka partisi terenkripsi dan menyegarkan tata letak partisi perangkat di jendela <application>gparted</application>.</para>
+            </listitem>
+          </orderedlist></para>
+        <note>
+          <para><application>gparted</application> mengingat setiap Frasa Sandi LUKS dalam memori komputer selama berjalan. Ini agar tidak perlu bertanya ketika membuka kembali partisi terenkripsi yang sama lagi. Ketika <application>gparted</application> ditutup semua frasa sandi LUKS yang diingat dibersihkan dari memori dan dilupakan.</para>
+        </note>
+      </sect3>
+
+
+<!-- ============= To Close an Encrypted Partition =================== -->
+      <sect3 id="gparted-close-encrypted-partition">
+        <title>Menutup Partisi Terenkripsi</title>
+        <para>Untuk menutup partisi terenkripsi LUKS: <orderedlist>
+            <listitem>
+              <para>Pilih partisi terenkripsi LUKS dan tidak dikait. Lihat <xref linkend="gparted-select-partition"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Pilih: <menuchoice><guimenu>Partisi</guimenu><guimenuitem>Tutup Enkripsi</guimenuitem></menuchoice>. Aplikasi menutup enkripsi LUKS dan menyegarkan tata letak partisi perangkat di jendela <application>gparted</application>.</para>
+            </listitem>
+          </orderedlist></para>
+      </sect3>
+
+    </sect2>
+<!-- ============= End of Basic Partition Actions ==================== -->
+
+<!-- ============= Intermediate Partition Actions ==================== -->
+    <sect2 id="gparted-intermediate-partition-actions">
+      <title>Tindakan Partisi Menengah</title>
+      <para>Tindakan ini akan mengubah partisi pada perangkat disk Anda. Tindakan ini tidak akan mengubah batas awal atau akhir dari partisi yang ada.</para>
+
+<!-- ============= Creating a New Partition ========================== -->
+      <sect3 id="gparted-create-new-partition">
+        <title>Membuat Partisi Baru</title>
+        <para>Untuk membuat partisi baru: <orderedlist>
+            <listitem>
+              <para>Pilih ruang yang belum dialokasikan pada perangkat diska. Lihat <xref linkend="gparted-select-unallocated"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Pilih: <menuchoice><guimenu>Partisi</guimenu><guimenuitem>Baru</guimenuitem></menuchoice>. Aplikasi menampilkan dialog <guilabel>Buat Partisi baru</guilabel>.</para>
+            </listitem>
+            <listitem>
+              <para>Tentukan ukuran dan lokasi untuk partisi. Lihat <xref linkend="gparted-specify-partition-size-and-location"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Tentukan perataan untuk partisi. Lihat <xref linkend="gparted-specify-partition-alignment"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Tentukan tipe partisi. Lihat <xref linkend="gparted-specify-partition-type"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Tentukan nama partisi ketika ruas diaktifkan. Lihat <xref linkend="gparted-specify-partition-name"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Tentukan tipe sistem berkas untuk partisi. Lihat <xref linkend="gparted-specify-partition-file-system"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Tentukan label sistem berkas untuk partisi. Lihat <xref linkend="gparted-specify-partition-file-system-label"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Klik <guibutton>Tambah</guibutton> untuk menambahkan operasi membuat partisi ke antrean operasi. Aplikasi menampilkan operasi membuat partisi di panel <guilabel>Operasi Tertunda</guilabel> di jendela <application>gparted</application>.</para>
+            </listitem>
+          </orderedlist></para> 
+      </sect3>
+
+<!-- ============= To Delete a Partition ============================= -->
+      <sect3 id="gparted-delete-partition">
+        <title>Menghapus Partisi</title>
+        <para>Untuk menghapus partisi: <orderedlist>
+            <listitem>
+              <para>Pilih suatu partisi yang tidak dikait. Lihat <xref linkend="gparted-select-partition"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Pilih: <menuchoice><guimenu>Partisi</guimenu><guimenuitem>Hapus</guimenuitem></menuchoice>. Aplikasi menampilkan operasi hapus partisi di panel <guilabel>Operasi Tertunda</guilabel>.</para>
+            </listitem>
+          </orderedlist></para>
+        <caution>
+          <para>Jika Anda menghapus partisi logis, maka semua partisi logis yang ada setelah partisi logis yang dihapus akan mengalami perubahan dalam nama perangkat.</para>
+          <para>Misalnya, partisi extended berisi empat partisi logis A, B, C, dan D. Partisi logis ini diakses oleh sistem operasi sebagai berikut:</para>
+          <itemizedlist>
+            <listitem>
+              <para>Partisi A sebagai /dev/sda5.</para>
+            </listitem>
+            <listitem>
+              <para>Partisi B sebagai /dev/sda6.</para>
+            </listitem>
+            <listitem>
+              <para>Partisi C sebagai /dev/sda7.</para>
+            </listitem>
+            <listitem>
+              <para>Partisi D sebagai /dev/sda8.</para>
+            </listitem>
+          </itemizedlist>
+          <para>Jika partisi B dihapus, maka partisi logis yang tersisa akan diakses oleh sistem operasi sebagai berikut:</para>
+          <itemizedlist>
+            <listitem>
+              <para>Partisi A sebagai /dev/sda5.</para>
+            </listitem>
+            <listitem>
+              <para>Partisi C sebagai /dev/sda6. Perhatikan perubahan nama perangkat.</para>
+            </listitem>
+            <listitem>
+              <para>Partisi D sebagai /dev/sda7. Perhatikan perubahan nama perangkat.</para>
+            </listitem>
+          </itemizedlist>
+          <para>Perubahan nama perangkat dapat menyebabkan masalah jika partisi dipasang menggunakan nama perangkat. Anda dapat menghindari masalah dengan menggunakan label sistem berkas atau Universally Unique Identifier (UUID) dari partisi saat mengait partisi.</para>
+          <para>Perubahan nama perangkat mungkin berdampak buruk pada berkas berikut: <itemizedlist>
+              <listitem>
+                <para>/etc/fstab - Berisi daftar sistem berkas yang akan dikait.</para>
+              </listitem>
+              <listitem>
+                <para>/boot/grub/menu.lst - Berisi instruksi boot sistem operasi untuk loader boot <application>grub</application>.</para>
+              </listitem>
+            </itemizedlist></para>
+        </caution>
+        <note>
+          <para>Disk dengan tabel partisi <guimenuitem>loop</guimenuitem> atau <guimenuitem>none</guimenuitem> tidak berisi tabel partisi, dan tidak berisi partisi. Sistem berkas pada disk tanpa tabel partisi diwakili di GParted oleh partisi virtual.</para>
+          <para>Untuk menghapus sistem berkas dan partisi virtual, pilih format ke <guimenuitem>dibersihkan</guimenuitem>.</para>
+          <para>Lihat <xref linkend="gparted-format-partition"/>.</para>
+        </note>
+      </sect3>
+
+<!-- ============= To Name a Partition =============================== -->
+      <sect3 id="gparted-name-partition">
+        <title>Menamai Partisi</title>
+        <note>
+          <para>Penamaan partisi hanya tersedia dengan tabel partisi GUID (GPT).</para>
+          <para>Lihat juga <xref linkend="gparted-create-partition-table"/>.</para>
+        </note>
+        <para>Untuk mengatur nama partisi:</para>
+          <orderedlist>
+            <listitem>
+              <para>Pilih suatu partisi yang tidak dikait. Lihat <xref linkend="gparted-select-partition"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Pilih: <menuchoice><guimenu>Partisi</guimenu> <guimenuitem>Namai Partisi</guimenuitem></menuchoice>. Aplikasi membuka dialog <guilabel>Atur nama partisi pada <replaceable>/path-ke-partisi</replaceable></guilabel>.</para>
+            </listitem>
+            <listitem>
+              <para>Ketikkan nama partisi dalam kotak teks <guilabel>Nama</guilabel>.</para>
+            </listitem>
+            <listitem>
+              <para>Klik <guibutton>OK</guibutton>. Aplikasi menampilkan operasi atur nama partisi di panel <guilabel>Operasi Tertunda</guilabel>.</para>
+            </listitem>
+          </orderedlist>
+      </sect3>
+
+<!-- ============= To Format a Partition ============================= -->
+      <sect3 id="gparted-format-partition">
+        <title>Memformat Partisi</title>
+        <para>Untuk memformat partisi: <orderedlist>
+            <listitem>
+              <para>Pilih suatu partisi yang tidak dikait. Lihat <xref linkend="gparted-select-partition"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Pilih: <menuchoice><guimenu>Partisi</guimenu><guimenuitem>Format ke</guimenuitem></menuchoice>, dan pilih jenis sistem berkas dari daftar. Aplikasi menampilkan operasi format partisi di panel <guilabel>Operasi Tertunda</guilabel>.</para>
+              <para>Lihat <xref linkend="gparted-specify-partition-file-system"/> untuk arti dari tipe sistem berkas <guimenuitem>dibersihkan</guimenuitem>.</para>
+            </listitem>
+          </orderedlist></para>
+      </sect3>
+
+<!-- ============= To Set a Partition File System Label ============== -->
+      <sect3 id="gparted-setting-partition-file-system-label">
+        <title>Mengatur Label Sistem Berkas Partisi</title>
+        <para>Untuk mengatur label atau nama volume sistem berkas dalam partisi: <orderedlist>
+            <listitem>
+              <para>Pilih suatu partisi yang tidak dikait. Lihat <xref linkend="gparted-select-partition"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Pilih: <menuchoice><guimenu>Partisi</guimenu> <guimenuitem>Labeli Sistem Berkas</guimenuitem></menuchoice>. Aplikasi membuka dialog <guilabel>Atur label sistem berkas pada <replaceable>/path-ke-partisi</replaceable></guilabel>.</para>
+            </listitem>
+            <listitem>
+              <para>Ketikkan nama label dalam kotak teks <guilabel>Label</guilabel>.</para>
+            </listitem>
+            <listitem>
+              <para>Klik <guibutton>OK</guibutton>. Aplikasi menampilkan operasi atur label sistem berkas dalam panel <guilabel>Operasi Tertunda</guilabel>.</para>
+            </listitem>
+          </orderedlist></para>
+      </sect3>
+
+<!-- ============= To Change a Partition's UUID ========================== -->
+      <sect3 id="gparted-changing-partition-uuid">
+        <title>Mengubah UUID Partisi</title>
+        <para>Untuk mengubah Universally Unique Identifier (UUID) dari partisi: <orderedlist>
+            <listitem>
+              <para>Pilih suatu partisi yang tidak dikait. Lihat <xref linkend="gparted-select-partition"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Pilih: <menuchoice><guimenu>Partisi</guimenu> <guimenuitem>UUID Baru</guimenuitem></menuchoice>. Aplikasi menampilkan operasi atur UUID acak baru di panel <guilabel>Operasi Tertunda</guilabel>.</para>
+              <warning>
+                <para>Mengubah UUID mungkin membatalkan kunci Windows Product Activation (WPA).</para>
+                <para>Pada sistem berkas FAT dan NTFS, Nomor Seri Volume digunakan sebagai UUID. Mengubah Nomor Seri Volume pada partisi sistem Windows, biasanya C:, mungkin membatalkan kunci WPA. Kunci WPA yang tidak valid akan mencegah log masuk sampai Anda mengaktifkan kembali Windows.</para>
+                <para>Dalam upaya untuk menghindari membatalkan kunci WPA, pada sistem berkas NTFS hanya setengah dari UUID diatur ke nilai acak baru. Pada sistem berkas FAT, tindakan pencegahan semacam itu tidak mungkin dilakukan.</para>
+                <para>Kunci WPA tidak boleh dipengaruhi oleh perubahan UUID partisi data atau partisi media lepasan. Dalam kasus yang jarang terjadi, partisi yang hadir pada waktu boot mungkin merupakan pengecualian untuk aturan ini.</para>
+              </warning>
+              <warning>
+                <para>Mengubah UUID ketika tidak perlu melakukannya dapat menyebabkan sistem GNU/Linux gagal boot, atau gagal mengait sistem berkas.</para>
+                <para>Mengubah UUID hanya diperlukan setelah menyalin partisi. Perubahan UUID diperlukan untuk mencegah UUID duplikat ketika sumber dan salinan partisi digunakan pada komputer yang sama.</para>
+                <para>Jika masalah boot atau mount terjadi, Anda mungkin perlu menyunting berkas konfigurasi, seperti /etc/fstab, dan meregenerasi menu grub untuk memastikan bahwa UUID yang benar dinyatakan.</para>
+              </warning>
+            </listitem>
+          </orderedlist></para>
+      </sect3>
+
+<!-- ============= Specifying Partition Details ====================== -->
+      <sect3 id="gparted-specify-partition-details">
+        <title>Menentukan Detil Partisi</title>
+        <para>Menentukan detail partisi berguna saat melakukan tindakan seperti membuat, mengubah ukuran, dan memindahkan.</para>
+
+<!-- ============= To Specify a Partition Size and Location ========== -->
+        <sect4 id="gparted-specify-partition-size-and-location">
+          <title>Menentukan Ukuran dan Lokasi Partisi</title>
+          <para>Untuk menentukan ukuran dan lokasi partisi, gunakan salah satu atau kombinasi dari yang berikut: <itemizedlist>
+              <listitem>
+                <para>Klik dan tahan panah di salah satu ujung area grafik. Seret panah ke kiri atau kanan di dalam rentang tampilan.</para>
+              </listitem>
+              <listitem>
+                <para>Klik dan tahan bagian tengah partisi di area grafis. Seret partisi ke kiri atau kanan di dalam rentang tampilan.</para>
+              </listitem>
+              <listitem>
+                <para>Klik panah tombol puntir, atau ketik nilai numerik untuk menyesuaikan ruas berikut: <itemizedlist>
+                    <listitem>
+                      <para><guilabel>Ruang Kosong Mendahului</guilabel></para>
+                    </listitem>
+                    <listitem>
+                      <para><guilabel>Ukuran Baru</guilabel></para>
+                    </listitem>
+                    <listitem>
+                      <para><guilabel>Ruang Kosong Mengikuti</guilabel></para>
+                    </listitem>
+                  </itemizedlist></para>
+              </listitem>
+            </itemizedlist></para>
+          <para>Aplikasi ini menyegarkan area grafis dan angka di samping tiga label ruas.</para>
+        </sect4>
+
+<!-- ============= To Specify a Partition Alignment ================== -->
+        <sect4 id="gparted-specify-partition-alignment">
+          <title>Menentukan Perataan Partisi</title>
+          <para>Untuk menentukan perataan partisi, klik tombol panah <guilabel>Ratakan ke</guilabel>, dan pilih dari daftar.</para>
+          <itemizedlist>
+            <listitem>
+              <para>Gunakan perataan <guilabel>MiB</guilabel> untuk sistem operasi modern. Pengaturan ini meratakan partisi untuk mulai dan berakhir pada batas mebibyte (1.048.576 byte) yang tepat. Penyelarasan MiB memberikan peningkatan kinerja saat digunakan dengan sistem RAID dan dengan Solid State Drive, seperti USB flash drive.</para>
+            </listitem>
+            <listitem>
+              <para>Gunakan perataan <guilabel>Silinder</guilabel> untuk mempertahankan kompatibilitas dengan sistem operasi yang dirilis sebelum tahun 2000, seperti DOS. Pengaturan ini meratakan partisi untuk mulai dan berakhir pada batas silinder disk.</para>
+              <tip>
+                <para>Nilai Cylinder/Head/Sector yang dilaporkan oleh perangkat disk modern tidak lagi memiliki hubungan fisik langsung dengan data yang tersimpan pada perangkat disk. Oleh karena itu tidak lagi valid untuk menggunakan pengaturan perataan ini untuk mencapai kinerja yang ditingkatkan.</para>
+              </tip>
+            </listitem>
+            <listitem>
+              <para>Gunakan <guilabel>Nihil</guilabel> hanya jika Anda memiliki pengetahuan mendalam tentang struktur disk, tabel partisi, dan boot record. Pengaturan ini menempatkan batas partisi relatif terhadap akhir partisi tepat sebelumnya pada perangkat disk. Pengaturan ini tidak dijamin untuk memesan atau menghormati ruang yang diperlukan untuk boot record.</para>
+            </listitem>
+          </itemizedlist>
+        </sect4>
+
+<!-- ============= To Specify a Partition Type ======================= -->
+        <sect4 id="gparted-specify-partition-type">
+          <title>Menentukan Tipe Partisi</title>
+          <para>Untuk menentukan tipe partisi, klik tombol panah <guilabel>Buat sebagai</guilabel>, dan pilih dari daftar.</para>
+          <note>
+            <para>Tabel partisi msdos membatasi partisi sebagai berikut: <itemizedlist>
+                <listitem>
+                  <para>Maksimum 4 partisi primer.</para>
+                </listitem>
+                <listitem>
+                  <para>Maksimum 3 partisi primer, dan 1 partisi extended.</para>
+                  <para>Partisi extended dapat berisi beberapa partisi logis. Beberapa distribusi GNU/Linux mendukung mengakses paling banyak 15 partisi pada perangkat disk.</para>
+                </listitem>
+                <listitem>
+                  <para>Ukuran maksimum partisi adalah 2 Tebibyte menggunakan ukuran sektor 512 byte. Partisi juga harus dimulai dalam 2 Tebibyte pertama dari perangkat disk.</para>
+                </listitem>
+              </itemizedlist></para>
+          </note>
+          <tip>
+            <para>Partisi primer memberikan pemulihan data yang lebih baik karena batas partisi disimpan di lokasi yang diketahui pada perangkat disk.</para>
+          </tip>
+        </sect4>
+
+<!-- ============= To Specify a Partition Name ======================= -->
+        <sect4 id="gparted-specify-partition-name">
+          <title>Menentukan Nama Partisi</title>
+          <note>
+            <para>Penamaan partisi hanya tersedia dengan tabel partisi GUID (GPT). Maka ruas tersebut hanya diaktifkan pada perangkat disk yang dipartisi menggunakan GPT.</para>
+            <para>Lihat juga <xref linkend="gparted-create-partition-table"/>.</para>
+          </note>
+          <para>Untuk menentukan nama partisi, ketikkan nama dalam kotak teks <guilabel>Nama partisi</guilabel>.</para>
+        </sect4>
+
+<!-- ============= To Specify a Partition File System ================ -->
+        <sect4 id="gparted-specify-partition-file-system">
+          <title>Menentukan Sistem Berkas Partisi</title>
+          <para>Untuk menentukan tipe sistem berkas bagi partisi, klik tombol panah <guilabel>Sistem Berkas</guilabel>, dan pilih dari daftar.</para>
+          <note>
+            <para>Contoh penggunaan untuk beberapa sistem berkas adalah sebagai berikut: <itemizedlist>
+                <listitem>
+                  <para>Sistem berkas <guimenuitem>ext2,</guimenuitem>, <guimenuitem>ext3</guimenuitem>, dan <guimenuitem>ext4</guimenuitem> dapat digunakan untuk memasan GNU/Linux, dan untuk data.</para>
+                </listitem>
+                <listitem>
+                  <para><guimenuitem>linux-swap</guimenuitem> dapat digunakan dengan GNU/Linux untuk meningkatkan memori virtual komputer Anda.</para>
+                </listitem>
+                <listitem>
+                  <para>Sistem berkas <guimenuitem>fat16</guimenuitem> dan <guimenuitem>fat32</guimenuitem> dapat digunakan untuk berbagi data antara sistem operasi bebas dan komersial.</para>
+                </listitem>
+                <listitem>
+                  <para><guimenuitem>dibersihkan</guimenuitem> dapat digunakan untuk menghapus tanda tangan sistem berkas yang ada dan memastikan bahwa partisi diakui kosong.</para>
+                </listitem>
+                <listitem>
+                  <para><guimenuitem>tidak diformat</guimenuitem> dapat digunakan untuk hanya membuat partisi tanpa menulis sistem berkas.</para>
+                </listitem>
+              </itemizedlist></para>
+          </note>
+        </sect4>
+
+<!-- ============= To Specify a Partition Label ====================== -->
+        <sect4 id="gparted-specify-partition-file-system-label">
+          <title>Menentukan Label Sistem Berkas Partisi</title>
+          <para>Untuk menentukan label sistem berkas dalam partisi, juga dikenal sebagai label volume, ketikkan nama label dalam kotak teks <guilabel>Label</guilabel>.</para>
+          <tip>
+            <para>Label sistem berkas dapat digunakan untuk membantu Anda mengingat apa yang disimpan dalam partisi.</para>
+            <para>Label unik dapat digunakan untuk mengait sistem berkas dengan sistem operasi GNU/Linux.</para>
+          </tip>
+        </sect4>
+
+      </sect3>
+<!-- ============= End of Specifying Partition Details =============== -->
+
+    </sect2>
+<!-- ============= End of Intermediate Partition Actions ============= -->
+
+<!-- ============= Advanced Partition Actions ======================== -->
+    <sect2 id="gparted-advanced-partition-actions">
+      <title>Tindakan Partisi Tingkat Lanjut</title>
+      <para>Tindakan ini akan mengubah partisi pada perangkat disk Anda. Tindakan ini dapat mengubah batas awal atau akhir dari partisi yang ada. Tindakan ini dapat menyebabkan sistem operasi gagal melakukan boot.</para>
+
+<!-- ============= To Resize a Partition ============================= -->
+      <sect3 id="gparted-resize-partition">
+        <title>Mengubah Ukuran Partisi</title>
+        <para>Mengubah ukuran dan memindahkan partisi dapat dilakukan dengan satu operasi <application>gparted</application>.</para>
+        <para>Untuk mengubah ukuran partisi: <orderedlist>
+            <listitem>
+              <para>Pilih suatu partisi. Lihat <xref linkend="gparted-select-partition"/>.</para>
+              <tip>
+                <para>Partisi yang tidak dikait atau tidak aktif memungkinkan paling banyak opsi mengubah ukuran.</para>
+                <para>Dukungan tersedia untuk mengubah ukuran daring beberapa partisi yang dikait atau aktif. Namun dukungan ini sering dibatasi untuk memperbesar saja.</para>
+              </tip>
+            </listitem>
+            <listitem>
+              <para>Pilih: <menuchoice><guimenu>Partisi</guimenu><guimenuitem>Ubuh Ukuran/Pindah</guimenuitem></menuchoice>. Aplikasi menampilkan dialog <guilabel>Ubah Ukuran/Pindah <replaceable>/path-ke-partisi</replaceable></guilabel>.</para>
+            </listitem>
+            <listitem>
+              <para>Sesuaikan ukuran partisi. Lihat <xref linkend="gparted-specify-partition-size-and-location"/>.</para>
+              <tip>
+                <para>Jika Anda tidak ingin awal partisi yang ada bergerak, maka jangan ubah nilai <guilabel>ruang kosong sebelumnya</guilabel>. Jika partisi dikait atau aktif, maka Anda tidak akan dapat mengubah nilai <guilabel>ruang kosong sebelumnya</guilabel>.</para>
+              </tip>
+            </listitem>
+            <listitem>
+              <para>Tentukan perataan partisi. Lihat <xref linkend="gparted-specify-partition-alignment"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Klik <guibutton>Ubah Ukuran/Pindah</guibutton>. Aplikasi menampilkan operasi mengubah ukuran/memindahkan partisi di panel <guilabel>Operasi Tertunda</guilabel>.</para>
+            </listitem>
+            <listitem>
+              <para>Periksa operasi yang ditambahkan ke panel <guilabel>Operasi Tertunda</guilabel>.</para>
+              <para>Jika operasi melibatkan langkah pemindahan, maka pertimbangkan hal berikut: <itemizedlist>
+                  <listitem>
+                    <para>Satu langkah memindah mungkin membutuhkan waktu lama untuk diselesaikan.</para>
+                  </listitem>
+                  <listitem>
+                    <para>Jika partisi adalah partisi boot sistem operasi, maka langkah memindah dapat menyebabkan sistem operasi gagal boot.</para>
+                  </listitem>
+                </itemizedlist></para>
+              <para>Jika Anda tidak siap untuk menunggu atau memperbaiki potensi masalah boot sistem operasi, maka Anda mungkin ingin membatalkan operasi. Lihat <xref linkend="gparted-undo-last-operation"/>.</para>
+            </listitem>
+          </orderedlist></para>
+        <tip>
+          <para>Untuk menumbuhkan atau memindahkan partisi, ruang yang tidak dialokasikan harus tersedia bersebelahan dengan partisi.</para>
+          <para>Jika Anda menumbuhkan partisi logis, maka ruang yang tidak dialokasikan harus berada dalam partisi extended.</para>
+          <para>Jika Anda menumbuhkan partisi primer, maka ruang yang tidak dialokasikan tidak boleh berada dalam partisi extended.</para>
+          <para>Anda dapat memindahkan ruang yang tidak dialokasikan untuk berada di dalam atau di luar partisi extended dengan mengubah ukuran batas partisi extended.</para>
+        </tip>
+        <tip>
+          <para>Partisi terenkripsi LUKS dan sistem berkas di dalamnya hanya dapat diubah ukuran ketika pemetaan enkripsi terbuka.</para>
+        </tip>
+        <tip>
+          <para>Untuk meningkatkan kemampuan untuk mengecilkan partisi NTFS, Anda mungkin mempertimbangkan satu atau beberapa hal berikut: <itemizedlist>
+              <listitem>
+                <para>Mendefragmentasi sistem berkas.</para>
+                <para>Boot ke Mode Aman dengan sistem operasi komersial yang menggunakan NTFS dapat meningkatkan kemampuan untuk mendefragmentasi sistem berkas. Untuk memasuki Mode Aman tekan <keycap>F8</keycap> saat komputer Anda sedang mem-boot sistem operasi.</para>
+              </listitem>
+              <listitem>
+                <para>Periksa partisi untuk kesalahan dengan perintah berikut: <screen><prompt>C:&gt; </prompt><command>chkdsk</command> /f /r</screen> Ingatlah untuk me-reboot kembali ke sistem operasi komersial yang menggunakan NTFS agar memungkinkan perintah <command>chkdsk</command> dieksekusi.</para>
+              </listitem>
+              <listitem>
+                <para>Nonaktifkan berkas paging untuk sementara. Berkas paging menempati lokasi tetap dalam partisi yang proses defragmentasi tidak dapat memindah.</para>
+              </listitem>
+              <listitem>
+                <para>Pindahkan berkas besar untuk sementara ke partisi atau perangkat diska lainnya. Berkas besar didefinisikan sebagai lebih besar dari beberapa ratus Megabyte (MB).</para>
+              </listitem>
+              <listitem>
+                <para>Pastikan matikan sistem operasi komersial yang tepat yang menggunakan NTFS sebelum Anda mengubah ukuran partisi NTFS</para>
+              </listitem>
+              <listitem>
+                <para>Biarkan setidaknya 10 persen ruang yang tidak digunakan dalam partisi NTFS. Jika Anda mengecilkan partisi terlalu banyak, maka sistem operasi komersial mungkin mengalami kesulitan berfungsi dengan baik.</para>
+              </listitem>
+              <listitem>
+                <para>Reboot dua kali ke dalam sistem operasi komersial yang menggunakan NTFS setelah menyusutkan partisi NTFS.</para>
+              </listitem>
+            </itemizedlist></para>
+        </tip>
+      </sect3>
+
+<!-- ============= To Move a Partition =============================== -->
+      <sect3 id="gparted-move-partition">
+        <title>Memindahkan Partisi</title>
+        <para>Memindahkan dan mengubah ukuran partisi dapat dilakukan dengan satu operasi <application>gparted</application>.</para>
+        <para>Untuk memindahkan partisi: <orderedlist>
+            <listitem>
+              <para>Pilih suatu partisi yang tidak dikait. Lihat <xref linkend="gparted-select-partition"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Pilih: <menuchoice><guimenu>Partisi</guimenu><guimenuitem>Ubuh Ukuran/Pindah</guimenuitem></menuchoice>. Aplikasi menampilkan dialog <guilabel>Ubah Ukuran/Pindah <replaceable>/path-ke-partisi</replaceable></guilabel>.</para>
+            </listitem>
+            <listitem>
+              <para>Sesuaikan lokasi partisi. Lihat <xref linkend="gparted-specify-partition-size-and-location"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Tentukan perataan partisi. Lihat <xref linkend="gparted-specify-partition-alignment"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Klik <guibutton>Ubah Ukuran/Pindah</guibutton>. Aplikasi menampilkan operasi mengubah ukuran/memindahkan partisi di panel <guilabel>Operasi Tertunda</guilabel>.</para>
+            </listitem>
+          </orderedlist></para>
+        <tip>
+          <para>Jika partisi adalah partisi boot sistem operasi, maka sistem operasi mungkin tidak bisa boot setelah operasi pemindahan diterapkan.</para>
+          <para>Jika sistem operasi gagal boot, lihat <xref linkend="gparted-fix-operating-system-boot-problems"/>.</para>
+        </tip>
+        <tip>
+          <para>Partisi terenkripsi LUKS hanya dapat dipindahkan ketika pemetaan enkripsi ditutup.</para>
+        </tip>
+      </sect3>
+
+<!-- ============= To Copy and Paste a Partition ===================== -->
+      <sect3 id="gparted-copy-and-paste-partition">
+        <title>Menyalin dan Menempelkan Partisi</title>
+        <para>Untuk menyalin partisi: <orderedlist>
+            <listitem>
+              <para>Pilih suatu partisi yang tidak dikait. Lihat <xref linkend="gparted-select-partition"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Pilih: <menuchoice><guimenu>Partisi</guimenu><guimenuitem>Salin</guimenuitem></menuchoice>. Aplikasi menandai partisi sebagai partisi sumber.</para>
+            </listitem>
+          </orderedlist></para>
+        <para>Untuk Menempelkan partisi: <orderedlist>
+            <listitem>
+              <para>Pilih ruang yang tidak dialokasikan pada perangkat diska. Lihat <xref linkend="gparted-select-unallocated"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Pilih: <menuchoice><guimenu>Partisi</guimenu><guimenuitem>Tempel</guimenuitem></menuchoice>. Aplikasi menampilkan dialog <guilabel>Tempel <replaceable>/path-ke-partisi</replaceable></guilabel>.</para>
+            </listitem>
+            <listitem>
+              <para>Jika mau, Anda dapat menyesuaikan ukuran dan lokasi partisi. Lihat <xref linkend="gparted-specify-partition-size-and-location"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Jika mau, Anda dapat menentukan perataan partisi. Lihat <xref linkend="gparted-specify-partition-alignment"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Klik <guibutton>Tempel</guibutton>. Aplikasi menampilkan operasi salin partisi di panel <guilabel>Operasi Tertunda</guilabel>.</para>
+            </listitem>
+          </orderedlist></para>
+        <caution>
+          <para>Salinan partisi memiliki label sistem berkas dan Universally Unique Identifier (UUID) yang sama dengan partisi sumber. Ini dapat menyebabkan masalah saat boot, atau ketika tindakan mengait menggunakan label sistem berkas atau UUID untuk mengidentifikasi partisi.</para>
+          <para>Masalahnya adalah bahwa sistem operasi akan secara acak memilih untuk memasang sumber, atau salinan partisi. Misalnya, pada tindakan kait pertama, partisi sumber mungkin dipasang. Pada aksi kait berikutnya salinan partisi mungkin dipasang. Seiring waktu sifat acak pemasangan partisi ini mungkin membuat berkas tampak secara misterius muncul atau menghilang tergantung pada partisi mana yang dipasang. Pemasangan acak sumber atau salinan partisi juga dapat menyebabkan kerusakan atau kehilangan data yang parah.</para>
+          <para>Untuk menghindari masalah, Anda disarankan untuk melakukan salah satu hal berikut: <itemizedlist>
+              <listitem>
+                <para>Setelah Anda mengantrikan atau menerapkan operasi salin: <orderedlist>
+                    <listitem>
+                      <para>Ubah UUID dari sumber, atau salinan partisi. Lihat <xref linkend="gparted-changing-partition-uuid"/>.</para>
+                    </listitem>
+                    <listitem>
+                      <para>Jika label sistem berkas tidak kosong, maka ubah label sistem berkas dari sumber, atau salinan partisi. Lihat <xref linkend="gparted-setting-partition-file-system-label"/>.</para>
+                    </listitem>
+                  </orderedlist></para>
+              </listitem>
+              <listitem>
+                <para>Setelah Anda menerapkan operasi salin, hapus, atau format ulang partisi sumber.</para>
+              </listitem>
+              <listitem>
+                <para>Gunakan beberapa metode lain untuk memastikan bahwa partisi sumber dan salinan partisi tidak digunakan pada komputer yang sama pada saat yang sama. Misalnya, jika salinan partisi berada di drive terpisah, lepaskan drive dari komputer.</para>
+              </listitem>
+            </itemizedlist></para>
+        </caution>
+        <tip>
+          <para>Sistem berkas dalam partisi terenkripsi LUKS hanya dapat disalin ketika pemetaan enkripsi terbuka.</para>
+        </tip>
+        <note>
+          <para>Untuk mencegah dekripsi data yang tidak diinginkan, menempelkan ke ruang yang tidak dialokasikan membuat partisi baru tidak diizinkan. Namun partisi terenkripsi LUKS dapat ditempelkan ke dalam partisi terenkripsi LUKS terbuka yang ada mempertahankan enkripsi, atau ditempelkan ke dalam partisi polos yang membuat salinan sistem berkas yang tidak terenkripsi.</para>
+        </note>
+      </sect3>
+
+<!-- ============= To Manage Partition Flags ========================= -->
+      <sect3 id="gparted-manage-partition-flags">
+        <title>Mengelola Flag Partisi</title>
+        <para>Untuk mengelola flag partisi: <orderedlist>
+            <listitem>
+              <para>Pilih suatu partisi. Lihat <xref linkend="gparted-select-partition"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Pilih: <menuchoice><guimenu>Partisi</guimenu><guimenuitem>Kelola Flag</guimenuitem></menuchoice>. Aplikasi membuka dialog <guilabel>Kelola flag pada <replaceable>/path-ke-partisi</replaceable></guilabel>.</para>
+              <para>
+                <itemizedlist>
+                  <listitem>
+                    <para>Untuk mengaktifkan flag, pilih kotak centang di samping flag. Aplikasi menulis flag yang diaktifkan ke partisi dan menyegarkan dialog <guilabel>Kelola flag pada <replaceable>/path-ke-partisi</replaceable></guilabel>.</para>
+                  </listitem>
+                  <listitem>
+                    <para>Untuk menonaktifkan flag, batalkan pilih kotak centang di samping flag. Aplikasi menulis flag yang dinonaktifkan ke partisi dan menyegarkan dialog <guilabel>Kelola bendera pada <replaceable>/path-ke-partisi</replaceable></guilabel>.</para>
+                  </listitem>
+                </itemizedlist>
+              </para>
+              <note>
+                <para><guimenuitem>Kelola Flag</guimenuitem> hanya tersedia untuk disk dengan tabel partisi. Disk dengan tabel partisi <guimenuitem>loop</guimenuitem> atau <guimenuitem>nihil</guimenuitem> tidak berisi tabel partisi, dan tidak memiliki flag partisi.</para>
+                <para>Lihat <xref linkend="gparted-view-device-information"/> untuk melihat tipe tabel partisi.</para>
+              </note>
+            </listitem>
+          </orderedlist></para>
+        <para>Untuk menutup dialog <guilabel>Kelola flag pada <replaceable>/path-ke-partisi</replaceable></guilabel>, klik <guibutton>Tutup</guibutton>.</para>
+        <note>
+          <para>Deskripsi flag dalam tabel partisi msdos mengikuti: <itemizedlist>
+              <listitem>
+                <para>Boot digunakan oleh beberapa boot loader sistem operasi komersial. Flag boot menunjukkan partisi aktif atau dapat di-boot. Hanya satu partisi pada perangkat disk yang dapat aktif.</para>
+              </listitem>
+              <listitem>
+                <para>Diag digunakan untuk menunjukkan partisi digunakan untuk diagnostik / pemulihan.</para>
+              </listitem>
+              <listitem>
+                <para>ESP menunjukkan Partisi Sistem EFI yang digunakan untuk mem-boot komputer dengan Unified Extensible Firmware Interface (UEFI) kelas 2 yang mencakup dukungan kompatibilitas untuk fungsi BIOS termasuk struktur partisi MBR.</para>
+              </listitem>
+              <listitem>
+                <para>Tersembunyi digunakan oleh beberapa sistem operasi komersial. Flag tersembunyi membuat partisi tidak terlihat oleh sistem operasi.</para>
+              </listitem>
+              <listitem>
+                <para>Irst mengidentifikasi partisi Intel Rapid Start Technology.</para>
+              </listitem>
+              <listitem>
+                <para>LBA digunakan oleh beberapa boot loader sistem operasi komersial. Flag LBA menunjukkan partisi harus diakses menggunakan Logical Block Addressing (LBA), alih-alih pengalamatan Cylinder-Head-Sector (CHS).</para>
+              </listitem>
+              <listitem>
+                <para>LVM digunakan untuk menunjukkan partisi digunakan oleh Logical Volume Manager (LVM).</para>
+              </listitem>
+              <listitem>
+                <para>Palo digunakan oleh boot loader Precision Architecture - Reduced Instruction Set Computing (PA-RISC), palo.</para>
+              </listitem>
+              <listitem>
+                <para>Prep digunakan untuk menunjukkan partisi boot pada perangkat keras Power Performance Computing (PowerPC).</para>
+              </listitem>
+              <listitem>
+                <para>RAID digunakan untuk menunjukkan partisi digunakan dalam Redundant Array of Inexpensive Disks (RAID).</para>
+              </listitem>
+            </itemizedlist></para>
+        </note>
+        <note>
+          <para>Deskripsi flag dalam tabel partisi gpt mengikuti: <itemizedlist>
+              <listitem>
+                <para>Atvrecv digunakan untuk menunjukkan partisi Pemulihan Apple TV.</para>
+              </listitem>
+              <listitem>
+                <para>BIOS_GRUB menunjukkan partisi boot BIOS yang sering digunakan oleh boot loader GRUB 2.</para>
+              </listitem>
+              <listitem>
+                <para>Boot digunakan oleh beberapa boot loader sistem operasi komersial. Flag boot menunjukkan partisi aktif atau dapat di-boot. Hanya satu partisi pada perangkat disk yang dapat aktif.</para>
+              </listitem>
+              <listitem>
+                <para>Diag menunjukkan partisi digunakan untuk diagnostik atau pemulihan.</para>
+              </listitem>
+              <listitem>
+                <para>ESP mengindikasikan Partisi Sistem EFI yang digunakan untuk mem-boot komputer dengan Extensible Firmware Interface (EFI) kelas 1 atau Unified Extensible Firmware Interface (UEFI) kelas 2 atau UEFI kelas 3.</para>
+              </listitem>
+              <listitem>
+                <para>Tersembunyi digunakan oleh beberapa sistem operasi komersial. Flag tersembunyi membuat partisi tidak terlihat oleh sistem operasi.</para>
+              </listitem>
+              <listitem>
+                <para>HP-service digunakan untuk menunjukkan partisi layanan Hewlett Packard.</para>
+              </listitem>
+              <listitem>
+                <para>Irst mengidentifikasi partisi Intel Rapid Start Technology.</para>
+              </listitem>
+              <listitem>
+                <para>Legacy_boot digunakan oleh beberapa perangkat lunak tujuan khusus untuk menunjukkan partisi mungkin dapat di-boot.</para>
+              </listitem>
+              <listitem>
+                <para>LVM menunjukkan partisi digunakan oleh Logical Volume Manager (LVM).</para>
+              </listitem>
+              <listitem>
+                <para>Msftdata mengidentifikasi partisi yang berisi sistem berkas Microsoft seperti NTFS atau FAT.</para>
+              </listitem>
+              <listitem>
+                <para>Msftres digunakan untuk menunjukkan partisi Microsoft Reserved.</para>
+              </listitem>
+              <listitem>
+                <para>Prep digunakan untuk menunjukkan partisi boot pada perangkat keras Power Performance Computing (PowerPC).</para>
+              </listitem>
+              <listitem>
+                <para>RAID menunjukkan partisi digunakan dalam Redundant Array of Inexpensive Disks (RAID).</para>
+              </listitem>
+            </itemizedlist></para>
+        </note>
+      </sect3>
+
+<!-- ============= To Check a Partition ============================== -->
+      <sect3 id="gparted-Check-partition">
+        <title>Memeriksa Partisi</title>
+        <para>Memeriksa partisi akan mencoba untuk menemukan dan memperbaiki masalah dalam sistem berkas. Memeriksa partisi akan mencoba untuk menumbuhkan sistem berkas untuk mengisi penuh partisi.</para>
+        <para>Untuk memeriksa partisi: <orderedlist>
+            <listitem>
+              <para>Pilih suatu partisi yang tidak dikait. Lihat <xref linkend="gparted-select-partition"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Pilih: <menuchoice><guimenu>Partisi</guimenu><guimenuitem>Periksa</guimenuitem></menuchoice>. Aplikasi menampilkan operasi pemeriksaan partisi di panel <guilabel>Operasi Tertunda</guilabel>.</para>
+            </listitem>
+          </orderedlist></para>
+      </sect3>
+
+<!-- ============= End of Advanced Partition Actions ================= -->
+    </sect2>
+
+<!-- ============= Working with the Operation Queue ================== -->
+    <sect2 id="gparted-operation-queue">
+      <title>Bekerja dengan Antrean Operasi</title>
+
+<!-- ============= To Undo Last Operation ============================ -->
+      <sect3 id="gparted-undo-last-operation">
+        <title>Membatalkan Operasi Terakhir</title>
+        <para>Untuk membatalkan operasi terakhir dalam antrean operasi, pilih: <menuchoice> <guimenu>Sunting</guimenu><guimenuitem>Batalkan Operasi Terakhir</guimenuitem></menuchoice>. Aplikasi menghapus operasi terakhir dari antrean yang ditampilkan di panel <guilabel>Operasi Tertunda</guilabel>. Jika tidak ada operasi yang tersisa dalam antrean, aplikasi menutup panel <guilabel>Operasi Tertunda</guilabel>.</para>
+      </sect3>
+
+<!-- ============= To Clear All Operations =========================== -->
+      <sect3 id="gparted-clear-all-operations">
+        <title>Menghapus Semua Operasi</title>
+        <para>Untuk menghapus semua operasi dalam antrean operasi, pilih: <menuchoice> <guimenu>Sunting</guimenu><guimenuitem>Hapus Semua Operasi</guimenuitem></menuchoice>. Aplikasi menghapus semua operasi dari antrean dan menutup panel <guilabel>Operasi Tertunda</guilabel>.</para>
+      </sect3>
+
+<!-- ============= To Apply All Operations =========================== -->
+      <sect3 id="gparted-apply-all-operations">
+        <title>Menerapkan Semua Operasi</title>
+        <para>Untuk menerapkan semua operasi: <orderedlist>
+            <listitem>
+              <para>Pilih: <menuchoice><guimenu>Sunting</guimenu><guimenuitem>Terapkan Semua Operasi</guimenuitem></menuchoice>. Aplikasi menampilkan dialog <guilabel>Menerapkan operasi ke perangkat</guilabel>.</para>
+              <caution>
+                <para>Menyunting partisi berpotensi menyebabkan DATA HILANG. Anda disarankan untuk mencadangkan data Anda sebelum menerapkan operasi penyuntingan partisi Anda.</para>
+              </caution>
+            </listitem>
+            <listitem>
+              <para>Klik <guibutton>Terapkan</guibutton>. Aplikasi menampilkan dialog <guilabel>Menerapkan operasi yang tertunda</guilabel>. Aplikasi ini menerapkan setiap operasi yang tertunda dalam urutan Anda membuat operasi. Aplikasi menampilkan pembaruan status ketika setiap operasi selesai. <itemizedlist>
+                  <listitem>
+                    <para>Untuk melihat informasi selengkapnya, klik <guibutton>Detail</guibutton>. Aplikasi ini menampilkan detail selengkapnya tentang operasi.</para>
+                    <para>Untuk melihat informasi selengkapnya tentang langkah-langkah dalam setiap operasi, klik tombol panah di samping setiap langkah.</para>
+                  </listitem>
+                  <listitem>
+                    <para>Untuk menghentikan operasi saat dijalankan, klik <guibutton>Batal</guibutton>. Aplikasi ini menampilkan tombol <guibutton>Paksa Batal (5)</guibutton> yang dinonaktifkan dan menghitung mundur selama 5 detik.</para>
+                    <note>
+                      <para><guibutton>Batal</guibutton> menginstruksikan aplikasi untuk menghentikan atau mengembalikan operasi seperlunya untuk memastikan integritas data.</para>
+                    </note>
+                    <para>Jika operasi belum dihentikan setelah 5 detik, aplikasi mengaktifkan tombol <guibutton>Paksa Batal</guibutton>.</para>
+                    <para>Untuk memaksa operasi berhenti, klik <guibutton>Paksa Batal</guibutton>. Aplikasi menampilkan dialog peringatan.</para>
+                    <para>Klik <guibutton>Lanjutkan Operasi</guibutton> untuk memperbolehkan operasi roll back selesai, atau klik <guibutton>Batalkan Operasi</guibutton> untuk membatalkan operasi roll back.</para>
+                    <warning>
+                      <para><guibutton>Batalkan Operasi</guibutton> mengakhiri roll back operasi yang aman dan dapat menyebabkan kerusakan sistem berkas PARAH dan kehilangan data. Anda disarankan untuk mengklik <guibutton>Lanjutkan Operasi</guibutton> untuk memperbolehkan roll back sampai selesai.</para>
+                    </warning>
+                    <para>Ketika aplikasi selesai melakukan operasi, aplikasi menampilkan tombol <guibutton>Simpan Detail</guibutton> dan tombol <guibutton>Tutup</guibutton>.</para>
+                  </listitem>
+                </itemizedlist></para>
+            </listitem>
+            <listitem>
+              <para>Jika Anda ingin menyimpan detail dari menerapkan semua operasi, maka klik <guibutton>Simpan Detail</guibutton>. Aplikasi menampilkan dialog <guilabel>Simpan Detail</guilabel>. <orderedlist numeration="loweralpha">
+                  <listitem>
+                    <para>Jika Anda ingin mengubah nama berkas baku, maka ketikkan nama berkas dalam kotak teks<guilabel>Nama</guilabel>.</para>
+                  </listitem>
+                  <listitem>
+                    <para>Jika Anda ingin menyimpan berkas dalam folder yang berbeda dari /root, klik <guibutton>Ramban folder lain</guibutton>. Aplikasi menampilkan navigator sistem berkas.</para>
+                    <para>Gunakan navigator sistem berkas untuk memilih folder.</para>
+                  </listitem>
+                  <listitem>
+                    <para>Klik <guibutton>Simpan</guibutton> untuk menyimpan berkas. Aplikasi menyimpan berkas detail.</para>
+                  </listitem>
+                </orderedlist></para>
+              <caution>
+                <para>Jika Anda menggunakan <application>gparted</application> dari Live CD, maka sistem berkas root ada di memori RAM. Semua berkas yang disimpan ke sistem berkas root Live CD akan hilang ketika Anda mematikan komputer.</para>
+                <para>Jika Anda menyimpan detail gparted ke sistem berkas root Live CD, maka Anda perlu menyalin berkas ke penyimpanan yang lebih permanen. Contoh penyimpanan yang lebih permanen adalah hard disk drive atau flash disk USB.</para>
+              </caution>
+            </listitem>
+            <listitem>
+              <para>Klik <guibutton>Tutup</guibutton>. Aplikasi menutup dialog <guilabel>Terapkan operasi tertunda</guilabel>. Aplikasi ini memindai ulang semua perangkat disk dan menyegarkan tata letak partisi perangkat di jendela <application>gparted</application>.</para>
+            </listitem>
+          </orderedlist></para>
+      </sect3>
+
+<!-- ============= End of Working with the Operation Queue =========== -->
+    </sect2>
+
+  </sect1>
+
+<!-- ============= Acquiring GParted on Live CD ====================== -->
+  <sect1 id="gparted-acquire-livecd">
+    <title>Memperoleh GParted di Live CD</title>
+    <para>Live CD adalah Compact Disc yang berisi sistem operasi yang dapat di-boot. Live CD memungkinkan Anda untuk mem-boot komputer Anda dari CD.</para>
+    <para>Menggunakan <application>gparted</application> dari Live CD memiliki keuntungan sebagai berikut: <itemizedlist>
+        <listitem>
+          <para>Anda dapat menyunting semua partisi Anda karena partisi tidak dikait.</para>
+        </listitem>
+        <listitem>
+          <para>Anda dapat menyunting partisi pada komputer yang tidak memiliki sistem operasi yang dapat di-boot.</para>
+        </listitem>
+      </itemizedlist></para>
+    <para>Aplikasi <application>gparted</application> tersedia di banyak distribusi Live CD.</para>
+    <para>Anda dapat mengunduh image Live CD yang berisi <application>gparted</application> dari situs web berikut: <itemizedlist>
+        <listitem>
+          <para>Live CD GParted <ulink type="http" url="https://gparted.org/livecd.php"/></para>
+        </listitem>
+        <listitem>
+          <para>SystemRescue (juga dikenal sebagai SystemRescueCD) <ulink type="http" url="http://www.system-rescue-cd.org"/></para>
+        </listitem>
+      </itemizedlist></para>
+    <tip>
+      <para>Image Live CD GParted dapat ditulis ke USB flash drive.</para>
+      <para>Jika komputer Anda bisa boot dari Universal Serial Bus (USB) maka Anda mungkin lebih suka boot dan menggunakan <application>gparted</application> dari USB flash drive.</para>
+    </tip>
+    <tip>
+      <para>Untuk menghindari pemborosan CD kosong saat membakar berkas image CD, gunakan tips berikut:</para>
+      <itemizedlist>
+        <listitem>
+          <para>Pastikan checksum berkas yang diunduh cocok dengan checksum yang dicantumkan di halaman unduhan.</para>
+        </listitem>
+        <listitem>
+          <para>Pastikan untuk membakar berkas .iso sebagai image ke CD kosong. Jika Anda membakar berkas .iso sebagai data ke CD kosong maka CD tidak akan boot di komputer Anda.</para>
+        </listitem>
+      </itemizedlist>
+    </tip>
+  </sect1>
+
+<!-- ============= Fixing Operating System Boot Problems ============= -->
+  <sect1 id="gparted-fix-operating-system-boot-problems">
+    <title>Memperbaiki Masalah Boot Sistem Operasi</title>
+    <para>Komputer Anda mungkin gagal mem-boot sistem operasi saat Anda melakukan salah satu tindakan berikut: <itemizedlist>
+        <listitem>
+          <para>Menghapus partisi.</para>
+        </listitem>
+        <listitem>
+          <para>Memindahkan partisi.</para>
+        </listitem>
+        <listitem>
+          <para>Instal sistem operasi lain dan timpa Master Boot Record (MBR).</para>
+        </listitem>
+      </itemizedlist></para>
+    <para>Untungnya kegagalan boot sering dapat diperbaiki.</para>
+    <para>Jika komputer Anda menggunakan boot loader GRUB, lihat <xref linkend="gparted-fix-grub-boot-problem"/> untuk memulihkan kemampuan boot.</para>
+    <para>Jika komputer Anda tidak menggunakan GRUB maka Anda disarankan berkonsultasi dengan dokumentasi bagi boot loader Anda untuk mempelajari cara memperbaiki masalah tersebut. Anda dapat berkonsultasi dengan <ulink type="http" url="https://gparted.org/faq.php">FAQ GParted</ulink>, atau <ulink type="http" url="https://gparted.org/forum.php">forum GParted</ulink>. Anda mungkin juga mencari di Internet untuk mempelajari bagaimana orang lain telah memecahkan masalah serupa.</para>
+
+<!-- ============= Fixing GRUB Boot Problem ========================== -->
+    <sect2 id="gparted-fix-grub-boot-problem">
+      <title>Memperbaiki masalah boot GRUB</title>
+      <para>Grand Unified Boot loader (GRUB) digunakan oleh banyak distribusi GNU/Linux. Untuk memperbaiki masalah boot GRUB, Anda mulai dengan menentukan versi utama GRUB mana yang digunakan.</para>
+      <para>Ada dua versi utama GRUB: <itemizedlist>
+          <listitem>
+            <para>GRUB, juga dikenal sebagai GRUB 2, mencakup versi 1.98 dan lebih tinggi. GRUB 2 bekerja dengan tabel partisi GUID (GPT) dan tabel partisi msdos.</para>
+          </listitem>
+          <listitem>
+            <para>GRUB Legacy, secara tradisional dikenal sebagai GRUB, mencakup versi 0.9x dan yang lebih lama. GRUB Legacy hanya berfungsi dengan tabel partisi msdos.</para>
+          </listitem>
+        </itemizedlist></para>
+      <para>GRUB 2 digunakan sebagai boot loader baku dalam distribusi GNU/Linux berikut: <itemizedlist>
+          <listitem>
+            <para>CentOS 7 dan yang lebih tinggi</para>
+          </listitem>
+          <listitem>
+            <para>Debian 6 (Squeeze) dan lebih tinggi</para>
+          </listitem>
+          <listitem>
+            <para>Fedora 16 (Verne) dan yang lebih tinggi</para>
+          </listitem>
+          <listitem>
+            <para>openSUSE 12.2 dan yang lebih tinggi</para>
+          </listitem>
+          <listitem>
+            <para>Ubuntu 9.10 (Karmic Koala) dan lebih tinggi</para>
+          </listitem>
+        </itemizedlist></para>
+      <para>Jika Anda tidak yakin apakah komputer Anda menggunakan GRUB 2 atau GRUB Legacy, Anda mungkin mencoba mencari jawabannya di Internet.</para>
+
+<!-- ============= To Restore GRUB 2 ================================= -->
+      <sect3 id="gparted-restore-grub-2">
+        <title>Memulihkan GRUB 2 Boot Loader</title>
+        <para>Gunakan langkah-langkah berikut untuk memulihkan boot loader GRUB 2: <orderedlist>
+            <listitem>
+              <para>Boot dari media Live seperti GParted Live atau image distribusi GNU/Linux Anda. Buka jendela terminal.</para>
+            </listitem>
+            <listitem>
+              <para>Tentukan partisi mana yang berisi sistem berkas / untuk distribusi GNU/Linux Anda.</para>
+              <para>Gunakan GParted untuk menampilkan daftar partisi pada perangkat disk Anda. Cari partisi yang berisi sistem berkas / (root) GNU/Linux Anda. Partisi Linux ini kemungkinan akan menggunakan sistem berkas seperti ext2, ext3, ext4, atau btrfs.</para>
+              <note>
+                <para>Jika partisi / (root) ada di LVM maka Logical Volume Manager harus aktif. LVM dapat dimulai dengan perintah: <screen><prompt># </prompt><command>vgchange</command> -a y</screen></para>
+                <para>Dengan LVM, setara dengan partisi disk adalah Volume Logis. Volume Logis dapat ditampilkan daftarnya dengan perintah: <screen><prompt># </prompt><command>lvscan</command></screen></para>
+              </note>
+              <note>
+                <para>Jika partisi / (root) ada di RAID, maka RAID harus aktif. Linux Software RAID dapat dimulai dengan perintah: <screen><prompt># </prompt><command>mdadm</command> --assemble --scan</screen></para>
+              </note>
+            </listitem>
+            <listitem>
+              <para>Buat titik kait direktori dengan memasukkan (sebagai root): <screen><prompt># </prompt><command>mkdir</command> /tmp/mydir</screen></para>
+            </listitem>
+            <listitem>
+              <para>Kait partisi / (root) pada titik kait direktori. Misalnya asumsikan sistem berkas / (root) dimuat dalam partisi /dev/sda5. Masukkan (sebagai root): <screen><prompt># </prompt><command>mount</command> <replaceable>/dev/sda5</replaceable> /tmp/mydir</screen></para>
+            </listitem>
+            <listitem>
+              <para>Jika Anda memiliki partisi /boot terpisah, misalnya di /dev/sda3, maka diperlukan langkah tambahan. Pasang partisi /boot di /tmp/mydir/boot dengan memasukkan (sebagai root): <screen><prompt># </prompt><command>mount</command> <replaceable>/dev/sda3</replaceable> /tmp/mydir/boot</screen></para>
+              <note>
+                <para>Jika Anda tidak tahu apakah Anda memiliki partisi boot terpisah maka Anda mungkin tidak dan dapat mengabaikan langkah ini.</para>
+              </note>
+            </listitem>
+            <listitem>
+              <para>Bersiaplah untuk mengubah lingkungan root dengan memasukkan (sebagai root): <screen><prompt># </prompt><command>mount</command> --bind /dev /tmp/mydir/dev</screen> <screen><prompt># </prompt><command>mount</command> --bind /proc /tmp/mydir/proc</screen> <screen><prompt># </prompt><command>mount</command> --bind /sys /tmp/mydir/sys</screen></para>
+            </listitem>
+            <listitem>
+              <para>Mengubah lingkungan root dengan memasukkan (sebagai root): <screen><prompt># </prompt><command>chroot</command> /tmp/mydir</screen></para>
+            </listitem>
+            <listitem>
+              <para>Instal ulang GRUB 2 pada perangkat boot. Perhatikan bahwa nama perangkat digunakan dan bukan nama partisi. Misalnya, jika partisi /dev/sda5 maka perangkat adalah /dev/sda.</para>
+              <para>Untuk distribusi Debian, Ubuntu, dan offshoot GNU/Linux lainnya, masukkan perintah (sebagai root): <screen><prompt># </prompt><command>grub-install</command> <replaceable>/dev/sda</replaceable></screen></para>
+              <para>Untuk distribusi CentOS, Fedora, openSUSE, dan offshoot GNU/Linux lainnya, masukkan perintah (sebagai root): <screen><prompt># </prompt><command>grub2-install</command> <replaceable>/dev/sda</replaceable></screen></para>
+            </listitem>
+            <listitem>
+              <para>Keluar dari lingkungan chroot dengan memasukkan (sebagai root): <screen><prompt># </prompt><command>exit</command></screen></para>
+            </listitem>
+            <listitem>
+              <para>Reboot komputer Anda.</para>
+            </listitem>
+          </orderedlist></para>
+      </sect3>
+
+<!-- ============= To Restore GRUB Legacy ============================ -->
+      <sect3 id="gparted-restore-grub-legacy">
+        <title>Memulihkan GRUB Legacy Boot Loader</title>
+        <para>Gunakan langkah-langkah berikut untuk memulihkan boot loader GRUB Legacy: <orderedlist>
+            <listitem>
+              <para>Boot dari media Live seperti image distribusi GNU/Linux Anda. Buka jendela terminal.</para>
+              <note>
+                <para>Media Live harus berisi boot loade GRUB Legacy. Jika distribusi GNU/Linux Anda menggunakan GRUB Legacy, maka media Live distribusi juga akan berisi GRUB Legacy.</para>
+              </note>
+            </listitem>
+            <listitem>
+              <para>Mulai aplikasi <application>grub</application> dari baris perintah (sebagai root). <screen><prompt># </prompt><command>grub</command></screen></para>
+            </listitem>
+            <listitem>
+              <para>Temukan di mana <application>grub</application> stage1 berada dengan menggunakan salah satu hal berikut:</para>
+              <para>Jika folder /boot disimpan dalam partisi /, gunakan perintah: <screen><prompt>grub&gt; </prompt><command>find</command> /boot/grub/stage1</screen> Jika folder /boot disimpan dalam partisi yang berbeda dari partisi /, gunakan perintah: <screen><prompt>grub&gt; </prompt><command>find</command> /grub/stage1</screen></para>
+              <para>Keluaran dari perintah <command>find</command> mungkin terlihat seperti berikut: <screen><computeroutput> <replaceable>(hd0,0)</replaceable></computeroutput></screen> Jika lebih dari satu baris tercantum dalam keluaran perintah, Anda harus memutuskan perangkat mana yang Anda gunakan untuk <application>grub</application>.</para>
+            </listitem>
+            <listitem>
+              <para>Atur perangkat root <application>grub</application> dengan menyatakan perangkat yang dikembalikan oleh perintah <command>find</command>. Ini harus menjadi partisi yang berisi direktori boot. <screen><prompt>grub&gt; </prompt>root <replaceable>(hd0,0)</replaceable></screen></para>
+            </listitem>
+            <listitem>
+              <para>Instal ulang boot loader <application>grub</application> ke Master Boot Record (MBR) dengan: <screen><prompt>grub&gt; </prompt>setup <replaceable>(hd0)</replaceable></screen></para>
+              <para>Jika Anda ingin memasang boat loader <application>grub</application> ke sektor boot partisi, sebagai gantinya nyatakan partisi dengan: <screen><prompt>grub&gt; </prompt>setup <replaceable>(hd0,0)</replaceable></screen></para>
+            </listitem>
+            <listitem>
+              <para>Keluar dari <application>grub</application>. <screen><prompt>grub&gt; </prompt>quit</screen></para>
+            </listitem>
+            <listitem>
+              <para>Reboot komputer Anda.</para>
+            </listitem>
+          </orderedlist></para>
+      </sect3>
+    </sect2>
+
+<!-- ============= End of Fixing Operating System Boot Problems ====== -->
+  </sect1>
+
+<!-- ============= Recovering Partition Tables ======================= -->
+  <sect1 id="gparted-recover-partition-table">
+    <title>Memulihkan Tabel Partisi</title>
+    <para>Jika Anda secara tidak sengaja menimpa tabel partisi Anda, ada kemungkinan Anda mungkin dapat memulihkannya.</para>
+    <para>Aplikasi <application>testdisk</application> dirancang untuk membantu memulihkan partisi yang hilang. Untuk informasi selengkapnya tentang <application>testdisk</application>, lihat <ulink type="http" url="https://www.cgsecurity.org/wiki/TestDisk"/>.</para>
+    <para lang="en">
+    If no partitions are found, you have other options to try to rescue
+    your data.  The <application>photorec</application> application is
+    designed to help recover many different types of lost files.  For
+    more information about <application>photorec</application>, see
+    <ulink type="http" url="https://www.cgsecurity.org/wiki/PhotoRec"/>.
+    </para>
+    <para lang="en">
+    Both <application>testdisk</application> and
+    <application>photorec</application> applications are included on
+    each Live CD listed in <xref linkend="gparted-acquire-livecd"/>.
+    </para>
+  </sect1>
+
+</article>

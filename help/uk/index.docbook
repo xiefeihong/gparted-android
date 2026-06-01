@@ -1,0 +1,1373 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+<!ENTITY appversion "1.6.0">
+<!ENTITY manrevision "1.13">
+<!ENTITY date "September 2023">
+<!ENTITY app "gparted">
+<!ENTITY appname "GParted">
+<!-- Information about the entities:
+       Use the appversion entity to specify the version of the application.
+       Use the manrevision entity to specify the revision number of this manual.
+       Use the date entity to specify the release date of this manual.
+       Use the app entity to specify the command name of the application.
+       Use the appname entity to specify the formal name of the application.
+  -->]>
+<!-- Remember to update the revision history -->
+<!--
+      To generate a single html file of this document, use the command:
+        xmlto html-nochunks index.docbook
+
+      To test this document in a viewer, use the command:
+        yelp file:/full-path-to-index.docbook
+ -->
+<!-- ============= Document Header =================================== -->
+<?db.chunk.max_depth 4?>
+<article id="index" lang="uk">
+<!-- Please do not change the id. -->
+<!-- For translations, change lang to appropriate code -->
+  <articleinfo>
+    <title>Підручник з GParted</title>
+    <publisher>
+      <publishername>Проєкт GParted</publishername>
+    </publisher>
+
+    <abstract role="description">
+      <para>GParted — редактор розділів диска GNOME. Програму призначено для створення, перевпорядковування та вилучення розділів на диску. За допомогою GParted ви можете змінювати структуру розділів без втрати вмісту розділів.</para>
+    </abstract>
+
+    <copyright><year>2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017</year> <holder>Curtis Gedak</holder></copyright>
+    <copyright><year>2014, 2015, 2017, 2018, 2023</year> <holder>Mike Fleetwood</holder></copyright>
+
+<!-- translators: uncomment this:
+    <copyright>
+      <year>2009</year>
+      <holder>ME-THE-TRANSLATOR (Latin translation)</holder>
+    </copyright>
+-->
+
+    <legalnotice>
+      <para>Дозволяється копіювати, розповсюджувати та/або змінювати цей документ на умовах ліцензії GNU Free Documentation License (GFDL), версії 1.2 або будь-якої старшої версії, що опублікована Free Software Foundation без інваріантних розділів, тексту титульної сторінки, та тексту фінальної сторінки. Копію GFDL можна знайти <ulink type="help" url="help:fdl">за адресою</ulink>, або <ulink type="http" url="https://www.fsf.org/licensing/licenses/fdl.html"/>, або у файлі COPYING-DOCS, що постачається з цією довідкою.</para>
+    </legalnotice>
+
+    <authorgroup>
+      <author role="maintainer"><firstname>Curtis</firstname> <surname>Gedak</surname> <affiliation> <orgname>Проєкт GParted</orgname> <address> <email>gedakc@users.sf.net</email> </address> </affiliation></author>
+      <author role="developer"><firstname>Mike</firstname> <surname>Fleetwood</surname> <affiliation> <orgname>Проєкт GParted</orgname> <address> <email>mike.fleetwood@googlemail.com</email> </address> </affiliation></author>
+
+<!-- This is appropriate place for other contributors: translators,
+     maintainers,  etc. Commented out by default.
+      <othercredit role="translator">
+        <firstname>Latin</firstname>
+        <surname>Translator 1</surname>
+        <affiliation>
+          <orgname>Latin Translation Team</orgname>
+          <address> <email>translator@gnome.org</email> </address>
+        </affiliation>
+        <contrib>Latin translation</contrib>
+      </othercredit>
+-->
+    </authorgroup>
+
+<!-- According to GNU FDL, revision history is mandatory if you are -->
+<!-- modifying/reusing someone else's document.  If not, you can omit it. -->
+    <revhistory>
+      <revision><revnumber>Підручник з GParted, версія 1.13</revnumber> <date>вересень 2023 року</date> <revdescription>
+          <para role="author">Mike Fleetwood</para>
+          <para role="publisher">Проєкт GParted</para>
+          <para role="annotations">Описано версію 1.6.0 GParted</para>
+        </revdescription></revision>
+      <revision><revnumber>Підручник з GParted, версія 1.12</revnumber> <date>травень 2018 року</date> <revdescription>
+          <para role="author">Mike Fleetwood</para>
+          <para role="publisher">Проєкт GParted</para>
+          <para role="annotations">Описано версію 0.31.0 GParted</para>
+        </revdescription></revision>
+      <revision><revnumber>Підручник з GParted, версія 1.11</revnumber> <date>вересень 2017 року</date> <revdescription>
+          <para role="author">Curtis Gedak і Mike Fleetwood</para>
+          <para role="publisher">Проєкт GParted</para>
+          <para role="annotations">Описано версію 0.29.0 GParted</para>
+        </revdescription></revision>
+      <revision><revnumber>Підручник з GParted, версія 1.10</revnumber> <date>січень 2017 року</date> <revdescription>
+          <para role="author">Curtis Gedak і Mike Fleetwood</para>
+          <para role="publisher">Проєкт GParted</para>
+          <para role="annotations">Описано версію 0.28.0 GParted</para>
+        </revdescription></revision>
+      <revision><revnumber>Підручник з GParted, версія 1.9</revnumber> <date>березень 2015 року</date> <revdescription>
+          <para role="author">Curtis Gedak і Mike Fleetwood</para>
+          <para role="publisher">Проєкт GParted</para>
+          <para role="annotations">Описано версію 0.22.0 GParted</para>
+        </revdescription></revision>
+      <revision><revnumber>Підручник з GParted, версія 1.8</revnumber> <date>вересень 2014 року</date> <revdescription>
+          <para role="author">Curtis Gedak</para>
+          <para role="publisher">Проєкт GParted</para>
+          <para role="annotations">Описано версію 0.20.0 GParted</para>
+        </revdescription></revision>
+      <revision><revnumber>Підручник з GParted, версія 1.7</revnumber> <date>лютий 2014 року</date> <revdescription>
+          <para role="author">Curtis Gedak</para>
+          <para role="publisher">Проєкт GParted</para>
+          <para role="annotations">Описано версію 0.18.0 GParted</para>
+        </revdescription></revision>
+      <revision><revnumber>Підручник з GParted, версія 1.6</revnumber> <date>грудень 2013 року</date> <revdescription>
+          <para role="author">Curtis Gedak</para>
+          <para role="publisher">Проєкт GParted</para>
+          <para role="annotations">Описано версію 0.17.0 GParted</para>
+        </revdescription></revision>
+      <revision><revnumber>Підручник з GParted, версія 1.5</revnumber> <date>вересень 2013 року</date> <revdescription>
+          <para role="author">Curtis Gedak</para>
+          <para role="publisher">Проєкт GParted</para>
+          <para role="annotations">Описано версію 0.16.2 GParted</para>
+        </revdescription></revision>
+      <revision><revnumber>Підручник з GParted, версія 1.4</revnumber> <date>лютий 2012 року</date> <revdescription>
+          <para role="author">Curtis Gedak</para>
+          <para role="publisher">Проєкт GParted</para>
+          <para role="annotations">Описано версію 0.12.0 GParted</para>
+        </revdescription></revision>
+      <revision><revnumber>Підручник з GParted, версія 1.3</revnumber> <date>січень 2011 року</date> <revdescription>
+          <para role="author">Curtis Gedak</para>
+          <para role="publisher">Проєкт GParted</para>
+          <para role="annotations">Описано версію 0.8.0 GParted</para>
+        </revdescription></revision>
+      <revision><revnumber>Підручник з GParted, версія 1.2</revnumber> <date>червень 2010 року</date> <revdescription>
+          <para role="author">Curtis Gedak</para>
+          <para role="publisher">Проєкт GParted</para>
+          <para role="annotations">Описано версію 0.6.0 GParted</para>
+        </revdescription></revision>
+      <revision><revnumber>Підручник з GParted, версія 1.1</revnumber> <date>липень 2009 року</date> <revdescription>
+          <para role="author">Curtis Gedak</para>
+          <para role="publisher">Проєкт GParted</para>
+          <para role="annotations">Описано версію 0.4.6 GParted</para>
+        </revdescription></revision>
+      <revision><revnumber>Підручник з GParted, версія 1.0</revnumber> <date>січень 2009 року</date> <revdescription>
+          <para role="author">Curtis Gedak</para>
+          <para role="publisher">Проєкт GParted</para>
+          <para role="annotations">Описано версію 0.4.2 GParted</para>
+        </revdescription></revision>
+      <revision><revnumber>Підручник з GParted, версія 0.3.9</revnumber> <date>вересень 2008 року</date> <revdescription>
+          <para role="author">Curtis Gedak</para>
+          <para role="publisher">Проєкт GParted</para>
+          <para role="annotations">Описано версію 0.3.9 GParted</para>
+        </revdescription></revision>
+    </revhistory>
+
+    <releaseinfo>У цьому підручнику описано версію 1.6.0 GParted</releaseinfo>
+
+    <legalnotice>
+      <title>Відгуки</title>
+      <para>Щоб повідомити про ваду або щось запропонувати щодо програми <application>gparted</application> або цього підручника, скористайтеся настановами на сторінці <ulink type="http" url="https://gparted.org/bugs.php"/>.</para>
+<!-- Translators may also add here feedback address for translations -->
+    </legalnotice>
+
+  
+    <othercredit class="translator">
+      <personname>
+        <firstname>Юрій Чорноіван</firstname>
+      </personname>
+      <email>yurchor@ukr.net</email>
+    </othercredit>
+    <copyright>
+      
+        <year>2021</year>
+      
+      <holder>Юрій Чорноіван</holder>
+    </copyright>
+  </articleinfo>
+
+<!-- ============= Document Body ===================================== -->
+<!-- ============= Introduction ====================================== -->
+  <sect1 id="gparted-introduction">
+    <title>Вступ</title>
+    <para>Програма <application>gparted</application> є редактором розділів GNOME, який призначено для створення, переупорядковування та вилучення розділів диска.</para>
+    <para>Дисковий пристрій може бути поділено на один або декілька розділів. Програма <application>gparted</application> надає вам змогу змінювати упорядковування розділів на дисковому пристрої, зберігаючи дані, що зберігаються на розділах.</para>
+    <para>За допомогою <application>gparted</application> ви можете виконати такі завдання: <itemizedlist>
+        <listitem>
+          <para>Створити таблицю розділів на дисковому пристрої.</para>
+        </listitem>
+        <listitem>
+          <para>Увімкнути або вимкнути прапорці розділу, зокрема прапорці завантаження та приховування.</para>
+        </listitem>
+        <listitem>
+          <para>Виконувати дії із розділами, зокрема створювати, вилучати, змінювати розмір, пересувати, перевіряти, визначати мітки, копіювати і вставляти розділи.</para>
+        </listitem>
+      </itemizedlist></para>
+    <caution>
+      <para>Зміна розділів може потенційно призвести до ВТРАТ ДАНИХ.</para>
+      <para>Програму <application>gparted</application> створено для уможливлення редагування розділів і зменшення ризику втрати даних. Програму ретельно тестовано, нею користуються самі учасники команди проєкту GParted. Втім, втрата даних може статися через вади у програмному забезпеченні, проблеми із обладнанням або втрату живлення.</para>
+      <para>Ви можете зменшити ризик втрати даних не монтуючи або демонтувавши розділи поза програмою <application>gparted</application>, доки запущено <application>gparted</application>.</para>
+      <para>Радимо вам створити резервну копію ваших даних до того, як ви скористаєтеся програмою <application>gparted</application>. Це особливо актуально для шифрованих даних, які можуть стати назавжди недоступними після помилки. Будь ласка, зверніться до <ulink type="http" url="https://gitlab.com/cryptsetup/cryptsetup/wikis/FrequentlyAskedQuestions">поширених питань щодо Cryptsetup та відповідей на них</ulink>, щоб дізнатися більше про резервне копіювання та відновлення зашифрованих даних.</para>
+    </caution>
+  </sect1>
+  
+<!-- ============= Getting Started =================================== -->
+  <sect1 id="gparted-getting-started">
+    <title>Початкові зауваження</title>
+    <para>
+    </para>
+
+<!-- ============= To Start gparted ================================== -->
+    <sect2 id="gparted-to-start">
+      <title>Запуск gparted</title>
+      <para>Запустити <application>gparted</application> можна в один із таких способів:</para>
+      <variablelist>
+        <varlistentry>
+          <term>Меню <guimenu>Програми</guimenu></term>
+          <listitem>
+            <para>Вибрати пункт меню <menuchoice><guisubmenu>Засоби системи</guisubmenu><guimenuitem>Редактор розділів GParted</guimenuitem></menuchoice>.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>Командний рядок</term>
+          <listitem>
+            <para>Віддати таку команду: <command>gparted</command></para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+      <para>Під час запуску <application>gparted</application> виконає на вашому комп'ютері пошук дискових пристроїв.</para>
+    </sect2>
+
+<!-- ============= When You Start gparted ============================ -->
+    <sect2 id="gparted-when-you-start">
+
+      <title>Вікно gparted</title>
+      <para>Після запуску <application>gparted</application> ви побачите таке вікно:</para>
+
+      <!-- ==== Figure ==== -->
+      <!-- The GNOME Documentation Project recommends a maximum image
+           width of 510 pixels.
+           http://library.gnome.org/devel/gdp-style-guide/stable/screenshot-4.html.en
+      -->
+      <figure id="gparted-window">
+        <title>Вікно gparted</title>
+        <screenshot>
+          <mediaobject><imageobject> <imagedata fileref="figures/gparted_window.png" format="PNG"/> </imageobject> <textobject> <phrase>Показано головне вікно gparted.</phrase> </textobject></mediaobject>
+        </screenshot>
+      </figure>
+
+      <para>Вікно <application>gparted</application> містить такі елементи:</para>
+      <variablelist>
+        <varlistentry>
+          <term>Панель меню</term>
+          <listitem>
+            <para>У меню містяться усі пункти команд, які знадобляться вам для роботи із дисковими пристроями та розділами у <application>gparted</application>.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>Панель інструментів</term>
+          <listitem>
+            <para>Панель інструментів містить частину команд, до яких ви маєте доступ з головного меню.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>Область графічного представлення</term>
+          <listitem>
+            <para>В області графічного представлення буде показано візуальне представлення розділів на вибраному дисковому пристрої.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>Область показу тексту</term>
+          <listitem>
+            <para>В області показу тексту міститься текстовий список розділів на вибраному дисковому пристрої.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>Смужка стану</term>
+          <listitem>
+            <para>У смужці стану містяться відомості щодо поточних дій <application>gparted</application> або кількості дій у черзі.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>Панель відомостей щодо пристрою</term>
+          <listitem>
+            <para>На панелі відомостей щодо пристрою буде показано дані щодо вибраного дискового пристрою.</para>
+            <para>Типово, панель відомостей щодо пристрою не показано. Щоб наказати програмі показати панель відомостей щодо пристрою, скористайтеся пунктом меню <menuchoice><guimenu>Перегляд</guimenu><guimenuitem>Інформація про пристрій</guimenuitem></menuchoice>.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>Панель черги операцій</term>
+          <listitem>
+            <para>На панелі черги операцій буде показано поточний список операцій над розділами у черзі.</para>
+            <para>Типово, панель операцій у черзі не буде показано, якщо у черзі 0 операцій. Щоб наказати програмі показати панель операцій у черзі, скористайтеся пунктом меню <menuchoice><guimenu>Перегляд</guimenu><guimenuitem>Операції у черзі</guimenuitem></menuchoice>.</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+      <para>Коли ви клацаєте лівою кнопкою в області перегляду, ви вибираєте розділ, над яким виконуватимуться дії з редагування розділів.</para>
+      <para>Коли клацатимете правою кнопкою миші будь-де в області перегляду, програма показуватиме контекстне меню. У контекстному меню зібрано пункти найпоширеніших дій з редагування розділів.</para>
+
+      <para>Подібно до інших програм GNOME, дії у <application>gparted</application> можна виконувати у декілька способів: за допомогою меню, за допомогою панелі інструментів та за допомогою клавіатурних скорочень.</para>
+    </sect2>
+
+<!-- ============= To Specify Devices on the Command Line ============ -->
+    <sect2 id="gparted-run-from-cmd-line">
+      <title>Запуск gparted з командного рядка</title>
+      <para>Ви можете запустити <application>gparted</application> з командного рядка і вказати один або декілька дискових пристроїв.</para>
+      <para>Щоб працювати із декількома дисковими пристроями з командного рядка, введіть вказану нижче команду і натисніть клавішу <keycap>Enter</keycap>:</para>
+      <para>
+      <screen><prompt>$ </prompt><command>gparted <replaceable>/шлях-до-вашого-пристрою1 /шлях-до-вашого-пристрою2</replaceable></command></screen>
+      </para>
+    </sect2>
+  </sect1>
+
+<!-- ============= Usage ============================================= -->
+<!-- ============= Viewing File System Support ======================= -->
+  <sect1 id="gparted-usage">
+    <title>Перегляд підтримки файлової системи</title>
+      <para>Щоб переглянути список підтримуваних дій із файловими системами, скористайтеся пунктом меню <menuchoice><guimenu>Перегляд</guimenu><guimenuitem>Підтримка файлових систем</guimenuitem></menuchoice>. У відповідь програма покаже діалогове вікно <guilabel>Підтримка файлових систем</guilabel>.</para>
+      <para>Якщо вами було встановлено програмне забезпечення під час роботи програми <application>gparted</application>, натисніть кнопку <guibutton>Пересканувати підтримувані дії</guibutton>, щоб оновити діаграму. У відповідь програма освіжить показану діаграму.</para>
+      <para>Щоб закрити діалогове вікно <guilabel>Підтримка файлових систем</guilabel>, натисніть кнопку <guibutton>Закрити</guibutton>.</para>
+  </sect1>
+
+<!-- ============= Working With Devices ============================== -->
+  <sect1 id="gparted-devices">
+    <title>Робота із пристроями</title>
+
+<!-- ============= To Select a Device ================================ -->
+    <sect2 id="gparted-select-device">
+      <title>Вибір пристрою</title>
+      <para>Щоб вибрати пристрій, скористайтеся пунктом меню <menuchoice><guimenu>GParted</guimenu><guimenuitem>Пристрої</guimenuitem></menuchoice> і виберіть пристрій зі списку. Програма покаже компонування розділів пристрою у вікні <application>gparted</application>.</para>
+    </sect2>
+
+<!-- ============= To View Device Information ======================== -->
+    <sect2 id="gparted-view-device-information">
+      <title>Перегляд відомостей щодо пристрою</title>
+      <para>Перегляд відомостей щодо дискового пристрою: <orderedlist>
+          <listitem>
+            <para>Виберіть дисковий пристрій. Див. <xref linkend="gparted-select-device"/>.</para>
+          </listitem>
+          <listitem>
+            <para>Виберіть пункт меню <menuchoice><guimenu>Перегляд</guimenu><guimenuitem>Інформація про пристрій</guimenuitem></menuchoice>. Програма відкриє бічну панель у вікні <application>gparted</application> і покаже відомості щодо пристрою.</para>
+         </listitem>
+       </orderedlist></para>
+      <para>Щоб закрити бічну панель <guilabel>Інформація про пристрій</guilabel>, зніміть позначення з пункту меню <menuchoice><guimenu>Перегляд</guimenu><guimenuitem>Інформація про пристрій</guimenuitem></menuchoice>.</para>
+    </sect2>
+
+<!-- ============= To Refresh a Device =============================== -->
+    <sect2 id="gparted-refresh-device">
+      <title>Оновлення даних усіх пристроїв</title>
+      <para>Щоб освіжити дані усіх пристроїв, скористайтеся пунктом меню <menuchoice><guimenu>GParted</guimenu><guimenuitem>Оновити пристрої</guimenuitem></menuchoice>. Програма виконає повторне сканування усіх дискових пристроїв і оновить компонування розділів пристрої у вікні <application>gparted</application>.</para>
+    </sect2>
+
+<!-- ============= To Create a New Partition Table =================== -->
+    <sect2 id="gparted-create-partition-table">
+      <title>Створення таблиці розділів</title>
+      <para>Для створення таблиці розділів на дисковому пристрої виконайте такі дії: <orderedlist>
+          <listitem>
+            <para>Виберіть дисковий пристрій. Див. <xref linkend="gparted-select-device"/>.</para>
+          </listitem>
+          <listitem>
+            <para>Виберіть пункт меню <menuchoice><guimenu>Пристрій</guimenu><guimenuitem>Створити таблицю розділів</guimenuitem></menuchoice>. Програма покаже діалогове вікно <guilabel>Створити таблицю розділів <replaceable>/шлях-до-пристрою</replaceable></guilabel>.</para>
+          </listitem>
+          <listitem>
+            <para>Якщо хочете, виберіть інший тип таблиці розділів зі списку.</para>
+            <note>
+              <para>Типовим типом таблиці розділів є <guimenuitem>msdos</guimenuitem> для дисків, розмір яких не перевищує 2 тебібайтів (у припущенні 512-байтового розміру сектора), і <guimenuitem>gpt</guimenuitem> для дисків розміром 2 тебібайти і більше.</para>
+              <para>Див. <xref linkend="gparted-specify-partition-type"/>, щоб ознайомитися із обмеженням таблиці розділів <guimenuitem>msdos</guimenuitem>.</para>
+            </note>
+            <note>
+              <para>Щоб скористатися диском без таблиці розділів, виберіть <guimenuitem>loop</guimenuitem> для створення віртуального розділу, який займатиме увесь диск. Далі, виконайте форматування з використанням бажаної файлової системи.</para>
+              <para>Див. <xref linkend="gparted-format-partition"/> щодо форматування віртуального розділу із файловою системою.</para>
+            </note>
+            <caution>
+              <para>Багато операційних систем розпізнають таблиці розділів <guimenuitem>gpt</guimenuitem> і <guimenuitem>msdos</guimenuitem>, але не розпізнають усі типи файлових систем. Нестача засобів розпізнавання файлової системи означає, що користування диском без таблиці розділів є ризикованішим. Наприклад, деякі операційні системи можуть надсилати запити щодо форматування диска без розділів, якщо їм не вдається розпізнати файлову систему.</para>
+            </caution>
+          </listitem>
+          <listitem>
+            <para>Натисніть кнопку <guibutton>Застосувати</guibutton>, щоб створити таблицю розділів. Програма запише нову таблицю розділів на дисковий пристрій. Програма освіжить компонування розділів пристрою у вікні <application>gparted</application>.</para>
+          </listitem>
+        </orderedlist></para>
+      <caution>
+        <para>УВАГА: Ця дія ЗНИЩИТЬ ВСІ ДАНІ на ВСЬОМУ ДИСКОВОМУ ПРИСТРОЇ.</para>
+        <para>Якщо ви випадково перезаписали вашу таблицю розділів, див. <xref linkend="gparted-recover-partition-table"/>.</para>
+      </caution>
+    </sect2>
+
+  </sect1>
+
+<!-- ============= Working with Partitions =========================== -->
+  <sect1 id="gparted-partitions">
+    <title>Робота з розділами</title>
+
+<!-- ============= Basic Partition Actions =========================== -->
+    <sect2 id="gparted-basic-partition-actions">
+      <title>Найпростіші дії з розділами</title>
+      <para>Ці дії не призведуть до внесення змін до розділів на вашому дисковому пристрої.</para>
+
+<!-- ============= To Select a Partition ============================= -->
+      <sect3 id="gparted-select-partition">
+        <title>Вибір розділу</title>
+        <para>Щоб вибрати розділ, скористайтеся однією з таких дій: <itemizedlist>
+            <listitem>
+              <para>Клацніть на розділі в області графічного представлення.</para>
+            </listitem>
+            <listitem>
+              <para>Клацніть на розділі в області текстового представлення.</para>
+            </listitem>
+          </itemizedlist></para>
+        <para>Програма підсвітить розділ в області графічного представлення і в області текстового представлення у вікні <application>gparted</application>.</para>
+        <note>
+          <para>Дії з розділами, зокрема вилучення, пересування, копіювання, форматування, перевірка, встановлення мітки або, часто, зміна розмірів, потребують демонтування розділу. Див. <xref linkend="gparted-unmount-partition"/>.</para>
+        </note>
+      </sect3>
+
+<!-- ============= To Select Unallocated Space ======================= -->
+      <sect3 id="gparted-select-unallocated">
+        <title>Вибір вільного місця</title>
+        <para>Щоб вибрати нерозподілене місце, скористайтеся однією з таких дій: <itemizedlist>
+            <listitem>
+              <para>Клацніть на підписі <guilabel>не розподілено</guilabel> в області графічного представлення.</para>
+            </listitem>
+            <listitem>
+              <para>Клацніть на підписі <guilabel>не розподілено</guilabel> в області текстового представлення.</para>
+            </listitem>
+          </itemizedlist></para>
+        <para>Програма підсвітить нерозподілене місце в області графічного представлення і в області текстового представлення у вікні <application>gparted</application>.</para>
+        <tip>
+          <para>Якщо у вас немає дискових пристроїв із нерозподіленим місцем, ви можете спробувати такі дії:</para>
+          <itemizedlist>
+            <listitem>
+              <para>Додати новий дисковий пристрій до вашого комп'ютера.</para>
+            </listitem>
+            <listitem>
+              <para>Стиснути розділ, який не заповнено даними. Див. <xref linkend="gparted-resize-partition"/>.</para>
+            </listitem>
+          </itemizedlist>
+        </tip>
+      </sect3>
+
+<!-- ============= To View Partition Information ===================== -->
+    <sect3 id="gparted-view-partition-information">
+        <title>Перегляд відомостей щодо розділу</title>
+        <para>Щоб переглянути відомості щодо розділу, виконайте такі дії: <orderedlist>
+            <listitem>
+              <para>Позначте розділ. Див. <xref linkend="gparted-select-partition"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Скористайтеся пунктом меню <menuchoice><guimenu>Розділ</guimenu><guimenuitem>Інформація</guimenuitem></menuchoice>. У відповідь програма відкриє діалогове вікно <guilabel>Інформація про <replaceable>/шлях-до-розділу</replaceable></guilabel>.</para>
+            </listitem>
+          </orderedlist></para>
+        <para>Щоб закрити діалогове вікно <guilabel>Інформація про <replaceable>/шлях-до-розділу</replaceable></guilabel>, натисніть кнопку <guibutton>Закрити</guibutton>.</para>
+      </sect3>
+
+<!-- ============= To Mount a Partition ============================== -->
+      <sect3 id="gparted-mount-partition">
+        <title>Монтування розділу</title>
+        <para>Для монтування розділу виконайте такі дії: <orderedlist>
+            <listitem>
+              <para>Позначте незмонтований розділ. Див. <xref linkend="gparted-select-partition"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Скористайтеся пунктом меню <menuchoice><guimenu>Розділ</guimenu><guimenuitem>Змонтувати</guimenuitem></menuchoice> і виберіть точку монтування зі списку. Програма змонтує розділ до точки монтування і освіжить компонування розділів диска у вікні <application>gparted</application>.</para>
+            </listitem>
+          </orderedlist></para>
+        <note>
+          <para>Якщо ви не бачите пункту <menuchoice><guimenu>Розділ</guimenu><guimenuitem>Змонтувати</guimenuitem></menuchoice>, це означає, що <application>gparted</application> не може визначити, куди слід монтувати розділ.</para>
+        </note>
+      </sect3>
+
+<!-- ============= To Unmount a Partition ============================ -->
+      <sect3 id="gparted-unmount-partition">
+        <title>Демонтування розділу</title>
+        <para>Щоб демонтувати розділ, виконайте такі дії: <orderedlist>
+            <listitem>
+              <para>Позначте змонтований розділ. Див. <xref linkend="gparted-select-partition"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Скористайтеся пунктом меню <menuchoice><guimenu>Розділ</guimenu><guimenuitem>Демонтувати</guimenuitem></menuchoice>. Програма демонтує розділ з точки монтування і освіжить компонування розділів диска у вікні <application>gparted</application>.</para>
+            </listitem>
+          </orderedlist></para>
+        <tip>
+          <para>Якщо використання пункту <menuchoice><guimenu>Розділ</guimenu><guimenuitem>Демонтувати</guimenuitem></menuchoice> не призводить до бажаних наслідків, ймовірно, розділ використовує якась інша програма.</para>
+          <para>Щоб демонтувати усі розділи і зробити їх доступними для дій з редагування розділів, завантажтеся із компакт-диска чи флешки із портативною системою і скористайтеся <application>gparted</application>. Див. <xref linkend="gparted-acquire-livecd"/></para>
+        </tip>
+      </sect3>
+
+<!-- ============= To Open an Encrypted Partition ==================== -->
+      <sect3 id="gparted-open-encrypted-partition">
+        <title>Відкриття зашифрованого розділу</title>
+        <para>Щоб відкрити зашифрований LUKS розділ, виконайте такі дії: <orderedlist>
+            <listitem>
+              <para>Позначте закритий зашифрований LUKS розділ. Див. <xref linkend="gparted-select-partition"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Скористайтеся пунктом меню <menuchoice><guimenu>Розділ</guimenu><guimenuitem>Відкрити шифровані дані</guimenuitem></menuchoice>.</para>
+              <para>Якщо <application>gparted</application> ще не відомий пароль LUKS, програма відкриє діалогове вікно <guilabel>Пароль LUKS до <replaceable>/шлях-до-розділу</replaceable></guilabel>. Введіть пароль LUKS до поля <guilabel>Пароль</guilabel> і натисніть кнопку <guibutton>Розблокувати</guibutton>.</para>
+              <para>Програма відкриє зашифрований розділ і освіжить компонування розділів диска у вікні <application>gparted</application>.</para>
+            </listitem>
+          </orderedlist></para>
+        <note>
+          <para><application>gparted</application> зберігатиме усі паролі LUKS у пам'яті комп'ютера, доки працюватиме програма. Так зроблено, щоб не надсилати вам повторні запити щодо пароля для відкриття того самого шифрованого розділу. Після закриття вікна <application>gparted</application> усі збережені паролі LUKS буде витерто з пам'яті і забуто.</para>
+        </note>
+      </sect3>
+
+
+<!-- ============= To Close an Encrypted Partition =================== -->
+      <sect3 id="gparted-close-encrypted-partition">
+        <title>Закриття зашифрованого розділу</title>
+        <para>Щоб закрити зашифрований розділ LUKS, виконайте такі дії: <orderedlist>
+            <listitem>
+              <para>Позначте незмонтований і зашифрований за допомогою LUKS розділ. Див. <xref linkend="gparted-select-partition"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Скористайтеся пунктом меню <menuchoice><guimenu>Розділ</guimenu><guimenuitem>Закрити шифровані дані</guimenuitem></menuchoice>. Програма закриє шифрований розділ LUKS і освіжить компонування розділів диска у вікні <application>gparted</application>.</para>
+            </listitem>
+          </orderedlist></para>
+      </sect3>
+
+    </sect2>
+<!-- ============= End of Basic Partition Actions ==================== -->
+
+<!-- ============= Intermediate Partition Actions ==================== -->
+    <sect2 id="gparted-intermediate-partition-actions">
+      <title>Проміжні дії з розділами</title>
+      <para>Ці дії призведуть до внесення змін до розділів на вашому дисковому пристрої. У результаті виконання цих дій не буде змінено початкові і кінцеві межі наявних розділів.</para>
+
+<!-- ============= Creating a New Partition ========================== -->
+      <sect3 id="gparted-create-new-partition">
+        <title>Створення розділу</title>
+        <para>Для створення розділу виконайте такі дії: <orderedlist>
+            <listitem>
+              <para>Виберіть нерозподілене місце на дисковому пристрої. Див. <xref linkend="gparted-select-unallocated"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Скористайтеся пунктом меню <menuchoice><guimenu>Розділ</guimenu><guimenuitem>Створити</guimenuitem></menuchoice>. Програма покаже діалогове вікно <guilabel>Створення нового розділу</guilabel>.</para>
+            </listitem>
+            <listitem>
+              <para>Вкажіть розмір і розташування розділу. Див. <xref linkend="gparted-specify-partition-size-and-location"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Вкажіть вирівнювання розділу. Див. <xref linkend="gparted-specify-partition-alignment"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Вкажіть тип розділу. Див. <xref linkend="gparted-specify-partition-type"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Вкажіть назву розділу, якщо увімкнено відповідне поле. Див. <xref linkend="gparted-specify-partition-name"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Вкажіть тип файлової системи на розділі. Див. <xref linkend="gparted-specify-partition-file-system"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Вкажіть мітку файлової системи на розділі. Див. <xref linkend="gparted-specify-partition-file-system-label"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Натисніть кнопку <guibutton>Додати</guibutton>, щоб додати дію зі створення розділу до черги дій. Програма покаже пункт дії зі створення розділу на панелі <guilabel>Операції в черзі</guilabel> у вікні <application>gparted</application>.</para>
+            </listitem>
+          </orderedlist></para> 
+      </sect3>
+
+<!-- ============= To Delete a Partition ============================= -->
+      <sect3 id="gparted-delete-partition">
+        <title>Вилучення розділу</title>
+        <para>Для вилучення розділу виконайте такі дії: <orderedlist>
+            <listitem>
+              <para>Позначте незмонтований розділ. Див. <xref linkend="gparted-select-partition"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Скористайтеся пунктом меню <menuchoice><guimenu>Розділ</guimenu><guimenuitem>Вилучити</guimenuitem></menuchoice>. Програма покаже дію з вилучення розділу на панелі <guilabel>Операції в черзі</guilabel>.</para>
+            </listitem>
+          </orderedlist></para>
+        <caution>
+          <para>Якщо ви вилучаєте логічний розділ, після вилучення логічного розділу буде змінено усі наявні назви пристроїв.</para>
+          <para>Нехай, наприклад, на розширеному розділі міститься чотири логічних розділи A, B, C і D. Операційна система отримуватиме доступ до цих логічних розділів так:</para>
+          <itemizedlist>
+            <listitem>
+              <para>Розділ A — /dev/sda5.</para>
+            </listitem>
+            <listitem>
+              <para>Розділ B — /dev/sda6.</para>
+            </listitem>
+            <listitem>
+              <para>Розділ C — /dev/sda7.</para>
+            </listitem>
+            <listitem>
+              <para>Розділ D — /dev/sda8.</para>
+            </listitem>
+          </itemizedlist>
+          <para>Якщо буде вилучено розділ B, операційна система отримуватиме доступ до решти логічних розділів так:</para>
+          <itemizedlist>
+            <listitem>
+              <para>Розділ A — /dev/sda5.</para>
+            </listitem>
+            <listitem>
+              <para>Розділ C — /dev/sda6. Зауважте зміну у назві пристрою.</para>
+            </listitem>
+            <listitem>
+              <para>Розділ D — /dev/sda7. Зауважте зміну у назві пристрою.</para>
+            </listitem>
+          </itemizedlist>
+          <para>Зміни у назві пристрою можуть спричинити проблеми, якщо розділ змонтовано з використанням назви пристрою. Ви можете уникнути проблем, скориставшись міткою файлової системи або універсальним унікальним ідентифікатором (UUID) розділу при монтуванні.</para>
+          <para>Зміни у назві пристрою можуть негативно вплинути на вміст таких файлів: <itemizedlist>
+              <listitem>
+                <para>/etc/fstab — містить список файлових систем для монтування.</para>
+              </listitem>
+              <listitem>
+                <para>/boot/grub/menu.lst — містить команди завантаження операційної системи для завантажувача <application>grub</application>.</para>
+              </listitem>
+            </itemizedlist></para>
+        </caution>
+        <note>
+          <para>Диски із таблицями розділів <guimenuitem>loop</guimenuitem> або <guimenuitem>none</guimenuitem> не містять таблиці розділів і не містять розділів. Файлову систему на диску без таблиці розділів буде показано у GParted віртуальним розділом.</para>
+          <para>Щоб вилучити файлову систему і віртуальний розділ, виберіть формат <guimenuitem>очищено</guimenuitem>.</para>
+          <para>Див. <xref linkend="gparted-format-partition"/>.</para>
+        </note>
+      </sect3>
+
+<!-- ============= To Name a Partition =============================== -->
+      <sect3 id="gparted-name-partition">
+        <title>Іменування розділу</title>
+        <note>
+          <para>Іменування розділів доступне лише за використання таблиць розділів GUID (GPT).</para>
+          <para>Див. також <xref linkend="gparted-create-partition-table"/>.</para>
+        </note>
+        <para>Для встановлення назви розділу виконайте такі дії:</para>
+          <orderedlist>
+            <listitem>
+              <para>Позначте незмонтований розділ. Див. <xref linkend="gparted-select-partition"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Скористайтеся пунктом меню <menuchoice><guimenu>Розділ</guimenu> <guimenuitem>Перейменувати розділ</guimenuitem></menuchoice>. У відповідь програма відкриє діалогове вікно <guilabel>Вказати назву розділу на <replaceable>/шлях-до-розділу</replaceable></guilabel>.</para>
+            </listitem>
+            <listitem>
+              <para>Введіть назву розділу до текстового поля <guilabel>Назва</guilabel>.</para>
+            </listitem>
+            <listitem>
+              <para>Натисніть кнопку <guibutton>Гаразд</guibutton>. Програма покаже дію зі встановлення назви розділу на панелі <guilabel>Операції в черзі</guilabel>.</para>
+            </listitem>
+          </orderedlist>
+      </sect3>
+
+<!-- ============= To Format a Partition ============================= -->
+      <sect3 id="gparted-format-partition">
+        <title>Форматування розділу</title>
+        <para>Для форматування розділу виконайте такі дії: <orderedlist>
+            <listitem>
+              <para>Позначте незмонтований розділ. Див. <xref linkend="gparted-select-partition"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Скористайтеся пунктом меню <menuchoice><guimenu>Розділ</guimenu><guimenuitem>Відформатувати в</guimenuitem></menuchoice> і виберіть тип файлової системи зі списку. У відповідь програма покаже пункт дії з форматування розділу на панелі <guilabel>Операції в черзі</guilabel>.</para>
+              <para>Див. <xref linkend="gparted-specify-partition-file-system"/>, щоб дізнатися значення типу файлової системи <guimenuitem>очищено</guimenuitem>.</para>
+            </listitem>
+          </orderedlist></para>
+      </sect3>
+
+<!-- ============= To Set a Partition File System Label ============== -->
+      <sect3 id="gparted-setting-partition-file-system-label">
+        <title>Встановлення мітки файлової системи розділу</title>
+        <para>Для встановлення мітки або назви тому файлової системи на розділі виконайте такі дії: <orderedlist>
+            <listitem>
+              <para>Позначте незмонтований розділ. Див. <xref linkend="gparted-select-partition"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Скористайтеся пунктом меню <menuchoice><guimenu>Розділ</guimenu> <guimenuitem>Мітка файлової системи</guimenuitem></menuchoice>. У відповідь програма відкриє діалогове вікно <guilabel>Вказати мітку файлової системи <replaceable>/шлях-до-розділу</replaceable></guilabel>.</para>
+            </listitem>
+            <listitem>
+              <para>Введіть назву мітки у текстове поле <guilabel>Мітка</guilabel>.</para>
+            </listitem>
+            <listitem>
+              <para>Натисніть кнопку <guibutton>Гаразд</guibutton>. Програма покаже дію зі встановлення мітки файлової системи на панелі <guilabel>Операції в черзі</guilabel>.</para>
+            </listitem>
+          </orderedlist></para>
+      </sect3>
+
+<!-- ============= To Change a Partition's UUID ========================== -->
+      <sect3 id="gparted-changing-partition-uuid">
+        <title>Зміна UUID розділу</title>
+        <para>Щоб змінити універсальний унікальний ідентифікатор (UUID) розділу, виконайте такі дії: <orderedlist>
+            <listitem>
+              <para>Позначте незмонтований розділ. Див. <xref linkend="gparted-select-partition"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Скористайтеся пунктом меню <menuchoice><guimenu>Розділ</guimenu><guimenuitem>Створити UUID</guimenuitem></menuchoice>. У відповідь програма покаже пункт дії із встановлення нового випадкового UUID на панелі <guilabel>Операції в черзі</guilabel>.</para>
+              <warning>
+                <para>Змінювання UUID може спричинити до скасування чинності ключа активації продукту Windows (WPA).</para>
+                <para>На файлових системах FAT і NTFS, серійний номер тому використовується як UUID. Змінювання серійного номера тому на системному розділі Windows, зазвичай C:, може спричинити до втрати чинності ключем WPA. Правильний ключ WPA перешкоджатиме увійти, поки ви не активуєте Windows повторно.</para>
+                <para>Щоб уникнути втрати чинності ключем WPA на файлових системах NTFS, випадкове значення має бути встановлено лише до половини UUID. У файлових системах FAT таке запобігання втраті чинності неможливе.</para>
+                <para>На чинність ключа WPA не мають впливати зміна UUID розділів даних або розділів на портативних пристроях. У рідкісних випадках розділ, який був наявним на момент завантаження, може бути виключенням з цього правила.</para>
+              </warning>
+              <warning>
+                <para>Безпричинна зміна UUID може призвести до помилок при завантаженні операційних систем GNU/Linux або монтуванні файлової системи.</para>
+                <para>Зміна UUID потрібна лише після копіювання розділу. Зміна UUID потрібна для запобігання дублюванню UUID, якщо джерело і копія розділу використовуються на тому самому комп'ютері.</para>
+                <para>Якщо виникають проблеми із завантаженням або монтуванням, вам варто спробувати виконати редагування файлів налаштувань, зокрема /etc/fstab, і повторно створити меню grub, щоб забезпечити правильне визначення UUID.</para>
+              </warning>
+            </listitem>
+          </orderedlist></para>
+      </sect3>
+
+<!-- ============= Specifying Partition Details ====================== -->
+      <sect3 id="gparted-specify-partition-details">
+        <title>Визначення параметрів розділу</title>
+        <para>Визначення параметрів розділу є корисним при виконанні дій зі створення, зміни розмірів і пересування розділів.</para>
+
+<!-- ============= To Specify a Partition Size and Location ========== -->
+        <sect4 id="gparted-specify-partition-size-and-location">
+          <title>Визначення розміру та розташування розділів</title>
+          <para>Щоб вказати розмір і розташування розділу, скористайтеся однією з таких дій або їхньою комбінацією: <itemizedlist>
+              <listitem>
+                <para>Натисніть і утримуйте стрілочку на будь-якому з країв графічної області. Перетягніть стрілочку ліворуч або праворуч у діапазоні показу.</para>
+              </listitem>
+              <listitem>
+                <para>Натисніть і утримуйте середню частину розділу у графічної області. Перетягніть розділ ліворуч або праворуч у діапазоні показу.</para>
+              </listitem>
+              <listitem>
+                <para>За допомогою натискання кнопочок-стрілочок поля лічильника або введення числових значень можна скоригувати значення таких полів: <itemizedlist>
+                    <listitem>
+                      <para><guilabel>Вільне місце перед</guilabel></para>
+                    </listitem>
+                    <listitem>
+                      <para><guilabel>Новий розмір</guilabel></para>
+                    </listitem>
+                    <listitem>
+                      <para><guilabel>Вільне місце позаду</guilabel></para>
+                    </listitem>
+                  </itemizedlist></para>
+              </listitem>
+            </itemizedlist></para>
+          <para>Програма оновить вміст графічної області і чисел поряд із трьома мітками полів.</para>
+        </sect4>
+
+<!-- ============= To Specify a Partition Alignment ================== -->
+        <sect4 id="gparted-specify-partition-alignment">
+          <title>Визначення вирівнювання розділу</title>
+          <para>Щоб визначити вирівнювання розділу, натисніть кнопку зі стрілкою <guilabel>Вирівняти до</guilabel> і виберіть бажаний пункту у списку.</para>
+          <itemizedlist>
+            <listitem>
+              <para>Скористайтеся вирівнюванням <guilabel>МіБ</guilabel> для сучасних операційних систем. Використання цього варіанта призводить до вирівнювання розділів на початок і кінець мебібайта (1048576 байтів). Вирівнювання на межу МіБ надає доступ до підвищеної швидкодії при використанні систем RAID та із дисками SSD, зокрема флеш-дисками USB.</para>
+            </listitem>
+            <listitem>
+              <para>Скористайтеся вирівнюванням <guilabel>Циліндр</guilabel> для забезпечення сумісності із операційними системами, які було випущено до 2000 року, зокрема DOS. Це варіант вирівнювання розділів на початок і кінець циліндра диска.</para>
+              <tip>
+                <para>Значення циліндра, головки, сектора, про які повідомляють сучасні дискові пристрої, більше не мають безпосередньої прив'язки до даних, які зберігаються на дисковому пристрої. Отже, досягти вищої швидкодії за допомогою вирівнювання за цим параметром більше не можна.</para>
+              </tip>
+            </listitem>
+            <listitem>
+              <para>Скористайтеся варіантом <guilabel>Немає</guilabel>, лише якщо ви маєте глибокі знання щодо структури дисків, таблиць розділів та записів завантаження. Використання цього варіанта призводить до розташування меж розділів відносно кінця будь-якого безпосередньо попереднього розділу на дисковому пристрої. Цей варіант не гарантує резервування або врахування параметрів місця, яке потрібне для записів завантажувачів.</para>
+            </listitem>
+          </itemizedlist>
+        </sect4>
+
+<!-- ============= To Specify a Partition Type ======================= -->
+        <sect4 id="gparted-specify-partition-type">
+          <title>Визначення типу розділу</title>
+          <para>Щоб визначити тип розділу, натисніть кнопку зі стрілкою <guilabel>Створити як</guilabel> і виберіть бажаний пункту у списку.</para>
+          <note>
+            <para>У таблиці розділів msdos передбачено такі обмеження на розділи: <itemizedlist>
+                <listitem>
+                  <para>Не більше 4 основних розділів.</para>
+                </listitem>
+                <listitem>
+                  <para>Не більше 3 основних розділів і 1 одного розширеного розділу.</para>
+                  <para>Розширений розділ може містити декілька логічних розділів. У деяких дистрибутивах GNU/Linux передбачено підтримку доступу до не більше ніж 15 розділів на дисковому пристрої.</para>
+                </listitem>
+                <listitem>
+                  <para>Максимальний розмір розділу обмежено 2 тебібайтами з розміром сектора 512 байтів. Розділ також має починатися у межах перших 2 тебібайтів дискового пристрою.</para>
+                </listitem>
+              </itemizedlist></para>
+          </note>
+          <tip>
+            <para>Дані з основних розділів легше відновити, оскільки межі розділів перебувають у наперед визначених місцях на дисковому пристрої.</para>
+          </tip>
+        </sect4>
+
+<!-- ============= To Specify a Partition Name ======================= -->
+        <sect4 id="gparted-specify-partition-name">
+          <title>Визначення назви розділу</title>
+          <note>
+            <para>Іменування розділів доступне лише за використання таблиць розділів GUID (GPT). Саме тому це поле буде увімкнено лише для дискових пристроїв, які було поділено на розділи із використанням GPT.</para>
+            <para>Див. також <xref linkend="gparted-create-partition-table"/>.</para>
+          </note>
+          <para>Щоб вказати назву розділу, введіть цю назву у поле для введення тексту <guilabel>Назва розділу</guilabel>.</para>
+        </sect4>
+
+<!-- ============= To Specify a Partition File System ================ -->
+        <sect4 id="gparted-specify-partition-file-system">
+          <title>Визначення файлової системи розділу</title>
+          <para>Щоб визначити тип файлової системи розділу, натисніть кнопку зі стрілкою <guilabel>Файлова система</guilabel> і виберіть бажаний пункту у списку.</para>
+          <note>
+            <para>Приклади використання деяких файлових систем: <itemizedlist>
+                <listitem>
+                  <para>Файловими системами <guimenuitem>ext2</guimenuitem>, <guimenuitem>ext3</guimenuitem> і <guimenuitem>ext4</guimenuitem> можна скористатися для встановлення GNU/Linux і зберігання даних.</para>
+                </listitem>
+                <listitem>
+                  <para>Файловою системою <guimenuitem>linux-swap</guimenuitem> можна скористатися у GNU/Linux для збільшення об'єму віртуальної пам'яті вашого комп'ютера.</para>
+                </listitem>
+                <listitem>
+                  <para>Файловими системами <guimenuitem>fat16</guimenuitem> і <guimenuitem>fat32</guimenuitem> можна скористатися для спільного користування даними у вільних і комерційних операційних системах.</para>
+                </listitem>
+                <listitem>
+                  <para>Файловою системою <guimenuitem>очищено</guimenuitem> можна скористатися для вилучення підписів будь-якої наявної файлової системи і забезпечення розпізнання розділу як порожнього.</para>
+                </listitem>
+                <listitem>
+                  <para>Файловою системою <guimenuitem>не форматовано</guimenuitem> можна скористатися для створення розділу без записування на нього файлової системи.</para>
+                </listitem>
+              </itemizedlist></para>
+          </note>
+        </sect4>
+
+<!-- ============= To Specify a Partition Label ====================== -->
+        <sect4 id="gparted-specify-partition-file-system-label">
+          <title>Визначення мітки файлової системи розділу</title>
+          <para>Щоб визначити мітку файлової системи на розділі, також відому як мітку тому, введіть назву мітки у текстове поле <guilabel>Мітка</guilabel>.</para>
+          <tip>
+            <para>Мітками файлових систем можна скористатися для полегшення визначення того, що зберігається на розділі.</para>
+            <para>Унікальними мітками може скористатися для монтування файлових систем у операційній системі GNU/Linux.</para>
+          </tip>
+        </sect4>
+
+      </sect3>
+<!-- ============= End of Specifying Partition Details =============== -->
+
+    </sect2>
+<!-- ============= End of Intermediate Partition Actions ============= -->
+
+<!-- ============= Advanced Partition Actions ======================== -->
+    <sect2 id="gparted-advanced-partition-actions">
+      <title>Складні дії з розділами</title>
+      <para>Ці дії призведуть до внесення змін до розділів на вашому дисковому пристрої. У результаті виконання цих дій може бути змінено початкові і кінцеві межі наявних розділів. Ці дії можуть призвести до помилок під час спроб завантажити операційні системи.</para>
+
+<!-- ============= To Resize a Partition ============================= -->
+      <sect3 id="gparted-resize-partition">
+        <title>Зміна розмірів розділу</title>
+        <para>Зміну розмірів і пересування розділу можна виконати за допомогою однієї дії у <application>gparted</application>.</para>
+        <para>Щоб змінити розміри розділу, виконайте такі дії: <orderedlist>
+            <listitem>
+              <para>Позначте розділ. Див. <xref linkend="gparted-select-partition"/>.</para>
+              <tip>
+                <para>Більшість дій зі зміни розмірів можна виконувати для демонтованих або неактивних розділів.</para>
+                <para>Передбачено підтримку інтерактивної зміни розмірів деяких змонтованих або активних в інший спосіб розділів. Втім, цю підтримку, зазвичай, обмежено лише збільшенням розмірів.</para>
+              </tip>
+            </listitem>
+            <listitem>
+              <para>Скористайтеся пунктом меню <menuchoice><guimenu>Розділ</guimenu><guimenuitem>Змінити розмір/Перемістити</guimenuitem></menuchoice>. У відповідь програма покаже діалогове вікно <guilabel>Змінити розмір/перемістити <replaceable>/шлях-до-розділу</replaceable></guilabel>.</para>
+            </listitem>
+            <listitem>
+              <para>Скоригуйте розмір розділу. Див. <xref linkend="gparted-specify-partition-size-and-location"/>.</para>
+              <tip>
+                <para>Якщо ви не хочете пересувати початок наявного розділу, не змінюйте значення параметра <guilabel>вільне місце перед</guilabel>. Якщо розділ змонтовано або він є активним в інший спосіб, ви не зможете змінити значення <guilabel>вільне місце перед</guilabel>.</para>
+              </tip>
+            </listitem>
+            <listitem>
+              <para>Вкажіть вирівнювання розділу. Див. <xref linkend="gparted-specify-partition-alignment"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Натисніть кнопку <guibutton>Змінити розмір/перемістити</guibutton>. Програма покаже пункт дії зі зміни розмірів або пересування розділу на панелі <guilabel>Операція в черзі</guilabel>.</para>
+            </listitem>
+            <listitem>
+              <para>Вивчіть дію, пункт якої було додано на панель <guilabel>Операції в черзі</guilabel>.</para>
+              <para>Якщо дія містить крок із пересування, варто зважити та таке: <itemizedlist>
+                  <listitem>
+                    <para>Виконання кроку із пересування може бути досить тривалим.</para>
+                  </listitem>
+                  <listitem>
+                    <para>Якщо розділ є розділом, з якого завантажується операційна система, пересування може спричинити неможливість завантаження операційної системи.</para>
+                  </listitem>
+                </itemizedlist></para>
+              <para>Якщо ви не готові чекати або виправляти потенційні проблеми із завантаженням операційної системи, можливо, вам варто скасувати дію. Див. <xref linkend="gparted-undo-last-operation"/>.</para>
+            </listitem>
+          </orderedlist></para>
+        <tip>
+          <para>Щоб збільшити розміри або пересунути розділ, вам знадобиться нерозподілене місце поряд із розділом.</para>
+          <para>Якщо ви збільшуєте розміри логічного розділу, нерозподілене місце на диску має перебувати у тому самому розширеному розділі.</para>
+          <para>Якщо ви збільшуєте розміри основного розділу, нерозподілене місце на диску має перебувати поза межами того самого розділеного розділу.</para>
+          <para>Ви можете пересунути нерозподілене місце всередину або назовні розширеного розділу шляхом пересування меж розширеного розділу.</para>
+        </tip>
+        <tip>
+          <para>Розміри зашифрованого розділу LUKS і файлової системи на ньому можна змінити, лише якщо прив'язку до шифрування відкрито.</para>
+        </tip>
+        <tip>
+          <para>Щоб збільшити ймовірність безпроблемного стискання розділу NTFS, вам варто виконати принаймні частину із таких дій: <itemizedlist>
+              <listitem>
+                <para>Виконайте дефрагментацію файлової системи</para>
+                <para>Завантаження у безпечному режимі комерційної операційної системи, яка використовує NTFS, може розширити можливості з дефрагментації файлової системи. Щоб увійти до безпечного режиму, натисніть клавішу <keycap>F8</keycap> під час завантаження операційної системи.</para>
+              </listitem>
+              <listitem>
+                <para>Перевірте розділ на наявність помилок за допомогою такої команди: <screen><prompt>C:&gt; </prompt><command>chkdsk</command> /f /r</screen> Не забудьте повторно завантажити комерційну операційну систему, у якій використовується NTFS, щоб уможливити виконання команди <command>chkdsk</command>.</para>
+              </listitem>
+              <listitem>
+                <para>Тимчасово вимкніть файл пам'яті на диску. Файл пам'яті на диску розташовується у фіксованому місці на розділі, яке не може бути змінено під час процедури дефрагментації.</para>
+              </listitem>
+              <listitem>
+                <para>Тимчасово пересуньте великі файли на інший розділ або дисковий пристрій. Великими вважаються файли, розмір яких перевищує декілька сотень мегабайтів (МБ).</para>
+              </listitem>
+              <listitem>
+                <para>Переконайтеся, що роботу комерційної операційної системи, у якій використано NTFS, завершено належним чином, перш ніж ви розпочнете зміну розмірів розділу із NTFS.</para>
+              </listitem>
+              <listitem>
+                <para>Лишіть принаймні 10 відсотків невикористаного місця на розділі NTFS. Якщо ви надто зменшите розмір розділу, у роботі комерційної операційної системи можуть виникнути проблеми.</para>
+              </listitem>
+              <listitem>
+                <para>Двічі перезавантажте комерційну операційну систему, у якій використано NTFS, після зменшення розмірів розділу NTFS.</para>
+              </listitem>
+            </itemizedlist></para>
+        </tip>
+      </sect3>
+
+<!-- ============= To Move a Partition =============================== -->
+      <sect3 id="gparted-move-partition">
+        <title>Пересування розділу</title>
+        <para>Пересування і зміну розмірів розділу можна виконати за допомогою однієї дії у <application>gparted</application>.</para>
+        <para>Щоб пересунути розділ, виконайте такі дії: <orderedlist>
+            <listitem>
+              <para>Позначте незмонтований розділ. Див. <xref linkend="gparted-select-partition"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Скористайтеся пунктом меню <menuchoice><guimenu>Розділ</guimenu><guimenuitem>Змінити розмір/Перемістити</guimenuitem></menuchoice>. У відповідь програма покаже діалогове вікно <guilabel>Змінити розмір/перемістити <replaceable>/шлях-до-розділу</replaceable></guilabel>.</para>
+            </listitem>
+            <listitem>
+              <para>Скоригуйте розташування розділу. Див. <xref linkend="gparted-specify-partition-size-and-location"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Вкажіть вирівнювання розділу. Див. <xref linkend="gparted-specify-partition-alignment"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Натисніть кнопку <guibutton>Змінити розмір/перемістити</guibutton>. Програма покаже пункт дії зі зміни розмірів або пересування розділу на панелі <guilabel>Операція в черзі</guilabel>.</para>
+            </listitem>
+          </orderedlist></para>
+        <tip>
+          <para>Якщо розділ є розділом, з якого завантажується операційна система, застосування дії з пересування розділу може спричинити неможливість завантаження операційної системи.</para>
+          <para>Якщо не вдається завантажити операційну систему, ознайомтеся із вмістом розділу <xref linkend="gparted-fix-operating-system-boot-problems"/>.</para>
+        </tip>
+        <tip>
+          <para>Пересувати зашифрований LUKS розділ можна, лише якщо прив'язку шифрування закрито.</para>
+        </tip>
+      </sect3>
+
+<!-- ============= To Copy and Paste a Partition ===================== -->
+      <sect3 id="gparted-copy-and-paste-partition">
+        <title>Копіювання розділу зі вставленням</title>
+        <para>Щоб скопіювати розділ, виконайте такі дії: <orderedlist>
+            <listitem>
+              <para>Позначте незмонтований розділ. Див. <xref linkend="gparted-select-partition"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Скористайтеся пунктом меню <menuchoice><guimenu>Розділ</guimenu><guimenuitem>Копіювати</guimenuitem></menuchoice>. Програма позначить розділ як розділ джерела даних.</para>
+            </listitem>
+          </orderedlist></para>
+        <para>Щоб вставити розділ, виконайте такі дії: <orderedlist>
+            <listitem>
+              <para>Виберіть нерозподілене місце на дисковому пристрої. Див. <xref linkend="gparted-select-unallocated"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Скористайтеся пунктом меню <menuchoice><guimenu>Розділ</guimenu><guimenuitem>Вставити</guimenuitem></menuchoice>. У відповідь програма покаже діалогове вікно <guilabel>Вставити <replaceable>/шлях-до-розділу</replaceable></guilabel>.</para>
+            </listitem>
+            <listitem>
+              <para>Якщо хочете, скоригуйте розмір і розташування розділу. Див. <xref linkend="gparted-specify-partition-size-and-location"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Якщо хочете, можете вказати вирівнювання розділу. Див. <xref linkend="gparted-specify-partition-alignment"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Натисніть кнопку <guibutton>Вставити</guibutton>. Програма покаже пункт дії з копіювання розділу на панелі <guilabel>Операція в черзі</guilabel>.</para>
+            </listitem>
+          </orderedlist></para>
+        <caution>
+          <para>Копія розділу матиме ту саму мітку файлової системи та універсальний унікальний ідентифікатор (UUID), що і розділ-джерело. Це може стати причиною проблем із завантаженням або діями з монтування, якщо для ідентифікації розділу використовується мітка файлової системи або UUID.</para>
+          <para>Проблема полягає у тому, що операційна система випадковим чином вибере між монтуванням джерела копіювання і копією розділу. Наприклад, під час першої спроби монтування може бути змонтовано розділ джерела. Під час наступної спроби може бути змонтовано розділ копії. З часом, ця випадкова природа монтування розділів може призвести до незрозумілої появи або зникнення файлів, залежно від того, який з розділів буде змонтовано. Випадкове монтування розділу джерела і копії також може призвести до серйозного пошкодження або втрати даних.</para>
+          <para>Щоб уникнути проблем, радимо вам виконати одну з таких дій: <itemizedlist>
+              <listitem>
+                <para>Після додавання до черги або застосування дії з копіювання: <orderedlist>
+                    <listitem>
+                      <para>Змініть UUID або початкового розділу, або його копії. Див. <xref linkend="gparted-changing-partition-uuid"/>.</para>
+                    </listitem>
+                    <listitem>
+                      <para>Якщо мітка файлової системи не є порожньою, змініть мітку файлової системи або початкового розділу, або його копії. Див. <xref linkend="gparted-setting-partition-file-system-label"/>.</para>
+                    </listitem>
+                  </orderedlist></para>
+              </listitem>
+              <listitem>
+                <para>Після застосування дії з копіювання вилучіть або переформатуйте початковий розділ.</para>
+              </listitem>
+              <listitem>
+                <para>Скористайтеся якимось іншим методом для забезпечення того, щоб початковий розділ і копія розділу не використовувалися на одному комп'ютері одночасно. Наприклад, якщо копія розділу зберігається на окремому диску, слід від'єднати диск від комп'ютера.</para>
+              </listitem>
+            </itemizedlist></para>
+        </caution>
+        <tip>
+          <para>Файлову систему у зашифрованому LUKS розділі можна скопіювати, лише якщо прив'язку шифрування відкрито.</para>
+        </tip>
+        <note>
+          <para>Щоб запобігти ненавмисному розшифруванню даних, вставлення на нерозподілене місце із створенням розділу заборонено. Втім, зашифрований розділ LUKS можна вставити до наявного відкритого зашифрованого розділу LUKS зі збереженням шифрування або вставити на звичайного розділу зі створенням незашифрованої копії файлової системи.</para>
+        </note>
+      </sect3>
+
+<!-- ============= To Manage Partition Flags ========================= -->
+      <sect3 id="gparted-manage-partition-flags">
+        <title>Керування прапорцями розділу</title>
+        <para>Для здійснення керування прапорцями розділу виконайте такі дії: <orderedlist>
+            <listitem>
+              <para>Позначте розділ. Див. <xref linkend="gparted-select-partition"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Скористайтеся пунктом меню <menuchoice><guimenu>Розділ</guimenu> <guimenuitem>Керування прапорцями</guimenuitem></menuchoice>. У відповідь програма відкриє діалогове вікно <guilabel>Керування прапорцями на <replaceable>/шлях-до-розділу</replaceable></guilabel>.</para>
+              <para>
+                <itemizedlist>
+                  <listitem>
+                    <para>Щоб увімкнути прапорець, позначте поле поряд із пунктом прапорця. Програма запише увімкнений прапорець на розділ і оновить вміст діалогового вікна <guilabel>Керування прапорцями <replaceable>/шлях-до-розділу</replaceable></guilabel>.</para>
+                  </listitem>
+                  <listitem>
+                    <para>Щоб вимкнути прапорець, зніміть позначку з поля поряд із пунктом прапорця. Програма запише вимкнений прапорець на розділ і оновить вміст діалогового вікна <guilabel>Керування прапорцями <replaceable>/шлях-до-розділу</replaceable></guilabel>.</para>
+                  </listitem>
+                </itemizedlist>
+              </para>
+              <note>
+                <para><guimenuitem>Керування прапорцями</guimenuitem> доступне лише для дисків із таблицями розділів. На дисках із таблицями розділів <guimenuitem>loop</guimenuitem> або <guimenuitem>немає</guimenuitem> не міститься таблиці розділів, тому для них не передбачено прапорців розділів.</para>
+                <para>Див. <xref linkend="gparted-view-device-information"/>, щоб дізнатися про те, як переглянути тип таблиці розділів.</para>
+              </note>
+            </listitem>
+          </orderedlist></para>
+        <para>Щоб закрити діалогове вікно <guilabel>Керування прапорцями на <replaceable>/шлях-до-розділу</replaceable></guilabel>, натисніть кнопку <guibutton>Закрити</guibutton>.</para>
+        <note>
+          <para>Опис прапорців у таблиці розділів msdos: <itemizedlist>
+              <listitem>
+                <para>«Boot» використовується завантажувачами комерційної операційної системи. Прапорець завантаження позначає, що розділ є активним або завантажуваним. Активним на дисковому пристрої може убти лише один розділ.</para>
+              </listitem>
+              <listitem>
+                <para>«Diag» використовують для позначення того, що розділ використано для діагностики або відновлення даних.</para>
+              </listitem>
+              <listitem>
+                <para>«ESP» позначає системний розділ EFI, який використовують для завантаження на комп'ютерах із Unified Extensible Firmware Interface (UEFI) класу 2, що включає підтримку сумісності для функцій BIOS, зокрема структури розділів MBR.</para>
+              </listitem>
+              <listitem>
+                <para>«Hidden» використовується деякими комерційними операційними системами. Прапорець «hidden» робить розділ невидимим для операційної системи.</para>
+              </listitem>
+              <listitem>
+                <para>«Irst» позначає розділи Intel Rapid Start Technology (технології миттєвого запуску Intel).</para>
+              </listitem>
+              <listitem>
+                <para>«LBA» використовується завантажувачами деяких комерційних операційних систем. Прапорець LBA позначає розділ, доступ до якого слід здійснювати з використанням логічного адресування блоків (Logical Block Addressing або LBA), замість адресування циліндр-голівка-сектор (CHS).</para>
+              </listitem>
+              <listitem>
+                <para>«LVM» використовують для позначення розділу, який використовується керуванням логічними томами (Logical Volume Manager або LVM).</para>
+              </listitem>
+              <listitem>
+                <para>«Palo» використовують у завантажувачі Precision Architecture - Reduced Instruction Set Computing (PA-RISC), palo.</para>
+              </listitem>
+              <listitem>
+                <para>«Prep» використовують для позначення розділу завантаження на обладнанні Power Performance Computing (PowerPC).</para>
+              </listitem>
+              <listitem>
+                <para>«RAID» використовують для позначення розділу, який використовують у надлишковому масиві недорогих дисків (Redundant Array of Inexpensive Disks або RAID).</para>
+              </listitem>
+            </itemizedlist></para>
+        </note>
+        <note>
+          <para>Опис прапорців у таблиці розділів gpt: <itemizedlist>
+              <listitem>
+                <para>«Atvrecv» використовують для позначення розділу Apple TV Recovery.</para>
+              </listitem>
+              <listitem>
+                <para>«BIOS_GRUB» позначає розділ завантаження BIOS, який часто використовують для завантажувача GRUB 2.</para>
+              </listitem>
+              <listitem>
+                <para>«Boot» використовується завантажувачами комерційної операційної системи. Прапорець завантаження позначає, що розділ є активним або завантажуваним. Активним на дисковому пристрої може убти лише один розділ.</para>
+              </listitem>
+              <listitem>
+                <para>«Diag» позначає розділ, який використовують для діагностики або відновлення даних.</para>
+              </listitem>
+              <listitem>
+                <para>«ESP» позначає системний розділ EFI, який використовують для завантаження комп'ютерів із розширеним інтерфейсом мікропрограм (Extensible Firmware Interface або EFI) класу 1 або уніфікованим розширеним інтерфейсом мікропрограм (Unified Extensible Firmware Interface або UEFI) класу 2 або UEFI класу 3.</para>
+              </listitem>
+              <listitem>
+                <para>«Hidden» використовується деякими комерційними операційними системами. Прапорець «hidden» робить розділ невидимим для операційної системи.</para>
+              </listitem>
+              <listitem>
+                <para>«HP-service» використовують для позначення службового розділу Hewlett Packard.</para>
+              </listitem>
+              <listitem>
+                <para>«Irst» позначає розділи Intel Rapid Start Technology (технології миттєвого запуску Intel).</para>
+              </listitem>
+              <listitem>
+                <para>«Legacy_boot» використовують для деякого спеціалізованого програмного забезпечення і позначення того, що з розділу можна завантажувати операційну систему.</para>
+              </listitem>
+              <listitem>
+                <para>«LVM» використовують для позначення розділу, який використовується керуванням логічними томами (Logical Volume Manager або LVM).</para>
+              </listitem>
+              <listitem>
+                <para>«Msftdata» позначає розділи, на яких містяться файлові системи Microsoft, зокрема NTFS та FAT.</para>
+              </listitem>
+              <listitem>
+                <para>«Msftres» використовують для позначення резервного розділу Microsoft.</para>
+              </listitem>
+              <listitem>
+                <para>«Prep» використовують для позначення розділу завантаження на обладнанні Power Performance Computing (PowerPC).</para>
+              </listitem>
+              <listitem>
+                <para>«RAID» використовують для позначення розділу, який використовують у надлишковому масиві недорогих дисків (Redundant Array of Inexpensive Disks або RAID).</para>
+              </listitem>
+            </itemizedlist></para>
+        </note>
+      </sect3>
+
+<!-- ============= To Check a Partition ============================== -->
+      <sect3 id="gparted-Check-partition">
+        <title>Перевірка розділу</title>
+        <para>Засоби перевірки розділу намагаються знайти та виправити проблеми у файловій системі. Під час перевірки буде виконано спробу збільшити файлову систему так, щоб вона заповнювала розділ.</para>
+        <para>Щоб перевірити розділ, виконайте такі дії: <orderedlist>
+            <listitem>
+              <para>Позначте незмонтований розділ. Див. <xref linkend="gparted-select-partition"/>.</para>
+            </listitem>
+            <listitem>
+              <para>Скористайтеся пунктом меню <menuchoice><guimenu>Розділ</guimenu><guimenuitem>Перевірити</guimenuitem></menuchoice>. Програма покаже дію з перевірки розділу на панелі <guilabel>Операції в черзі</guilabel>.</para>
+            </listitem>
+          </orderedlist></para>
+      </sect3>
+
+<!-- ============= End of Advanced Partition Actions ================= -->
+    </sect2>
+
+<!-- ============= Working with the Operation Queue ================== -->
+    <sect2 id="gparted-operation-queue">
+      <title>Робота із чергою дій</title>
+
+<!-- ============= To Undo Last Operation ============================ -->
+      <sect3 id="gparted-undo-last-operation">
+        <title>Скасування останньої дії</title>
+        <para>Щоб скасувати останню дію у черзі дій, скористайтеся пунктом меню <menuchoice><guimenu>Зміни</guimenu><guimenuitem>Скасувати останню операцію</guimenuitem></menuchoice>. Програма вилучить пункт останньої дій із черги, яку показано на панелі <guilabel>Операції в черзі</guilabel>. Якщо у черзі не лишилося дій, програма закриє панель <guilabel>Операції в черзі</guilabel>.</para>
+      </sect3>
+
+<!-- ============= To Clear All Operations =========================== -->
+      <sect3 id="gparted-clear-all-operations">
+        <title>Вилучення усіх пунктів дій</title>
+        <para>Щоб вилучити усі дії з черги дій, скористайтеся пунктом меню <menuchoice><guimenu>Зміни</guimenu><guimenuitem>Очистити чергу операцій</guimenuitem></menuchoice>. У відповідь програма вилучить усі пункти дій із черги і закриє панель <guilabel>Операції в черзі</guilabel>.</para>
+      </sect3>
+
+<!-- ============= To Apply All Operations =========================== -->
+      <sect3 id="gparted-apply-all-operations">
+        <title>Застосування усіх дій</title>
+        <para>Щоб застосувати усі дії, виконайте такі дії: <orderedlist>
+            <listitem>
+              <para>Скористайтеся пунктом меню <menuchoice><guimenu>Зміни</guimenu><guimenuitem>Застосувати всі операції</guimenuitem></menuchoice>. У відповідь програма покаже діалогове вікно <guilabel>Застосування операцій на диску</guilabel>.</para>
+              <caution>
+                <para>Зміна розділів може потенційно призвести до ВТРАТ ДАНИХ. Радимо вам зробити резервну копію ваших даних до застосування дій з редагування до розділу.</para>
+              </caution>
+            </listitem>
+            <listitem>
+              <para>Натисніть кнопку <guibutton>Застосувати</guibutton>. У відповідь програма покаже діалогове вікно <guilabel>Застосовуються операції черги</guilabel>. Програма застосує усі дії з черги у порядку, у якому їх було створено. Після завершення кожної дії програма показуватиме оновлення стану. <itemizedlist>
+                  <listitem>
+                    <para>Щоб переглянути докладніші відомості, натисніть кнопку <guibutton>Подробиці</guibutton>. У відповідь програма покаже подробиці щодо дій.</para>
+                    <para>Щоб переглянути більше даних щодо кроків кожної з дій, натисніть кнопку зі стрілкою поряд із пунктом кожного з кроків.</para>
+                  </listitem>
+                  <listitem>
+                    <para>Щоб зупинити виконання поточної дії, натисніть кнопку <guibutton>Скасувати</guibutton>. У відповідь програма покаже вимкнену кнопку <guibutton>Примусово скасувати (5)</guibutton> і почне відлік 5 секунд.</para>
+                    <note>
+                      <para>Натискання кнопки <guibutton>Скасувати</guibutton> накаже програмі зупинити або скасувати наслідки дій так, щоб забезпечити цілісність даних.</para>
+                    </note>
+                    <para>Якщо дії не буде перервано за 5 секунд, програма увімкне кнопку <guibutton>Примусово скасувати</guibutton>.</para>
+                    <para>Щоб примусово припинити виконання дій, натисніть кнопку <guibutton>Примусово скасувати</guibutton>. У відповідь програма покаже діалогове вікно із попередженням.</para>
+                    <para>Натисніть кнопку <guibutton>Продовжити операцію</guibutton>, щоб дозволити завершити дії із відновлення початкового стану, або натисніть кнопку <guibutton>Скасувати операцію</guibutton>, щоб скасувати дії із відновлення початкового стану.</para>
+                    <warning>
+                      <para>Натискання кнопки <guibutton>Скасувати операцію</guibutton> перериває дії із безпечного відновлення початкового стану після дій і може спричинити ЗНАЧНІ пошкодження файлової системи і втрату даних. Радимо вам натиснути кнопку <guibutton>Продовжити операцію</guibutton>, щоб уможливити завершення дій з відновлення початкового стану.</para>
+                    </warning>
+                    <para>Коли програма завершить виконання дій, програма покаже кнопку <guibutton>Зберегти подробиці</guibutton> і кнопку <guibutton>Закрити</guibutton>.</para>
+                  </listitem>
+                </itemizedlist></para>
+            </listitem>
+            <listitem>
+              <para>Якщо ви хочете зберегти подробиці щодо застосування усіх дій, натисніть кнопку <guibutton>Зберегти подробиці</guibutton>. У відповідь програма покаже діалогове вікно <guilabel>Зберегти подробиці</guilabel>. <orderedlist numeration="loweralpha">
+                  <listitem>
+                    <para>Якщо ви хочете змінити типову назву файла, введіть назву файла у текстове поле <guilabel>Назва</guilabel>.</para>
+                  </listitem>
+                  <listitem>
+                    <para>Якщо ви хочете зберегти файл до теки, відмінної від /root, натисніть кнопку <guibutton>Навігація</guibutton>. У відповідь програма покаже вікно навігації файловою системою.</para>
+                    <para>Скористайтеся навігатором файловою системою для вибору теки.</para>
+                  </listitem>
+                  <listitem>
+                    <para>Натисніть кнопку <guibutton>Зберегти</guibutton>, щоб зберегти файл. У відповідь програма збереже файл подробиць.</para>
+                  </listitem>
+                </orderedlist></para>
+              <caution>
+                <para>Якщо ви захочете скористатися <application>gparted</application> з образу портативної системи, кореневу файлову систему буде розміщено в оперативній пам'яті. Усі файли, які зберігаються у кореневій файловій системі образу портативної системи, буде втрачено після вимикання комп'ютера.</para>
+                <para>Якщо ви зберегли подробиці щодо роботи gparted у кореневій файловій системі портативної системи, вам слід скопіювати цей файл на інший надійніший носій даних. Прикладами надійніших носіїв даних є жорсткий диск або флешка USB.</para>
+              </caution>
+            </listitem>
+            <listitem>
+              <para>Натисніть кнопку <guibutton>Закрити</guibutton>. У відповідь програма закриє діалогове вікно <guilabel>Застосовуються операції черги</guilabel>. Програма виконає повторне сканування усіх дискових пристроїв і оновить компонування розділів на пристрої у вікні <application>gparted</application>.</para>
+            </listitem>
+          </orderedlist></para>
+      </sect3>
+
+<!-- ============= End of Working with the Operation Queue =========== -->
+    </sect2>
+
+  </sect1>
+
+<!-- ============= Acquiring GParted on Live CD ====================== -->
+  <sect1 id="gparted-acquire-livecd">
+    <title>Отримання GParted на носії портативної системи</title>
+    <para>Образ портативної системи є образом для компакт-диска, який містить придатну до завантаження операційну систему. За допомогою образу портативної системи ви можете завантажувати систему на вашому комп'ютері з портативного носія.</para>
+    <para>Користування <application>gparted</application> з образу портативної системи має такі переваги: <itemizedlist>
+        <listitem>
+          <para>Ви зможете редагувати усі ваші розділи, оскільки усі ці розділи не буде змонтовано.</para>
+        </listitem>
+        <listitem>
+          <para>Ви зможете редагувати розділи на комп'ютерах, на яких не встановлено придатної до завантаження операційної системи.</para>
+        </listitem>
+      </itemizedlist></para>
+    <para>Програмою <application>gparted</application> можна скористатися у багатьох дистрибутивах портативних систем.</para>
+    <para>Ви можете отримати образ портативної системи, який містить <application>gparted</application>, з таких сайтів: <itemizedlist>
+        <listitem>
+          <para>Образ портативної системи GParted <ulink type="http" url="https://gparted.org/livecd.php"/></para>
+        </listitem>
+        <listitem>
+          <para>SystemRescue (також відомий як SystemRescueCD) <ulink type="http" url="https://www.system-rescue.org"/></para>
+        </listitem>
+      </itemizedlist></para>
+    <tip>
+      <para>Образ портативної системи із GParted можна записати на флешку USB.</para>
+      <para>Якщо ваш комп'ютер може завантажуватися з носіїв, які з'єднано за допомогою універсальної послідовної шини (Universal Serial Bus або USB), вам варто надати перевагу завантаженню та використанню <application>gparted</application> з флешки USB.</para>
+    </tip>
+    <tip>
+      <para>Щоб уникнути псування порожнього компакт-диска для запису файла образу компакт-диска, скористайтеся такими настановами:</para>
+      <itemizedlist>
+        <listitem>
+          <para>Переконайтеся, що контрольна сума отриманого файла збігається із контрольною сумою, яку вказано на сторінці отримання образу.</para>
+        </listitem>
+        <listitem>
+          <para>Переконайтеся, що файл .iso буде записано як образ на порожній компакт-диск. Якщо ви спробуєте записати файл .iso як дані на порожній компакт-диск, ви не зможете завантажити з нього систему на вашому комп'ютері.</para>
+        </listitem>
+      </itemizedlist>
+    </tip>
+  </sect1>
+
+<!-- ============= Fixing Operating System Boot Problems ============= -->
+  <sect1 id="gparted-fix-operating-system-boot-problems">
+    <title>Усування проблем із завантаженням операційної системи</title>
+    <para>У вашого комп'ютера можуть виникнути проблеми із завантаженням операційної системи, якщо ви виконали якусь із таких дій: <itemizedlist>
+        <listitem>
+          <para>Вилучили розділ.</para>
+        </listitem>
+        <listitem>
+          <para>Пересунули розділ.</para>
+        </listitem>
+        <listitem>
+          <para>Встановили іншу операційну і перезаписали основний запис завантаження (Master Boot Record або MBR).</para>
+        </listitem>
+      </itemizedlist></para>
+    <para>На щастя, проблеми із завантаженням часто можна усунути.</para>
+    <para>Якщо на вашому комп'ютері використано завантажувач GRUB, ознайомтеся із вмістом розділу <xref linkend="gparted-fix-grub-boot-problem"/>, щоб відновити можливість завантаження.</para>
+    <para>Якщо на вашому комп'ютері не використано GRUB, радимо вам звернутися до документації до вашого завантажувача, щоб дізнатися про те, як виправити проблему. Ви можете також звернутися до <ulink type="http" url="https://gparted.org/faq.php">Списку поширених питань щодо GParted та відповідей на них</ulink> або <ulink type="http" url="https://gparted.org/forum.php">форуму GParted</ulink>. Також можете пошукати шляхи розв'язання проблем іншими користувачами в інтернеті.</para>
+
+<!-- ============= Fixing GRUB Boot Problem ========================== -->
+    <sect2 id="gparted-fix-grub-boot-problem">
+      <title>Виправлення проблеми із завантаженням у GRUB</title>
+      <para>Завантажувач GRUB використовується у багатьох дистрибутивах GNU/Linux. Усування проблем із завантаженням GRUB слід розпочати із визначення основної версії використаного завантажувача GRUB.</para>
+      <para>Існує дві основні версії GRUB: <itemizedlist>
+          <listitem>
+            <para>GRUB, також відомий як GRUB 2, є завантажувачем версії 1.98 або новішої. GRUB 2 працює як із GPT, так і з таблицями розділів msdos.</para>
+          </listitem>
+          <listitem>
+            <para>Застарілий GRUB, який традиційно називають GRUB, — це завантажувач версій 0.9x та попередніх. Застарілий GRUB працює лише із таблицями розділів msdos.</para>
+          </listitem>
+        </itemizedlist></para>
+      <para>GRUB 2 використано як типовий завантажувач у таких дистрибутивах GNU/Linux: <itemizedlist>
+          <listitem>
+            <para>CentOS 7 і новіші версії</para>
+          </listitem>
+          <listitem>
+            <para>Debian 6 (Squeeze) і новіші версії</para>
+          </listitem>
+          <listitem>
+            <para>Fedora 16 (Verne) і новіші версії</para>
+          </listitem>
+          <listitem>
+            <para>openSUSE 12.2 і новіші версії</para>
+          </listitem>
+          <listitem>
+            <para>Ubuntu 9.10 (Karmic Koala) і новіші версії</para>
+          </listitem>
+        </itemizedlist></para>
+      <para>Якщо ви не певні щодо того, який із завантажувачів, GRUB 2 чи застарілий GRUB, використано на вашому комп'ютері, можете спробувати пошукати відповідь в інтернеті.</para>
+
+<!-- ============= To Restore GRUB 2 ================================= -->
+      <sect3 id="gparted-restore-grub-2">
+        <title>Відновлення завантажувача GRUB 2</title>
+        <para>Скористайтеся такими кроками для відновлення завантажувача GRUB 2: <orderedlist>
+            <listitem>
+              <para>Завантажте комп'ютер з носія портативної системи, зокрема GParted Live або образу вашого дистрибутива GNU/Linux. Відкрийте вікно термінала.</para>
+            </listitem>
+            <listitem>
+              <para>Визначте, на якому розділі міститься файлова система / для вашого дистрибутива GNU/Linux.</para>
+              <para>Скористайтеся GParted для отримання списку розділів на вашому дисковому пристрої. Знайдіть розділ, який містить вашу файлову систему / GNU/Linux. Ймовірно, цей розділ Linux використовуватиме файлову систему із такого списку: ext2, ext3, ext4 або btrfs.</para>
+              <note>
+                <para>Якщо розділ / зберігається у LVM, має бути активовано керування логічними томами. Запустити LVM можна також командою: <screen><prompt># </prompt><command>vgchange</command> -a y</screen></para>
+                <para>У LVM еквівалентом розділу на диску є логічний том. Отримати список логічних томів можна за допомогою такої команди: <screen><prompt># </prompt><command>lvscan</command></screen></para>
+              </note>
+              <note>
+                <para>Якщо розділ / працює у RAID, має бути активовано RAID. Програмний RAID у Linux можна запустити за допомогою такої команди: <screen><prompt># </prompt><command>mdadm</command> --assemble --scan</screen></para>
+              </note>
+            </listitem>
+            <listitem>
+              <para>Створіть каталог точки монтування за допомогою такої команди (від імені користувача root): <screen><prompt># </prompt><command>mkdir</command> /tmp/mydir</screen></para>
+            </listitem>
+            <listitem>
+              <para>Змонтуйте розділ / до каталогу точки монтування. Наприклад, припустімо, що файлова система / міститься на розділі /dev/sda5. Введіть таку команду (від імені користувача root): <screen><prompt># </prompt><command>mount</command> <replaceable>/dev/sda5</replaceable> /tmp/mydir</screen></para>
+            </listitem>
+            <listitem>
+              <para>Якщо у вас є окремий розділ /boot, наприклад на /dev/sda3, потрібен буде додатковий крок. Змонтуйте розділ /boot до /tmp/mydir/boot за допомогою такої команди (від імені користувача root): <screen><prompt># </prompt><command>mount</command> <replaceable>/dev/sda3</replaceable> /tmp/mydir/boot</screen></para>
+              <note>
+                <para>Якщо ви не знаєте, чи є у вас окремий розділ завантаження, ймовірно, у вас його немає, і ви можете проігнорувати цей крок.</para>
+              </note>
+            </listitem>
+            <listitem>
+              <para>Приготуйтеся до зміни середовища кореневого каталогу за допомогою таких команд (від імені користувача root): <screen><prompt># </prompt><command>mount</command> --bind /dev /tmp/mydir/dev</screen> <screen><prompt># </prompt><command>mount</command> --bind /proc /tmp/mydir/proc</screen> <screen><prompt># </prompt><command>mount</command> --bind /sys /tmp/mydir/sys</screen></para>
+            </listitem>
+            <listitem>
+              <para>Змініть середовище кореневого каталогу за допомогою такої команди (від імені користувача root): <screen><prompt># </prompt><command>chroot</command> /tmp/mydir</screen></para>
+            </listitem>
+            <listitem>
+              <para>Повторно встановіть GRUB 2 на пристрій завантаження. Зауважте, що використана назва пристрою не є назвою розділу. Наприклад, якщо розділом / є /dev/sda5, пристроєм є /dev/sda.</para>
+              <para>Для Debian, Ubuntu та інших похідних дистрибутивів GNU/Linux, введіть таку команду (від імені користувача root): <screen><prompt># </prompt><command>grub-install</command> <replaceable>/dev/sda</replaceable></screen></para>
+              <para>Для CentOS, Fedora, openSUSE та інших похідних дистрибутивів GNU/Linux, введіть таку команду (від імені користувача root): <screen><prompt># </prompt><command>grub2-install</command> <replaceable>/dev/sda</replaceable></screen></para>
+            </listitem>
+            <listitem>
+              <para>Вийдіть із середовища chroot за допомогою такої команди (від імені користувача root): <screen><prompt># </prompt><command>exit</command></screen></para>
+            </listitem>
+            <listitem>
+              <para>Перезавантажте систему.</para>
+            </listitem>
+          </orderedlist></para>
+      </sect3>
+
+<!-- ============= To Restore GRUB Legacy ============================ -->
+      <sect3 id="gparted-restore-grub-legacy">
+        <title>Відновлення застарілого завантажувача GRUB</title>
+        <para>Скористайтеся такими кроками для відновлення застарілого завантажувача GRUB: <orderedlist>
+            <listitem>
+              <para>Завантажте комп'ютер з носія портативної системи, зокрема образу вашого дистрибутива GNU/Linux. Відкрийте вікно термінала.</para>
+              <note>
+                <para>На носії портативної системи має міститися застарілий завантажувач GRUB. Якщо у вашому дистрибутиві GNU/Linux використано застарілий GRUB, на носії портативної системи також міститиметься застарілий GRUB.</para>
+              </note>
+            </listitem>
+            <listitem>
+              <para>Запустіть програму <application>grub</application> з командного рядка (від імені користувача root). <screen><prompt># </prompt><command>grub</command></screen></para>
+            </listitem>
+            <listitem>
+              <para>Визначте, де розташовано stage1 <application>grub</application> за допомогою одного з таких способів:</para>
+              <para>Якщо тека /boot зберігається на розділіe /, скористайтеся такою командою: <screen><prompt>grub&gt; </prompt><command>find</command> /boot/grub/stage1</screen> Якщо ж тека /boot зберігається на розділі, відмінному від розділу /, скористайтеся такою командою: <screen><prompt>grub&gt; </prompt><command>find</command> /grub/stage1</screen></para>
+              <para>Результати, які виведено командою <command>find</command> можуть виглядати десь так: <screen><computeroutput> <replaceable>(hd0,0)</replaceable></computeroutput></screen> Якщо у виведених даних декілька рядків, вам доведеться вирішити, який із пристроїв ви використовуєте для <application>grub</application>.</para>
+            </listitem>
+            <listitem>
+              <para>Встановіть кореневий пристрій <application>grub</application>, задавши пристрій, який було визначено за допомогою команди <command>find</command>. Це має бути розділ, що містить каталог boot. <screen><prompt>grub&gt; </prompt>root <replaceable>(hd0,0)</replaceable></screen></para>
+            </listitem>
+            <listitem>
+              <para>Повторно встановіть завантажувач <application>grub</application> до основного запису завантаження (Master Boot Record або MBR) за допомогою такої команди: <screen><prompt>grub&gt; </prompt>setup <replaceable>(hd0)</replaceable></screen></para>
+              <para>Якщо ви хочете встановити завантажувач <application>grub</application> до сектора завантаження розділу, замість попередньої команди вам слід вказати розділ ось так: <screen><prompt>grub&gt; </prompt>setup <replaceable>(hd0,0)</replaceable></screen></para>
+            </listitem>
+            <listitem>
+              <para>Вийдіть із <application>grub</application>. <screen><prompt>grub&gt; </prompt>quit</screen></para>
+            </listitem>
+            <listitem>
+              <para>Перезавантажте систему.</para>
+            </listitem>
+          </orderedlist></para>
+      </sect3>
+    </sect2>
+
+<!-- ============= End of Fixing Operating System Boot Problems ====== -->
+  </sect1>
+
+<!-- ============= Recovering Partition Tables ======================= -->
+  <sect1 id="gparted-recover-partition-table">
+    <title>Відновлення таблиць розділів</title>
+    <para>Якщо ви випадково перезаписали вашу таблицю розділів, ймовірно, її можна відновити.</para>
+    <para>Програму <application>testdisk</application> створено для полегшення відновлення втрачених розділів. Щоб дізнатися більше про <application>testdisk</application>, ознайомтеся із вмістом <ulink type="http" url="https://www.cgsecurity.org/wiki/TestDisk"/>.</para>
+    <para>Якщо не буде знайдено жодного розділу, вам доведеться скористатися іншими варіантами дій у спробі врятувати ваші дані. Програму <application>photorec</application> розроблено для того, щоб допомогти у відновленні вмісту файлів багатьох різних типів. Докладніші відомості щодо <application>photorec</application> наведено тут: <ulink type="http" url="https://www.cgsecurity.org/wiki/PhotoRec"/>.</para>
+    <para>Обидві програми, <application>testdisk</application> і <application>photorec</application>, включено до усіх образів портативних систем зі списку у розділі <xref linkend="gparted-acquire-livecd"/></para>
+  </sect1>
+
+</article>
