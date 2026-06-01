@@ -18,7 +18,6 @@
 #ifndef GPARTED_GPARTED_CORE_H
 #define GPARTED_GPARTED_CORE_H
 
-#include <iostream>
 #include "BlockSpecial.h"
 #include "Device.h"
 #include "FileSystem.h"
@@ -29,22 +28,26 @@
 #include "SupportedFileSystems.h"
 #include "Utils.h"
 
+#ifndef USE_ADB_BACKEND
+#include <parted/parted.h>
+#else
+struct PedDevice;
+struct PedDisk;
+struct PedPartition;
+struct PedFileSystem;
+struct PedGeometry;
+#endif
+
 #include <vector>
 #include <fstream>
 #include <glibmm/thread.h>
 #include <glibmm/ustring.h>
-
-#ifndef USE_ADB_BACKEND
-#include <parted/parted.h>
-#else
-struct PedDisk;
-struct PedDevice;
-struct PedPartition;
-#endif
+#include <memory>
 
 
 namespace GParted
 {
+
 
 class GParted_Core
 {
@@ -56,22 +59,22 @@ public:
 	GParted_Core() ;
 	~GParted_Core() ;
 
-	static Glib::ustring get_version_and_config_string();
-	static void find_supported_core();
-
-	static constexpr bool enable_log_commands = true;
-	static constexpr bool enable_log_output   = true;
-	static constexpr bool enable_log_set      = true;
+	static constexpr bool enable_log_cmd  = true;
+	static constexpr bool enable_log_out  = true;
+	static constexpr bool enable_log_set  = true;
 
 	inline static void log_cmd(const char* msg) {
-		if (enable_log_commands) std::cerr << msg << std::endl;
+		if (enable_log_cmd) std::cerr << msg << std::endl;
 	}
 	inline static void log_out(const char* msg) {
-		if (enable_log_output) std::cerr << msg << std::endl;
+		if (enable_log_out) std::cerr << msg << std::endl;
 	}
 	inline static void log_set(const char* msg) {
 		if (enable_log_set) std::cerr << msg << std::endl;
 	}
+
+	static Glib::ustring get_version_and_config_string();
+	static void find_supported_core();
 	void find_supported_filesystems() ;
 	void set_user_devices( const std::vector<Glib::ustring> & user_devices ) ;
 	void set_devices( std::vector<Device> & devices ) ;
@@ -102,11 +105,13 @@ public:
 	                                Sector end,
 	                                Byte_Value sector_size,
 	                                bool inside_extended );
+	static Glib::ustring check_logical_esp_warning(PartitionType ptntype, bool esp_flag);
+	static void compose_partition_flags(Partition& partition, const Glib::ustring& disktype);
 
 private:
 	//detectionstuff..
 	void set_thread_status_message( Glib::ustring msg ) ;
-	#ifndef USE_ADB_BACKEND
+#ifndef USE_ADB_BACKEND
 	static Glib::ustring get_partition_path(const PedPartition *lp_partition);
 #endif
 	void set_device_from_disk( Device & device, const Glib::ustring & device_path );
@@ -163,7 +168,7 @@ private:
 	bool move_filesystem( const Partition & partition_old,
 			      const Partition & partition_new,
 			      OperationDetail & operationdetail ) ;
-#if defined(HAVE_LIBPARTED_FS_RESIZE) && !defined(USE_ADB_BACKEND)
+#ifndef USE_ADB_BACKEND
 	bool resize_move_filesystem_using_libparted( const Partition & partition_old,
 				      		     const Partition & partition_new,
 					      	     OperationDetail & operationdetail ) ;
@@ -237,7 +242,18 @@ private:
 	bool check_repair_maximize( const Partition & partition,
 	                            OperationDetail & operationdetail );
 
-	bool set_partition_type( const Partition & partition, OperationDetail & operationdetail ) ;
+	bool set_partition_type(const Partition& partition, OperationDetail& operationdetail);
+#ifndef USE_ADB_BACKEND
+	static bool set_partition_type_using_flag(PedPartition* lp_partition,
+					          PedPartitionFlag lp_flag,
+					          OperationDetail& operationdetail);
+	static bool set_partition_flag(PedPartition* lp_partition,
+	                               PedPartitionFlag lp_flag,
+	                               OperationDetail& operationdetail);
+	bool set_partition_type_using_fstype(PedPartition* lp_partition,
+	                                     FSType fstype,
+	                                     OperationDetail& operationdetail);
+#endif
 
 	bool calibrate_partition( Partition & partition, OperationDetail & operationdetail ) ;
 	bool calculate_exact_geom( const Partition & partition_old,
@@ -251,11 +267,9 @@ private:
 	void capture_libparted_messages( OperationDetail & operationdetail, bool success );
 
 #ifndef USE_ADB_BACKEND
-	static bool flush_device( PedDevice * lp_device );
 	static bool get_device( const Glib::ustring & device_path, PedDevice *& lp_device, bool flush = false );
 	static bool get_disk(PedDevice *lp_device, PedDisk*& lp_disk);
-	static bool get_device_and_disk(const Glib::ustring& device_path,
-	                                PedDevice*& lp_device, PedDisk*& lp_disk, bool flush = false);
+	static bool get_device_and_disk(const Glib::ustring& device_path, PedDevice*& lp_device, PedDisk*& lp_disk);
 	static void destroy_device_and_disk( PedDevice*& lp_device, PedDisk*& lp_disk );
 	static bool commit( PedDisk* lp_disk );
 	static bool commit_to_os( PedDisk* lp_disk, std::time_t timeout );
@@ -267,15 +281,16 @@ private:
 
 	static PedExceptionOption ped_exception_handler( PedException * e ) ;
 
-	std::vector<PedPartitionFlag> flags;
+	std::vector<PedPartitionFlag> m_all_libparted_flags;
 #endif
-
 	std::vector<Glib::ustring> device_paths ;
 	bool probe_devices ;
 	Glib::ustring thread_status_message;  //Used to pass data to show_pulsebar method
-	static SupportedFileSystems* supported_filesystems;
+	static std::unique_ptr<SupportedFileSystems> supported_filesystems;
 };
 
-} //GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_GPARTED_CORE_H */

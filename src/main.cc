@@ -42,7 +42,8 @@ int main( int argc, char *argv[] )
 	// Display version and configuration info when starting for command line users.
 	std::cout << GParted::GParted_Core::get_version_and_config_string() << std::endl;
 
-	#ifndef USE_ADB_BACKEND
+#ifndef USE_ADB_BACKEND
+	//check UID
 	if ( getuid() != 0 )
 	{
 		const Glib::ustring error_msg(_("Root privileges are required for running GParted"));
@@ -58,12 +59,7 @@ int main( int argc, char *argv[] )
 #endif
 
 	//deal with arguments..
-	std::vector<Glib::ustring> user_devices;
-	for (int i = 1; i < argc; i++)
-	{
-		Glib::ustring arg(argv[i]);
-		user_devices.push_back(arg);
-	}
+	std::vector<Glib::ustring> user_devices(argv + 1, argv + argc);
 	
 	GParted::Win_GParted win_gparted( user_devices ) ; 
 	Gtk::Main::run( win_gparted ) ;

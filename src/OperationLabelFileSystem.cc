@@ -14,64 +14,64 @@
  *  along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
+
 #include "OperationLabelFileSystem.h"
+
+#include "Device.h"
+#include "Operation.h"
 #include "Partition.h"
 #include "PartitionVector.h"
+
+#include <glib.h>
+#include <glibmm/ustring.h>
+
 
 namespace GParted
 {
 
+
 OperationLabelFileSystem::OperationLabelFileSystem( const Device & device,
                                                     const Partition & partition_orig,
                                                     const Partition & partition_new )
+ : Operation(OPERATION_LABEL_FILESYSTEM, device, partition_orig, partition_new)
 {
-	type = OPERATION_LABEL_FILESYSTEM;
-
-	this->device = device.get_copy_without_partitions();
-	this->partition_original = partition_orig.clone();
-	this->partition_new      = partition_new.clone();
 }
 
-OperationLabelFileSystem::~OperationLabelFileSystem()
-{
-	delete partition_original;
-	delete partition_new;
-	partition_original = nullptr;
-	partition_new = nullptr;
-}
 
 void OperationLabelFileSystem::apply_to_visual( PartitionVector & partitions )
 {
 	substitute_new( partitions );
 }
 
+
 void OperationLabelFileSystem::create_description()
 {
-	g_assert(partition_new != nullptr);  // Bug: Not initialised by constructor or reset later
+	g_assert(m_partition_new != nullptr);  // Bug: Not initialised by constructor or reset later
 
-	if( partition_new->get_filesystem_partition().get_filesystem_label().empty() )
+	if(m_partition_new->get_filesystem_partition().get_filesystem_label().empty())
 	{
 		/* TO TRANSLATORS: looks like   Clear file system Label on /dev/hda3 */
-		description = Glib::ustring::compose( _("Clear file system label on %1"),
-		                                partition_new->get_path() );
+		m_description = Glib::ustring::compose(_("Clear file system label on %1"),
+		                                m_partition_new->get_path());
 	}
 	else
 	{
 		/* TO TRANSLATORS: looks like   Set file system label "My Label" on /dev/hda3 */
-		description = Glib::ustring::compose( _("Set file system label \"%1\" on %2"),
-		                                partition_new->get_filesystem_partition().get_filesystem_label(),
-		                                partition_new->get_path() );
+		m_description = Glib::ustring::compose(_("Set file system label \"%1\" on %2"),
+		                                m_partition_new->get_filesystem_partition().get_filesystem_label(),
+		                                m_partition_new->get_path());
 	}
 }
 
+
 bool OperationLabelFileSystem::merge_operations( const Operation & candidate )
 {
-	g_assert(partition_new != nullptr);  // Bug: Not initialised by constructor or reset later
+	g_assert(m_partition_new != nullptr);  // Bug: Not initialised by constructor or reset later
 
-	if ( candidate.type == OPERATION_LABEL_FILESYSTEM         &&
-	     *partition_new == candidate.get_partition_original()    )
+	if (candidate.m_type == OPERATION_LABEL_FILESYSTEM         &&
+	    *m_partition_new == candidate.get_partition_original()   )
 	{
-		partition_new->set_filesystem_label( candidate.get_partition_new().get_filesystem_label() );
+		m_partition_new->set_filesystem_label(candidate.get_partition_new().get_filesystem_label());
 		create_description();
 		return true;
 	}
@@ -79,4 +79,5 @@ bool OperationLabelFileSystem::merge_operations( const Operation & candidate )
 	return false;
 }
 
-} //GParted
+
+}  // namespace GParted

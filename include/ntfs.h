@@ -19,11 +19,17 @@
 #ifndef GPARTED_NTFS_H
 #define GPARTED_NTFS_H
 
+
 #include "FileSystem.h"
+#include "OperationDetail.h"
 #include "Partition.h"
+
+#include <glibmm/ustring.h>
+
 
 namespace GParted
 {
+
 
 class ntfs : public FileSystem
 {
@@ -33,7 +39,6 @@ public:
 	void set_used_sectors( Partition & partition ) ;
 	void read_label( Partition & partition ) ;
 	bool write_label( const Partition & partition, OperationDetail & operationdetail ) ;
-	void read_uuid( Partition & partition ) ;
 	bool write_uuid( const Partition & partition, OperationDetail & operationdetail ) ;
 	bool create( const Partition & new_partition, OperationDetail & operationdetail ) ;
 	bool resize( const Partition & partition_new, OperationDetail & operationdetail, bool fill_partition );
@@ -47,6 +52,8 @@ private:
 	void clone_progress( OperationDetail *operationdetail );
 };
 
-} //GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_NTFS_H */

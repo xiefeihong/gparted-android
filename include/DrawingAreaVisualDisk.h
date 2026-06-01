@@ -21,9 +21,12 @@
 #include "PartitionVector.h"
 
 #include <gtkmm/drawingarea.h>
+#include <sigc++/signal.h>
+
 
 namespace GParted
 {
+
 
 class DrawingAreaVisualDisk : public Gtk::DrawingArea
 {
@@ -41,36 +44,38 @@ public:
 	sigc::signal< void, unsigned int, unsigned int > signal_popup_menu ;
 	
 private:
-	struct visual_partition ; 
+	struct VisualPartition;
 
 	//private functions	
 	int get_total_separator_px( const PartitionVector & partitions );
 
-	void set_static_data( const PartitionVector & partitions,
-	                      std::vector<visual_partition> & visual_partitions,
-	                      Sector length );
-	int calc_length( std::vector<visual_partition> & visual_partitions, int length_px ) ;
-	void calc_position_and_height( std::vector<visual_partition> & visual_partitions, int start, int border ) ;
-	void calc_usage( std::vector<visual_partition> & visual_partitions ) ;
-	void calc_text( std::vector<visual_partition> & visual_partitions ) ;
+	void set_static_data(const PartitionVector & partitions,
+	                     std::vector<VisualPartition>& visual_partitions,
+	                     Sector device_length);
+	int calc_length(std::vector<VisualPartition>& visual_partitions, int length_px);
+	void calc_position_and_height(std::vector<VisualPartition>& visual_partitions, int start, int border);
+	void calc_usage(std::vector<VisualPartition>& visual_partitions);
+	void calc_text(std::vector<VisualPartition>& visual_partitions);
 
 	void draw_partition(const Cairo::RefPtr<Cairo::Context>& cr,
-	                    const visual_partition& vp);
+	                    const VisualPartition& vp);
 	void draw_partitions(const Cairo::RefPtr<Cairo::Context>& cr,
-	                     const std::vector<visual_partition>& visual_partitions);
+	                     const std::vector<VisualPartition>& visual_partitions);
 
-	void set_selected( const std::vector<visual_partition> & visual_partitions, int x, int y ) ;
-	void set_selected( const std::vector<visual_partition> & visual_partitions, const Partition * partition_ptr );
+	bool set_selected_by_coord(const std::vector<VisualPartition>& visual_partitions,
+	                           int x, int y);
+	bool set_selected_by_ptn(const std::vector<VisualPartition>& visual_partitions,
+	                         const Partition* partition_ptr);
 
-	int spreadout_leftover_px( std::vector<visual_partition> & visual_partitions, int pixels ) ;
-	
+	int spreadout_leftover_px(std::vector<VisualPartition>& visual_partitions, int pixels);
+
 	//overridden signalhandlers
 	bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr);
 	bool on_button_press_event( GdkEventButton * event ) ;
 	void on_size_allocate( Gtk::Allocation & allocation ) ;
 
 	//variables
-	struct visual_partition
+	struct VisualPartition
 	{
 		double fraction ;		//Partition size as a fraction of containing disk or extended partition size
 		int x_start, length ;
@@ -84,12 +89,12 @@ private:
 		Gdk::RGBA color;
 		Glib::RefPtr<Pango::Layout> pango_layout;
 
-		// Pointer to real partition.  (Alias to element in Win_GParted::display_partitions[] vector).
+		// Pointer to real partition.  (Alias to element in Win_GParted::m_display_device.partitions[] vector).
 		const Partition * partition_ptr;
 
-		std::vector<visual_partition> logicals ;
+		std::vector<VisualPartition> logicals;
 
-		visual_partition()
+		VisualPartition()
 		{
 			fraction = 0.0 ;
 			x_start = length =
@@ -99,28 +104,30 @@ private:
 			x_unallocated_start = unallocated_length =
 			y_usage_start = usage_height =
 			x_text = y_text = 0 ;
-			
+
 			pango_layout .clear() ;
 			logicals .clear() ;
 		}
 
-		~visual_partition()
+		~VisualPartition()
 		{
 			pango_layout .clear() ;
 			logicals .clear() ;
 		}
 	};
 
-	std::vector<visual_partition> visual_partitions ;
-	const visual_partition * selected_vp ;
-	int TOT_SEP, MIN_SIZE ;
-
-	Gdk::RGBA color_used;
-	Gdk::RGBA color_unused;
-	Gdk::RGBA color_unallocated;
-	Gdk::RGBA color_text;
+	std::vector<VisualPartition> m_visual_partitions;
+	const VisualPartition*       m_selected_vp;
+	int                          m_tot_sep;
+	int                          m_min_size;
+	const Gdk::RGBA              m_color_used;
+	const Gdk::RGBA              m_color_unused;
+	const Gdk::RGBA              m_color_unallocated;
+	const Gdk::RGBA              m_color_text;
 };
 
-} //GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_DRAWINGAREAVISUALDISK_H */

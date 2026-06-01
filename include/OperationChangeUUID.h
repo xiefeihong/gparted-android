@@ -17,12 +17,16 @@
 #ifndef GPARTED_OPERATIONCHANGEUUID_H
 #define GPARTED_OPERATIONCHANGEUUID_H
 
+
+#include "Device.h"
 #include "Operation.h"
 #include "Partition.h"
 #include "PartitionVector.h"
 
+
 namespace GParted
 {
+
 
 class OperationChangeUUID : public Operation
 {
@@ -31,18 +35,19 @@ public:
 	                   , const Partition & partition_orig
 	                   , const Partition & partition_new
 	                   ) ;
-	virtual ~OperationChangeUUID();
+
+	OperationChangeUUID(const OperationChangeUUID& src) = delete;             // Copy construction prohibited
+	OperationChangeUUID& operator=(const OperationChangeUUID& rhs) = delete;  // Copy assignment prohibited
 
 	void apply_to_visual( PartitionVector & partitions );
 
 private:
-	OperationChangeUUID( const OperationChangeUUID & src );              // Not implemented copy constructor
-	OperationChangeUUID & operator=( const OperationChangeUUID & rhs );  // Not implemented copy assignment operator
-
 	void create_description() ;
 	bool merge_operations( const Operation & candidate );
-} ;
+};
 
-} //GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_OPERATIONCHANGEUUID_H */

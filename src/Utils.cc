@@ -31,10 +31,12 @@
 #include <glibmm/stringutils.h>
 #include <glibmm/shell.h>
 #include <glibmm/fileutils.h>
+#include <glibmm/convert.h>
 #include <gtkmm/main.h>
 #include <gtkmm/enums.h>
 #include <gtkmm/stock.h>
 #include <gtkmm/stockitem.h>
+#include <sigc++/signal.h>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -45,6 +47,77 @@
 
 namespace GParted
 {
+
+
+namespace  // unnamed
+{
+
+
+class CommandStatus
+{
+public:
+	bool        running;
+	int         pipecount;
+	int         exit_status;
+	bool        foreground;
+	Glib::Mutex mutex;
+	Glib::Cond  cond;
+
+	void store_exit_status(GPid pid, int status);
+	void execute_command_eof();
+};
+
+
+void CommandStatus::store_exit_status(GPid pid, int status)
+{
+	exit_status = Utils::decode_wait_status(status);
+	running = false;
+	if (pipecount == 0)  // pipes finished first
+	{
+		if (foreground)
+			Gtk::Main::quit();
+		else {
+			mutex.lock();
+			cond.signal();
+			mutex.unlock();
+		}
+	}
+	Glib::spawn_close_pid(pid);
+}
+
+
+void CommandStatus::execute_command_eof()
+{
+	if (--pipecount)
+		return;  // wait for second pipe to eof
+	if (! running)  // already got exit status
+	{
+		if (foreground)
+			Gtk::Main::quit();
+		else {
+			mutex.lock();
+			cond.signal();
+			mutex.unlock();
+		}
+	}
+}
+
+
+static void set_C_locale()
+{
+	setenv("LC_ALL", "C", 1);
+}
+
+
+static void _store_exit_status(GPid pid, gint status, gpointer data)
+{
+	CommandStatus *sp = (CommandStatus *)data;
+	sp->store_exit_status(pid, status);
+}
+
+
+}  // unnamed namespace
+
 
 const Glib::ustring DEV_MAPPER_PATH = "/dev/mapper/";
 
@@ -66,7 +139,7 @@ Gtk::Label * Utils::mk_label( const Glib::ustring & text
                             , Gtk::Align valign
                             )
 {
-	Gtk::Label *label = manage(new Gtk::Label(text));
+	Gtk::Label* label = Gtk::manage(new Gtk::Label(text));
 
 	label->set_xalign(0.0);
 	label->set_valign(valign);
@@ -84,7 +157,7 @@ Gtk::Label * Utils::mk_label( const Glib::ustring & text
 
 Gtk::Image* Utils::mk_image(const Gtk::StockID& stock_id, Gtk::IconSize icon_size)
 {
-	Gtk::Image *image = Gtk::manage(new Gtk::Image(stock_id, icon_size));
+	Gtk::Image* image = Gtk::manage(new Gtk::Image(stock_id, icon_size));
 
 	// Ensure icon size
 	int width = 0;
@@ -104,9 +177,8 @@ Glib::RefPtr<Gdk::Pixbuf> Utils::mk_pixbuf(Gtk::Widget& widget,
                                            Gtk::IconSize icon_size)
 {
 	Glib::RefPtr<Gdk::Pixbuf> theme_icon = widget.render_icon_pixbuf(stock_id, icon_size);
-
-	if (!theme_icon)
-		return Gdk::Pixbuf::create(Gdk::COLORSPACE_RGB, false, 8, 24, 24);
+	if (! theme_icon)
+		return theme_icon;
 
 	// Ensure icon size
 	int width = 0;
@@ -156,6 +228,7 @@ Glib::ustring Utils::get_color(FSType fstype)
 		case FS_CLEARED:         return "#000000";  // Black
 		case FS_OTHER:           return "#000000";  // Black (never displayed)
 		case FS_EXTENDED:        return "#95E3E5";  // Cyan Hilight [*]
+		case FS_BCACHEFS:        return "#C26825";  // Orange Dark [*]
 		case FS_BTRFS:           return "#E58749";  // Orange Medium [*]
 		case FS_EXFAT:           return "#267726";  // Accent Green Dark
 		case FS_EXT2:            return "#7590AE";  // Blue Medium
@@ -188,8 +261,8 @@ Glib::ustring Utils::get_color(FSType fstype)
 		case FS_LINUX_SWSUSPEND: return "#884631";  // Red Dark
 		case FS_REFS:            return "#3EA281";  // Aquamarine Dark [*]
 		case FS_UFS:             return "#AA8F2C";  // Accent Yellow Shadow [+]
-		case FS_ZFS:             return "#C26825";  // Orange Dark [*]
-		case FS_EROFS:           return "#4D908E";  // Teal [EROFS]
+		case FS_ZFS:             return "#984F18";  // Orange Shadow [*]
+		case FS_EROFS:           return "#E47E3C";  // Orange Red [*]
 		case FS_USED:            return "#F8F8BA";  // Light Tan Yellow [*]
 		case FS_UNUSED:          return "#FFFFFF";  // White
 		default:                 return "#000000";  // Black
@@ -259,53 +332,54 @@ int Utils::get_max_partition_name_length( Glib::ustring & tabletype )
 
 int Utils::get_filesystem_label_maxlength(FSType fstype)
 {
+	// Only file systems which can have labels, either set when created or changed
+	// afterwards, need a maximum length defining.
 	switch (fstype)
 	{
-		//All file systems commented out are not supported for labelling
-		//  by either the new partition or label partition operations.
-		case FS_BTRFS		: return 255 ;
-		case FS_EXFAT		: return 11;
-		case FS_EXT2		: return 16 ;
-		case FS_EXT3		: return 16 ;
-		case FS_EXT4		: return 16 ;
+		case FS_BCACHEFS:   return 32;
+		case FS_BTRFS:      return 255;
+		case FS_EXFAT:      return 11;
+		case FS_EXT2:       return 16;
+		case FS_EXT3:       return 16;
+		case FS_EXT4:       return 16;
+
 		// mkfs.f2fs supports labels up to 512 characters, however only blkid is
 		// used to read the label and that only displays the first 127 characters.
-		case FS_F2FS		: return 127;
-		case FS_FAT16		: return 11 ;
-		case FS_FAT32		: return 11 ;
-		//mkfs.hfsplus can create hfs and hfs+ file systems with labels up to 255
-		//  characters.  However there is no specific tool to read the labels and
-		//  blkid, the only tool currently available, only display the first 27
-		//  and 63 character respectively.
-		//  Reference:
-		//  util-linux-2.20.1/libblkid/src/superblocks/hfs.c:struct hfs_mdb
-		case FS_HFS		: return 27 ;
-		case FS_HFSPLUS		: return 63 ;
-		//mkfs.jfs and jfs_tune can create and update labels to 16 characters but
-		//  only displays the first 11 characters.  This is because version 1 jfs
-		//  file systems only have an 11 character field for the label but version
-		//  2 jfs has extra fields containing a 16 character label.  mkfs.jfs
-		//  writes the extra fields containing the 16 character label, but then
-		//  sets it to version 1 jfs.  It does this to be backwardly compatible
-		//  with jfs before 1.0.18, released May 2002.  Blkid does display the
-		//  full 16 character label by just ignoring the file system version.
-		//  As using jfs_tune to get the label stick with an 11 character limit.
-		//  References:
-		//  jfsutils-1.1.15/tune/tune.c:main()
-		//  jfsutils-1.1.15/mkfs/mkfs.c:create_aggregate()
-		//  http://jfs.cvs.sourceforge.net/viewvc/jfs/jfsutils/NEWS?revision=HEAD
-		case FS_JFS		: return 11 ;
-		case FS_LINUX_SWAP	: return 15 ;
-		//case FS_LVM2_PV	: return  ;
-		case FS_MINIX		: return 0;  // MINIX doesn't support labelling.
-		case FS_NILFS2		: return 80 ;
-		case FS_NTFS		: return 128 ;
-		case FS_REISER4		: return 16 ;
-		case FS_REISERFS	: return 16 ;
-		case FS_UDF		: return 126;  // and only 63 if label contains character above U+FF
-		case FS_XFS		: return 12 ;
+		case FS_F2FS:       return 127;
+		case FS_FAT16:      return 11;
+		case FS_FAT32:      return 11;
 
-		default			: return 30 ;
+		// mkfs.hfsplus can create hfs and hfs+ file systems with labels up to 255
+		// characters.  However there is no specific tool to read the labels and
+		// blkid, the only tool currently available, only display the first 27 and
+		// 63 character respectively.
+		// Reference:
+		// util-linux-2.20.1/libblkid/src/superblocks/hfs.c:struct hfs_mdb
+		case FS_HFS:        return 27;
+		case FS_HFSPLUS:    return 63;
+
+		// mkfs.jfs and jfs_tune can create and update labels to 16 characters but
+		// only displays the first 11 characters.  This is because version 1 jfs
+		// file systems only have an 11 character field for the label but version
+		// 2 jfs has extra fields containing a 16 character label.  mkfs.jfs
+		// writes the extra fields containing the 16 character label, but then
+		// sets it to version 1 jfs.  It does this to be backwardly compatible
+		// with jfs before 1.0.18, released May 2002.  Blkid does display the full
+		// 16 character label by just ignoring the file system version.  As using
+		// jfs_tune to read the label stick with an 11 character limit.
+		// References:
+		// jfsutils-1.1.15/tune/tune.c:main()
+		// jfsutils-1.1.15/mkfs/mkfs.c:create_aggregate()
+		// http://jfs.cvs.sourceforge.net/viewvc/jfs/jfsutils/NEWS?revision=HEAD
+		case FS_JFS:        return 11;
+		case FS_LINUX_SWAP: return 15;
+		case FS_NILFS2:     return 80;
+		case FS_NTFS:       return 128;
+		case FS_REISER4:    return 16;
+		case FS_REISERFS:   return 16;
+		case FS_UDF:        return 126;  // and only 63 if label contains character above U+FF
+		case FS_XFS:        return 12;
+		default:            return 30;
 	}
 }
 
@@ -351,6 +425,7 @@ const Glib::ustring Utils::get_filesystem_string(FSType fstype)
 		                          */
 		                         return _("cleared");
 		case FS_EXTENDED:        return "extended";
+		case FS_BCACHEFS:        return "bcachefs";
 		case FS_BTRFS:           return "btrfs";
 		case FS_EXFAT:           return "exfat";
 		case FS_EXT2:            return "ext2";
@@ -411,6 +486,7 @@ const Glib::ustring Utils::get_filesystem_kernel_name( FSType fstype )
 {
 	switch ( fstype )
 	{
+		case FS_BCACHEFS : return "bcachefs";
 		case FS_BTRFS    : return "btrfs";
 		case FS_EXFAT    : return "exfat";
 		case FS_EXT2     : return "ext2";
@@ -429,6 +505,7 @@ const Glib::ustring Utils::get_filesystem_kernel_name( FSType fstype )
 		case FS_REISERFS : return "reiserfs";
 		case FS_UDF      : return "udf";
 		case FS_XFS      : return "xfs";
+		case FS_EROFS    : return "erofs";
 		default          : return "";
 	}
 }
@@ -438,11 +515,12 @@ const Glib::ustring Utils::get_filesystem_software(FSType fstype)
 {
 	switch (fstype)
 	{
+		case FS_BCACHEFS:   return "bcachefs-tools";
 		case FS_BTRFS:      return "btrfs-progs / btrfs-tools";
 		case FS_EXFAT:      return "exfatprogs";
 		case FS_EXT2:       return "e2fsprogs";
 		case FS_EXT3:       return "e2fsprogs";
-		case FS_EXT4:       return "e2fsprogs v1.41+";
+		case FS_EXT4:       return "e2fsprogs";
 		case FS_F2FS:       return "f2fs-tools";
 		case FS_FAT16:      return "dosfstools, mtools";
 		case FS_FAT32:      return "dosfstools, mtools";
@@ -537,14 +615,17 @@ bool Utils::kernel_version_at_least( int major_ver, int minor_ver, int patch_ver
 Glib::ustring Utils::format_size( Sector sectors, Byte_Value sector_size )
 {
 	std::stringstream ss ;
-	ss << std::setiosflags( std::ios::fixed ) << std::setprecision( 2 ) ;
+	ss << std::setiosflags(std::ios::fixed);
 
 	if ( (sectors * sector_size) < KIBIBYTE )
 	{
+		ss << std::setprecision(0);
 		ss << sector_to_unit( sectors, sector_size, UNIT_BYTE ) ;
 		return Glib::ustring::compose( _("%1 B"), ss .str() ) ;
 	}
-	else if ( (sectors * sector_size) < MEBIBYTE )
+
+	ss << std::setprecision(2);
+	if (sectors * sector_size < MEBIBYTE)
 	{
 		ss << sector_to_unit( sectors, sector_size, UNIT_KIB ) ;
 		return Glib::ustring::compose( _("%1 KiB"), ss .str() ) ;
@@ -621,64 +702,6 @@ int Utils::execute_command( const Glib::ustring & command )
 	Glib::ustring dummy ;
 	return execute_command(command, nullptr, dummy, dummy);
 }
-
-class CommandStatus
-{
-public:
-	bool running;
-	int pipecount;
-	int exit_status;
-	bool foreground;
-	Glib::Mutex mutex;
-	Glib::Cond cond;
-	void store_exit_status( GPid pid, int status );
-	void execute_command_eof();
-};
-
-void CommandStatus::store_exit_status( GPid pid, int status )
-{
-	exit_status = Utils::decode_wait_status( status );
-	running = false;
-	if (pipecount == 0) // pipes finished first
-	{
-		if (foreground)
-			Gtk::Main::quit();
-		else {
-			mutex.lock();
-			cond.signal();
-			mutex.unlock();
-		}
-	}
-	Glib::spawn_close_pid( pid );
-}
-
-void CommandStatus::execute_command_eof()
-{
-	if (--pipecount)
-		return; // wait for second pipe to eof
-	if ( !running ) // already got exit status
-	{
-		if (foreground)
-			Gtk::Main::quit();
-		else {
-			mutex.lock();
-			cond.signal();
-			mutex.unlock();
-		}
-	}
-}
-
-static void set_locale()
-{
-	setenv( "LC_ALL", "C", 1 );
-}
-
-static void _store_exit_status( GPid pid, gint status, gpointer data )
-{
-	CommandStatus *sp = (CommandStatus *)data;
-	sp->store_exit_status( pid, status );
-}
-
 int Utils::execute_command( const Glib::ustring & command,
 			    Glib::ustring & output,
 			    Glib::ustring & error,
@@ -707,13 +730,13 @@ int Utils::execute_command( const Glib::ustring & command,
 			std::string( "." ),
 			Glib::shell_parse_argv( command ),
 			Glib::SPAWN_DO_NOT_REAP_CHILD | Glib::SPAWN_SEARCH_PATH,
-			use_C_locale ? sigc::ptr_fun( set_locale ) : sigc::slot< void >(),
+			use_C_locale ? sigc::ptr_fun(set_C_locale) : sigc::slot<void>(),
 			&pid,
 			(input != nullptr) ? &in : 0,
 			&out,
 			&err );
 	} catch (Glib::SpawnError &e) {
-		std::cerr << e.what() << std::endl;
+		std::cerr << Utils::convert_ustring(e.what().raw()) << std::endl;
 		return Utils::get_failure_status( e );
 	}
 	fcntl( out, F_SETFL, O_NONBLOCK );
@@ -757,7 +780,7 @@ int Utils::execute_command( const Glib::ustring & command,
 // NOTE:
 // Together get_failure_status() and decode_wait_status() provide complete shell style
 // exit status handling.  See bash(1) manual page, EXIT STATUS section for details.
-int Utils::get_failure_status( Glib::SpawnError & e )
+int Utils::get_failure_status(const Glib::SpawnError& e)
 {
 	if ( e.code() == Glib::SpawnError::NOENT )
 		return 127;
@@ -779,6 +802,17 @@ int Utils::decode_wait_status( int wait_status )
 	std::cerr << "Unexpected wait status " << wait_status << std::endl;
 	return 255;
 }
+
+
+// Convert Unicode string to the locale's character set.  Any characters which aren't
+// converted are simply skipped.
+std::string Utils::convert_ustring(const Glib::ustring& ustr)
+{
+	std::string output_charset;
+	Glib::get_charset(output_charset);
+	return Glib::convert_with_fallback(ustr.raw(), output_charset, "UTF-8", "");
+}
+
 
 Glib::ustring Utils::regexp_label( const Glib::ustring & text
                                  , const Glib::ustring & pattern
@@ -951,7 +985,7 @@ bool Utils::is_dev_busy(const Glib::ustring& path)
 const Glib::ustring& Utils::first_directory(const std::vector<Glib::ustring>& paths)
 {
 	for (unsigned int i = 0; i < paths.size(); i++)
-		if (file_test(paths[i], Glib::FILE_TEST_IS_DIR))
+		if (Glib::file_test(paths[i], Glib::FILE_TEST_IS_DIR))
 			return paths[i];
 
 	static const Glib::ustring not_found;
@@ -1005,4 +1039,5 @@ bool Utils::get_kernel_version( int & major_ver, int & minor_ver, int & patch_ve
 	return success ;
 }
 
-} //GParted..
+
+}  // namespace GParted

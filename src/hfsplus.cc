@@ -15,27 +15,30 @@
  *  along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
+
 #include "hfsplus.h"
+
 #include "FileSystem.h"
+#include "OperationDetail.h"
 #include "Partition.h"
+#include "Utils.h"
 
 #include <glibmm/miscutils.h>
 #include <glibmm/shell.h>
+#include <glibmm/ustring.h>
 
 
 namespace GParted
 {
+
 
 FS hfsplus::get_filesystem_support()
 {
 	FS fs( FS_HFSPLUS );
 
 	fs .busy = FS::GPARTED ;
-
-#ifdef HAVE_LIBPARTED_FS_RESIZE
 	fs.read = FS::LIBPARTED;
 	fs.shrink = FS::LIBPARTED;
-#endif
 
 	if ( ! Glib::find_program_in_path( "mkfs.hfsplus" ) .empty() )
 	{
@@ -55,19 +58,21 @@ FS hfsplus::get_filesystem_support()
 
 bool hfsplus::create( const Partition & new_partition, OperationDetail & operationdetail )
 {
-	Glib::ustring cmd = "";
+	Glib::ustring cmd;
 	if( new_partition.get_filesystem_label().empty() )
 		cmd = "mkfs.hfsplus " + Glib::shell_quote( new_partition.get_path() );
 	else
 		cmd = "mkfs.hfsplus -v " + Glib::shell_quote( new_partition.get_filesystem_label() ) +
 		      " " + Glib::shell_quote( new_partition.get_path() );
-	return ! execute_command( cmd , operationdetail, EXEC_CHECK_STATUS );
+	return ! operationdetail.execute_command(cmd, EXEC_CHECK_STATUS);
 }
+
 
 bool hfsplus::check_repair( const Partition & partition, OperationDetail & operationdetail )
 {
-	return ! execute_command( "fsck.hfsplus -f -y " + Glib::shell_quote( partition.get_path() ),
-	                          operationdetail, EXEC_CHECK_STATUS );
+	return ! operationdetail.execute_command("fsck.hfsplus -f -y " + Glib::shell_quote(partition.get_path()),
+	                        EXEC_CHECK_STATUS);
 }
 
-} //GParted
+
+}  // namespace GParted

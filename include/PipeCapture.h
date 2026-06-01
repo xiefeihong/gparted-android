@@ -24,15 +24,18 @@
 #include <glibmm/ustring.h>
 #include <glibmm/refptr.h>
 #include <glibmm/iochannel.h>
+#include <sigc++/signal.h>
 
-namespace GParted {
+
+namespace GParted
+{
+
 
 // captures output pipe of subprocess into a ustring and emits a signal on eof
 class PipeCapture
 {
 public:
 	PipeCapture( int fd, Glib::ustring &buffer );
-	~PipeCapture();
 
 	void connect_signal();
 	sigc::signal<void> signal_eof;
@@ -43,22 +46,20 @@ private:
 	static gboolean _OnReadable( GIOChannel *source,
 	                             GIOCondition condition,
 	                             gpointer data );
-	static void append_unichar_vector_to_utf8( std::string & str,
-	                                           const std::vector<gunichar> & ucvec );
-	static gunichar get_utf8_char_validated(const char *p, gssize max_len);
-	static int utf8_char_length( unsigned char firstbyte );
 
-	Glib::RefPtr<Glib::IOChannel> channel;  // Wrapper around fd
-	char * readbuf;                 // Bytes read from IOChannel (fd)
-	size_t fill_offset;             // Filling offset into readbuf
-	std::vector<gunichar> linevec;  // Current line stored as UCS-4 characters
-	size_t cursor;                  // Cursor position index into linevec
-	std::string capturebuf;         // Captured output as UTF-8 characters
-	size_t line_start;              // Index into bytebuf where current line starts
-	Glib::ustring & callerbuf;      // Reference to caller supplied buffer
-	bool callerbuf_uptodate;        // Has capturebuf changed since last copied to callerbuf?
+	Glib::RefPtr<Glib::IOChannel> m_channel;             // Wrapper around fd
+	std::vector<char>             m_readbuf;             // Bytes read from IOChannel (fd)
+	size_t                        m_fill_offset;         // Filling offset into m_readbuf
+	std::vector<gunichar>         m_linevec;             // Current line stored as UCS-4 characters
+	size_t                        m_cursor;              // Cursor position index into m_linevec
+	std::string                   m_capturebuf;          // Captured output as UTF-8 characters
+	size_t                        m_line_start;          // Index into m_capturebuf where current line starts
+	Glib::ustring&                m_callerbuf;           // Reference to caller supplied buffer
+	bool                          m_callerbuf_uptodate;  // Has m_capturebuf changed since last copied to m_callerbuf?
 };
 
-} // namepace GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_PIPECAPTURE_H */

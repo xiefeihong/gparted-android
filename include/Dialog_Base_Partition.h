@@ -20,20 +20,25 @@
 
 
 #include "Device.h"
-#include "Frame_Resizer_Extended.h"
+#include "Frame_Resizer_Base.h"
 #include "FileSystem.h"
 #include "OptionComboBox.h"
 #include "Partition.h"
+#include "Utils.h"
 
 #include <gtkmm/dialog.h>
-#include <gtkmm/stock.h>
 #include <gtkmm/label.h>
 #include <gtkmm/spinbutton.h>
 #include <gtkmm/grid.h>
 #include <gtkmm/box.h>
+#include <gtkmm/button.h>
+#include <sigc++/connection.h>
+#include <memory>
+
 
 namespace GParted
 {
+
 
 class Dialog_Base_Partition : public Gtk::Dialog
 {
@@ -42,8 +47,11 @@ public:
 	Dialog_Base_Partition(const Device& device);
 	~Dialog_Base_Partition( ) ;
 
+	Dialog_Base_Partition(const Dialog_Base_Partition& src) = delete;             // Copy construction prohibited
+	Dialog_Base_Partition& operator=(const Dialog_Base_Partition& rhs) = delete;  // Copy assignment prohibited
+
 	void Set_Resizer( bool extended ) ;
-	const Partition & Get_New_Partition();
+	const Partition& get_new_partition();
 
 protected:
 	enum SPINBUTTON {
@@ -68,8 +76,8 @@ protected:
 
 	double MB_PER_PIXEL ;
 	Sector TOTAL_MB ;
-	Frame_Resizer_Base *frame_resizer_base;
-	Partition * new_partition;
+	std::unique_ptr<Frame_Resizer_Base> m_frame_resizer_base;
+	std::unique_ptr<Partition>          m_new_partition;
 
 	Sector START; //the first sector of the first relevant partition ( this is either current or current -1 )  needed in Get_Resized_Partition()
 	Sector total_length ; //total amount of sectors ( this can be up to 3 partitions...)
@@ -100,19 +108,18 @@ protected:
 	FS_Limits fs_limits;  // Working copy of file system min/max size limits
 
 private:
-	Dialog_Base_Partition( const Dialog_Base_Partition & src );              // Not implemented copy constructor
-	Dialog_Base_Partition & operator=( const Dialog_Base_Partition & rhs );  // Not implemented copy assignment operator
-
-	void Check_Change( ) ;
+	void update_button_resize_move_sensitivity();
 
 	Gtk::Box vbox_resize_move;
 	Gtk::Label label_minmax ;
 	Gtk::Grid grid_resize;
 	Gtk::Box hbox_grid;
 	Gtk::Box hbox_resizer;
-	Gtk::Button button_resize_move ;
+	Gtk::Button button_resize_move;  // Displayed only in the derived Resize/Move dialog
 };
 
-} //GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_DIALOG_BASE_PARTITION_H */

@@ -36,10 +36,7 @@
     </abstract>
 
     <copyright><year>2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017</year> <holder>Curtis Gedak</holder></copyright>
-    <copyright lang="en">
-      <year>2014, 2015, 2017, 2018, 2023</year>
-      <holder>Mike Fleetwood</holder>
-    </copyright>
+    <copyright><year>2014, 2015, 2017, 2018, 2023</year> <holder>Mike Fleetwood</holder></copyright>
 
 <!-- translators: uncomment this:
     <copyright>
@@ -73,15 +70,11 @@
 <!-- According to GNU FDL, revision history is mandatory if you are -->
 <!-- modifying/reusing someone else's document.  If not, you can omit it. -->
     <revhistory>
-      <revision lang="en">
-        <revnumber>GParted Manual V1.13</revnumber>
-        <date>September 2023</date>
-        <revdescription>
-          <para role="author" lang="en">Mike Fleetwood</para>
-          <para role="publisher" lang="en">GParted Project</para>
-          <para role="annotations" lang="en">Describes version 1.6.0 of GParted</para>
-        </revdescription>
-      </revision>
+      <revision><revnumber>Manual do GParted V1.13</revnumber> <date>Setembro de 2023</date> <revdescription>
+          <para role="author">Mike Fleetwood</para>
+          <para role="publisher">Projeto do GParted</para>
+          <para role="annotations">Descreve a versão 1.6.0 do GParted</para>
+        </revdescription></revision>
       <revision><revnumber>Manual do GParted V1.12</revnumber> <date>Maio de 2018</date> <revdescription>
           <para role="author">Mike Fleetwood</para>
           <para role="publisher">Projeto do GParted</para>
@@ -154,9 +147,7 @@
         </revdescription></revision>
     </revhistory>
 
-    <releaseinfo lang="en">
-    This manual describes version 1.6.0 of GParted
-    </releaseinfo>
+    <releaseinfo>Este manual descreve a versão 1.6.0 do GParted</releaseinfo>
 
     <legalnotice>
       <title>Feedback</title>
@@ -285,9 +276,10 @@
       <para>Quando você iniciar o <application>gparted</application>, a seguinte janela será exibida:</para>
 
       <!-- ==== Figure ==== -->
-      <!-- The GNOME Documentation Project recommends a maximum image
-           width of 510 pixels.
-           http://library.gnome.org/devel/gdp-style-guide/stable/screenshot-4.html.en
+      <!-- Maximum image width is about 634 pixels before yelp starts
+           shrinking the image and text in order to fit it on the
+           printed page on A4 paper (width 210 mm).  A4 being slightly
+           narrower than US letter (width 8.5 inches, ~216 mm).
       -->
       <figure id="gparted-window">
         <title>Janela do GParted</title>
@@ -1422,18 +1414,8 @@
     <title>Recuperando tabelas de partição</title>
     <para>Se você acidentalmente sobrescrever sua tabela de partições, há uma chance de que você possa recuperá-la.</para>
     <para>O aplicativo <application>testdisk</application> é projetado para ajudar a recuperar partições perdidas. Para mais informações sobre o <application>testdisk</application>, consulte <ulink type="http" url="https://www.cgsecurity.org/wiki/TestDisk"/>.</para>
-    <para lang="en">
-    If no partitions are found, you have other options to try to rescue
-    your data.  The <application>photorec</application> application is
-    designed to help recover many different types of lost files.  For
-    more information about <application>photorec</application>, see
-    <ulink type="http" url="https://www.cgsecurity.org/wiki/PhotoRec"/>.
-    </para>
-    <para lang="en">
-    Both <application>testdisk</application> and
-    <application>photorec</application> applications are included on
-    each Live CD listed in <xref linkend="gparted-acquire-livecd"/>.
-    </para>
+    <para>Caso nenhuma partição seja encontrada, você possui outras opções para tentar resgatar seus dados. O aplicativo <application>photorec</application> foi projetado para ajudar a recuperar muitos tipos diferentes de arquivos perdidos. Para mais informações sobre o <application>photorec</application>, consulte <ulink type="http" url="https://www.cgsecurity.org/wiki/PhotoRec"/>.</para>
+    <para>Ambos os aplicativos <application>testdisk</application> e <application>photorec</application> estão inclusos em cada Live CD listado em <xref linkend="gparted-acquire-livecd"/>.</para>
   </sect1>
 
 </article>

@@ -19,11 +19,15 @@
 #ifndef GPARTED_JFS_H
 #define GPARTED_JFS_H
 
+
 #include "FileSystem.h"
+#include "OperationDetail.h"
 #include "Partition.h"
+
 
 namespace GParted
 {
+
 
 class jfs : public FileSystem
 {
@@ -39,6 +43,8 @@ public:
 	bool check_repair( const Partition & partition, OperationDetail & operationdetail ) ;
 };
 
-} //GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_JFS_H */

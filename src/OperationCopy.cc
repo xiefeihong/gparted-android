@@ -15,55 +15,54 @@
  *  along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
+
 #include "OperationCopy.h"
+
+#include "Device.h"
 #include "Partition.h"
 #include "PartitionVector.h"
+#include "Operation.h"
+#include "Utils.h"
+
+#include <glib.h>
+#include <glibmm/ustring.h>
+
 
 namespace GParted
 {
+
 
 OperationCopy::OperationCopy( const Device & device,
 			      const Partition & partition_orig,
 			      const Partition & partition_new,
 			      const Partition & partition_copied )
+ : Operation(OPERATION_COPY, device, partition_orig, partition_new),
+   m_partition_copied(partition_copied.clone())
 {
-	type = OPERATION_COPY ;
-
-	this->device = device.get_copy_without_partitions();
-	this->partition_original = partition_orig.clone();
-	this->partition_new      = partition_new.clone();
-	this->partition_copied   = partition_copied.clone();
 }
 
-OperationCopy::~OperationCopy()
-{
-	delete partition_original;
-	delete partition_new;
-	delete partition_copied;
-	partition_original = nullptr;
-	partition_new = nullptr;
-	partition_copied = nullptr;
-}
 
 Partition & OperationCopy::get_partition_copied()
 {
-	g_assert(partition_copied != nullptr);  // Bug: Not initialised by constructor or reset later
+	g_assert(m_partition_copied != nullptr);  // Bug: Not initialised by constructor or reset later
 
-	return *partition_copied;
+	return *m_partition_copied;
 }
+
 
 const Partition & OperationCopy::get_partition_copied() const
 {
-	g_assert(partition_copied != nullptr);  // Bug: Not initialised by constructor or reset later
+	g_assert(m_partition_copied != nullptr);  // Bug: Not initialised by constructor or reset later
 
-	return *partition_copied;
+	return *m_partition_copied;
 }
+
 
 void OperationCopy::apply_to_visual( PartitionVector & partitions )
 {
-	g_assert(partition_original != nullptr);  // Bug: Not initialised by constructor or reset later
+	g_assert(m_partition_original != nullptr);  // Bug: Not initialised by constructor or reset later
 
-	if ( partition_original->type == TYPE_UNALLOCATED )
+	if (m_partition_original->type == TYPE_UNALLOCATED)
 		// Paste into unallocated space creating new partition
 		insert_new( partitions );
 	else
@@ -71,33 +70,36 @@ void OperationCopy::apply_to_visual( PartitionVector & partitions )
 		substitute_new( partitions );
 }
 
+
 void OperationCopy::create_description() 
 {
-	g_assert(partition_original != nullptr);  // Bug: Not initialised by constructor or reset later
-	g_assert(partition_new != nullptr);  // Bug: Not initialised by constructor or reset later
-	g_assert(partition_copied != nullptr);  // Bug: Not initialised by constructor or reset later
+	g_assert(m_partition_original != nullptr);  // Bug: Not initialised by constructor or reset later
+	g_assert(m_partition_new != nullptr);  // Bug: Not initialised by constructor or reset later
+	g_assert(m_partition_copied != nullptr);  // Bug: Not initialised by constructor or reset later
 
-	if ( partition_original->type == TYPE_UNALLOCATED )
+	if (m_partition_original->type == TYPE_UNALLOCATED)
 	{
 		/*TO TRANSLATORS: looks like  Copy /dev/hda4 to /dev/hdd (start at 250 MiB) */
-		description = Glib::ustring::compose( _("Copy %1 to %2 (start at %3)"),
-		                                partition_copied->get_path(),
-		                                device.get_path(),
-		                                Utils::format_size( partition_new->sector_start,
-		                                                    partition_new->sector_size ) );
+		m_description = Glib::ustring::compose(_("Copy %1 to %2 (start at %3)"),
+		                                m_partition_copied->get_path(),
+		                                m_device.get_path(),
+		                                Utils::format_size(m_partition_new->sector_start,
+		                                                   m_partition_new->sector_size));
 	}
 	else
 	{
 		/*TO TRANSLATORS: looks like  Copy /dev/hda4 to /dev/hdd1 */
-		description = Glib::ustring::compose( _("Copy %1 to %2"),
-		                                partition_copied->get_path(),
-		                                partition_original->get_path() );
+		m_description = Glib::ustring::compose(_("Copy %1 to %2"),
+		                                m_partition_copied->get_path(),
+		                                m_partition_original->get_path());
 	}
 }
+
 
 bool OperationCopy::merge_operations( const Operation & candidate )
 {
 	return false;  // Never merge copy operations
 }
 
-} //GParted
+
+}  // namespace GParted

@@ -15,23 +15,38 @@
  *  along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Device.h"
+
 #include "Dialog_Base_Partition.h"
+
+#include "Device.h"
+#include "Frame_Resizer_Base.h"
+#include "Frame_Resizer_Extended.h"
 #include "Partition.h"
 #include "Utils.h"
 
 #include <glibmm/ustring.h>
+#include <gtkmm/box.h>
+#include <gtkmm/dialog.h>
+#include <gtkmm/enums.h>
+#include <gtkmm/image.h>
 #include <gtkmm/label.h>
+#include <gtkmm/stock.h>
+#include <gtkmm/widget.h>
 #include <atkmm/relation.h>
+#include <sigc++/bind.h>
+#include <sigc++/connection.h>
+#include <sigc++/signal.h>
+#include <glib.h>
+#include <memory>
 
 
 namespace GParted
 {
 
+
 Dialog_Base_Partition::Dialog_Base_Partition(const Device& device)
  : m_device(device)
 {
-	frame_resizer_base = nullptr;
 	GRIP = false ;
 	this ->fixed_start = false ;
 	this ->set_resizable( false );
@@ -142,123 +157,129 @@ Dialog_Base_Partition::Dialog_Base_Partition(const Device& device)
 	this ->show_all_children() ;
 }
 
+
 void Dialog_Base_Partition::Set_Resizer( bool extended )
 {
 	if ( extended )
-		frame_resizer_base = new Frame_Resizer_Extended() ;
+		m_frame_resizer_base = std::make_unique<Frame_Resizer_Extended>();
 	else
 	{
-		frame_resizer_base = new Frame_Resizer_Base() ;
-		frame_resizer_base ->signal_move .connect( sigc::mem_fun( this, &Dialog_Base_Partition::on_signal_move ) );
+		m_frame_resizer_base = std::make_unique<Frame_Resizer_Base>();
+		m_frame_resizer_base->signal_move.connect(sigc::mem_fun(this, &Dialog_Base_Partition::on_signal_move));
 	}
-	
-	frame_resizer_base ->set_border_width( 5 ) ;
-	frame_resizer_base ->set_shadow_type( Gtk::SHADOW_ETCHED_OUT );
-		
+
+	m_frame_resizer_base->set_border_width(5);
+	m_frame_resizer_base->set_shadow_type(Gtk::SHADOW_ETCHED_OUT);
+
 	//connect signals
-	frame_resizer_base ->signal_resize .connect( sigc::mem_fun( this, &Dialog_Base_Partition::on_signal_resize ) );
-		
-	hbox_resizer .pack_start( *frame_resizer_base, Gtk::PACK_EXPAND_PADDING );
-	
+	m_frame_resizer_base->signal_resize.connect(sigc::mem_fun(this, &Dialog_Base_Partition::on_signal_resize));
+
+	hbox_resizer.pack_start(*m_frame_resizer_base, Gtk::PACK_EXPAND_PADDING);
+
 	this ->show_all_children() ;
 }
 
-const Partition & Dialog_Base_Partition::Get_New_Partition()
+
+const Partition& Dialog_Base_Partition::get_new_partition()
 {
-	g_assert(new_partition != nullptr);  // Bug: Not initialised by derived Dialog_Partition_*() constructor calling set_data()
+	g_assert(m_new_partition != nullptr);  // Bug: Not initialised by derived Dialog_Partition_*() constructor calling set_data()
 
 	prepare_new_partition();
-	return *new_partition;
+	return *m_new_partition;
 }
+
 
 void Dialog_Base_Partition::prepare_new_partition()
 {
-	g_assert(new_partition != nullptr);  // Bug: Not initialised by derived Dialog_Partition_*() constructor calling set_data()
+	g_assert(m_new_partition != nullptr);  // Bug: Not initialised by derived Dialog_Partition_*() constructor calling set_data()
 
-	Sector old_size = new_partition->get_sector_length();
+	Sector old_size = m_new_partition->get_sector_length();
 
 	//FIXME:  Partition size is limited to just less than 1024 TeraBytes due
 	//        to the maximum value of signed 4 byte integer.
 	if ( ORIG_BEFORE != spinbutton_before .get_value_as_int() )
-		new_partition->sector_start = START + Sector(spinbutton_before.get_value_as_int()) * (MEBIBYTE / new_partition->sector_size);
+		m_new_partition->sector_start = START + Sector(spinbutton_before.get_value_as_int()) * (MEBIBYTE / m_new_partition->sector_size);
 
 	if ( ORIG_AFTER != spinbutton_after .get_value_as_int() )
-		new_partition->sector_end =
-			new_partition->sector_start
-			+ Sector(spinbutton_size.get_value_as_int()) * (MEBIBYTE / new_partition->sector_size)
+		m_new_partition->sector_end =
+			m_new_partition->sector_start
+			+ Sector(spinbutton_size.get_value_as_int()) * (MEBIBYTE / m_new_partition->sector_size)
 			- 1 /* one sector short of exact mebibyte multiple */;
 
 	//due to loss of precision during calcs from Sector -> MiB and back, it is possible
 	//the new partition thinks it's bigger then it can be. Here we solve this.
-	if ( new_partition->sector_start < START )
-		new_partition->sector_start = START;
-	if ( new_partition->sector_end > ( START + total_length - 1 ) )
-		new_partition->sector_end = START + total_length - 1;
+	if (m_new_partition->sector_start < START)
+		m_new_partition->sector_start = START;
+	if (m_new_partition->sector_end > (START + total_length - 1))
+		m_new_partition->sector_end = START + total_length - 1;
 
 	//grow a bit into small freespace ( < 1MiB ) 
-	if ( (new_partition->sector_start - START) < (MEBIBYTE / new_partition->sector_size) )
-		new_partition->sector_start = START;
-	if ( ( START + total_length - 1 - new_partition->sector_end ) < (MEBIBYTE / new_partition->sector_size) )
-		new_partition->sector_end = START + total_length - 1;
+	if ((m_new_partition->sector_start - START) < (MEBIBYTE / m_new_partition->sector_size))
+		m_new_partition->sector_start = START;
+	if ((START + total_length - 1 - m_new_partition->sector_end) < (MEBIBYTE / m_new_partition->sector_size))
+		m_new_partition->sector_end = START + total_length - 1;
 
 	//set alignment
 	switch (combo_alignment.get_active_row_number())
 	{
 		case 0:
-			new_partition->alignment = ALIGN_CYLINDER;
+			m_new_partition->alignment = ALIGN_CYLINDER;
 			break;
 		case 1:
-			new_partition->alignment = ALIGN_MEBIBYTE;
+			m_new_partition->alignment = ALIGN_MEBIBYTE;
 			{
 				// If partition start or end sectors are not MiB aligned,
 				// and space is available, then add 1 MiB to partition so
 				// requesting size is kept after snap_to_mebibyte() method
 				// rounding.
-				Sector partition_size = new_partition->sector_end - new_partition->sector_start + 1;
-				Sector sectors_in_mib = MEBIBYTE / new_partition->sector_size;
-				if (    (    ( new_partition->sector_start % sectors_in_mib       > 0 )
-				          || ( ( new_partition->sector_end + 1 ) % sectors_in_mib > 0 )
+				Sector partition_size = m_new_partition->sector_end - m_new_partition->sector_start + 1;
+				Sector sectors_in_mib = MEBIBYTE / m_new_partition->sector_size;
+				if (    (    (m_new_partition->sector_start % sectors_in_mib     > 0)
+				          || ((m_new_partition->sector_end + 1) % sectors_in_mib > 0)
 				        )
 				     && ( partition_size + sectors_in_mib < total_length )
 				   )
-					new_partition->sector_end += sectors_in_mib;
+				{
+					m_new_partition->sector_end += sectors_in_mib;
+				}
 			}
 			break;
 		case 2:
-			new_partition->alignment = ALIGN_STRICT;
+			m_new_partition->alignment = ALIGN_STRICT;
 			break;
 
 		default:
-			new_partition->alignment = ALIGN_MEBIBYTE;
+			m_new_partition->alignment = ALIGN_MEBIBYTE;
 			break;
 	}
 
-	new_partition->free_space_before = Sector(spinbutton_before.get_value_as_int()) * (MEBIBYTE / new_partition->sector_size);
+	m_new_partition->free_space_before =   Sector(spinbutton_before.get_value_as_int())
+	                                     * (MEBIBYTE / m_new_partition->sector_size);
 
 	// If the original before value has not changed, then set indicator to keep start sector unchanged.
 	if ( ORIG_BEFORE == spinbutton_before .get_value_as_int() )
-		new_partition->strict_start = true;
+		m_new_partition->strict_start = true;
 
-	snap_to_alignment(m_device, *new_partition);
+	snap_to_alignment(m_device, *m_new_partition);
 
 	//update partition usage
-	if ( new_partition->sector_usage_known() )
+	if (m_new_partition->sector_usage_known())
 	{
-		Sector new_size = new_partition->get_sector_length();
+		Sector new_size = m_new_partition->get_sector_length();
 		if ( old_size == new_size )
 		{
 			//Pasting into new same sized partition or moving partition keeping the same size,
 			//  therefore only block copy operation will be performed maintaining file system size.
-			new_partition->set_sector_usage(
-					new_partition->sectors_used + new_partition->sectors_unused,
-					new_partition->sectors_unused );
+			m_new_partition->set_sector_usage(
+					m_new_partition->sectors_used + m_new_partition->sectors_unused,
+					m_new_partition->sectors_unused);
 		}
 		else
 		{
 			//Pasting into new larger partition or (moving and) resizing partition larger or smaller,
 			//  therefore block copy followed by file system grow or shrink operations will be
 			//  performed making the file system fill the partition.
-			new_partition->set_sector_usage( new_size, new_size - new_partition->sectors_used );
+			m_new_partition->set_sector_usage(new_size, new_size - m_new_partition->sectors_used);
 		}
 	}
 }
@@ -469,7 +490,7 @@ void Dialog_Base_Partition::Set_Confirm_Button( CONFIRMBUTTON button_type )
 		case RESIZE_MOVE:
 			{
 				Gtk::Image* image_temp = Utils::mk_image(Gtk::Stock::GOTO_LAST, Gtk::ICON_SIZE_BUTTON);
-				Gtk::Box* hbox_resize_move(manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL)));
+				Gtk::Box* hbox_resize_move(Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL)));
 
 				hbox_resize_move->pack_start(*image_temp, Gtk::PACK_EXPAND_PADDING);
 				hbox_resize_move->pack_start(*Utils::mk_label(fixed_start ? _("Resize") : _("Resize/Move")),
@@ -522,11 +543,12 @@ void Dialog_Base_Partition::on_signal_move( int x_start, int x_end )
 	}
 	else
 		spinbutton_after .set_value( TOTAL_MB - spinbutton_before .get_value() - spinbutton_size .get_value() ) ;
-	
-	Check_Change() ;
-	
+
+	update_button_resize_move_sensitivity();
+
 	GRIP = false ;
 }
+
 
 void Dialog_Base_Partition::on_signal_resize( int x_start, int x_end, Frame_Resizer_Base::ArrowType arrow )
 {  
@@ -549,13 +571,16 @@ void Dialog_Base_Partition::on_signal_resize( int x_start, int x_end, Frame_Resi
 	else if ( arrow == Frame_Resizer_Base::ARROW_LEFT ) //don't touch freespace after, leave it as it is
 		spinbutton_before .set_value( TOTAL_MB - spinbutton_size .get_value() - spinbutton_after .get_value() ) ;
 
-	Check_Change() ;
-	
+	update_button_resize_move_sensitivity();
+
 	GRIP = false ;
 }
 
+
 void Dialog_Base_Partition::on_spinbutton_value_changed( SPINBUTTON spinbutton )
-{  
+{
+	g_assert(m_frame_resizer_base != nullptr);  // Bug: Not initialised by call to Set_Resizer()
+
 	if ( ! GRIP )
 	{
 		before_value = fixed_start ? MIN_SPACE_BEFORE_MB : spinbutton_before .get_value() ;
@@ -587,17 +612,18 @@ void Dialog_Base_Partition::on_spinbutton_value_changed( SPINBUTTON spinbutton )
 		
 		//And apply the changes to the visual view...
 		if ( ! fixed_start )
-			frame_resizer_base ->set_x_start( Utils::round( spinbutton_before .get_value() / MB_PER_PIXEL ) ) ;
-		
-		frame_resizer_base ->set_x_end( 500 - Utils::round( spinbutton_after .get_value() / MB_PER_PIXEL ) ) ;
+			m_frame_resizer_base->set_x_start(Utils::round(spinbutton_before.get_value() / MB_PER_PIXEL));
 
-		frame_resizer_base->redraw();
+		m_frame_resizer_base->set_x_end(500 - Utils::round(spinbutton_after.get_value() / MB_PER_PIXEL));
 
-		Check_Change() ;
+		m_frame_resizer_base->redraw();
+
+		update_button_resize_move_sensitivity();
 	}
 }
 
-void Dialog_Base_Partition::Check_Change()
+
+void Dialog_Base_Partition::update_button_resize_move_sensitivity()
 {
 	button_resize_move .set_sensitive(
 		ORIG_BEFORE != spinbutton_before .get_value_as_int()	||
@@ -605,16 +631,17 @@ void Dialog_Base_Partition::Check_Change()
 		ORIG_AFTER  != spinbutton_after .get_value_as_int() ) ; 
 }
 
+
 Dialog_Base_Partition::~Dialog_Base_Partition() 
 {
 	before_change_connection .disconnect() ;
 	size_change_connection .disconnect() ;
 	after_change_connection .disconnect() ;
-	delete frame_resizer_base;
 
 	// Work around a Gtk issue fixed in 3.24.0.
 	// https://gitlab.gnome.org/GNOME/gtk/issues/125
 	hide();
 }
 
-} //GParted
+
+}  // namespace GParted

@@ -28,6 +28,7 @@
 namespace GParted
 {
 
+
 //Initialize static data elements
 bool Proc_Partitions_Info::proc_partitions_info_cache_initialized = false ;
 
@@ -54,19 +55,21 @@ const std::vector<Glib::ustring> & Proc_Partitions_Info::get_device_paths()
 }
 
 
-// E.g. ["/dev/sda", "/tmp/fs.img"] -> ["/dev/sda", "/dev/sda1", "/dev/sda2", "/tmp/fs.img"]
-std::vector<Glib::ustring> Proc_Partitions_Info::get_device_and_partition_paths_for(
-                const std::vector<Glib::ustring>& device_paths)
+// E.g. ["/dev/sda", "/tmp/fs.img"] ->
+//      [DeviceAndPartitionNames("/dev/sda", ["/dev/sda1". "/dev/sda2"]),
+//       DeviceAndPartitionNames("/tmp/fs.img", [])
+//      ]
+std::vector<DeviceAndPartitionNames> Proc_Partitions_Info::get_device_and_partition_names_for(
+                const std::vector<Glib::ustring>& device_names)
 {
 	initialize_if_required();
-	std::vector<Glib::ustring> all_paths;
-	for (unsigned int i = 0; i < device_paths.size(); i++)
+	std::vector<DeviceAndPartitionNames> dev_ptn_names;
+	for (unsigned int i = 0; i < device_names.size(); i++)
 	{
-		all_paths.push_back(device_paths[i]);
-		const std::vector<Glib::ustring>& part_paths = get_partition_paths_for(device_paths[i]);
-		all_paths.insert(all_paths.end(), part_paths.begin(), part_paths.end());
+		DeviceAndPartitionNames dpn(device_names[i], get_partition_paths_for(device_names[i]));
+		dev_ptn_names.push_back(dpn);
 	}
-	return all_paths;
+	return dev_ptn_names;
 }
 
 
@@ -160,6 +163,11 @@ bool Proc_Partitions_Info::is_whole_disk_device_name(const Glib::ustring& name)
 	if (Utils::regexp_label(name, "^(bcache[0-9]+)$") != "")
 		return true;
 
+	// Match Network Block Device names.
+	// E.g.: device = nbd0 (partition = nbd0p1)
+	if (Utils::regexp_label(name, "^(nbd[0-9]+)$") != "")
+		return true;
+
 	return false;
 }
 
@@ -235,4 +243,4 @@ bool Proc_Partitions_Info::is_partition_of_device(const Glib::ustring& partname,
 }
 
 
-} //GParted
+}  // namespace GParted

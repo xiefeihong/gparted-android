@@ -1957,7 +1957,7 @@ AC_SUBST(am__xargs_n)
 ])
 
 m4_include([m4/ax_cxx_compile_stdcxx.m4])
-m4_include([m4/ax_cxx_compile_stdcxx_11.m4])
+m4_include([m4/ax_cxx_compile_stdcxx_14.m4])
 m4_include([m4/gettext.m4])
 m4_include([m4/iconv.m4])
 m4_include([m4/intlmacosx.m4])

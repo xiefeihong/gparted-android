@@ -30,6 +30,8 @@
 #include <gtkmm/treestore.h>
 #include <gtkmm/scrolledwindow.h>
 #include <gtkmm/expander.h>
+#include <sigc++/connection.h>
+#include <sigc++/signal.h>
 #include <fstream>
 #include <vector>
 
@@ -37,10 +39,11 @@
 namespace GParted
 {
 
+
 class Dialog_Progress : public Gtk::Dialog
 {
 public:
-	Dialog_Progress(const std::vector<Device>& devices, const std::vector<Operation *>& operations);
+	Dialog_Progress(const std::vector<Device>& devices, const OperationVector& operations);
 	~Dialog_Progress();
 
 	sigc::signal< bool, Operation * > signal_apply_operation ;
@@ -50,6 +53,7 @@ private:
 	void update_gui_elements() ;
 	void on_signal_show() ;
 	void on_cell_data_description( Gtk::CellRenderer * renderer, const Gtk::TreeModel::iterator & iter) ;
+	bool cancel_timeout();
 	void on_cancel() ;
 	void on_save() ;
 	void write_device_details(const Device& device, std::ofstream& out);
@@ -60,52 +64,56 @@ private:
 	bool on_delete_event( GdkEventAny * event ) ;
 	bool pulsebar_pulse();
 
-	Gtk::Label label_current ;
-	Gtk::Label label_current_sub ;
-	Gtk::ProgressBar progressbar_all, progressbar_current ;
-	Gtk::TreeView treeview_operations ;
-	Gtk::TreeRow treerow ;
-	Gtk::ScrolledWindow scrolledwindow ;
-	Gtk::Expander expander_details ;
-	Gtk::Button *cancelbutton;
-	
-	Glib::RefPtr<Gdk::Pixbuf> icon_execute ;
-	Glib::RefPtr<Gdk::Pixbuf> icon_success;
-	Glib::RefPtr<Gdk::Pixbuf> icon_error ;
-	Glib::RefPtr<Gdk::Pixbuf> icon_info ;
-	Glib::RefPtr<Gdk::Pixbuf> icon_warning;
+	// Child widgets
+	Gtk::Label          m_label_current;
+	Gtk::ProgressBar    m_progressbar_current;
+	Gtk::Label          m_label_current_sub;
+	Gtk::ProgressBar    m_progressbar_all;
+	Gtk::Expander       m_expander_details;
+	Gtk::ScrolledWindow m_scrolledwindow;
+	Gtk::TreeView       m_treeview_operations;
+	Gtk::Button*        m_cancelbutton;
 
-	Glib::RefPtr<Gtk::TreeStore> treestore_operations;
-	
-	struct treeview_operations_Columns : public Gtk::TreeModelColumnRecord             
+	// Model for displaying the operation details
+	Glib::RefPtr<Gtk::TreeStore> m_treestore_operations;
+	struct TreeView_Operations_Columns : public Gtk::TreeModelColumnRecord
 	{
 		Gtk::TreeModelColumn<Glib::ustring> operation_description;
 		Gtk::TreeModelColumn<Glib::ustring> elapsed_time ;
 		Gtk::TreeModelColumn< Glib::RefPtr<Gdk::Pixbuf> > status_icon;
-				
-		treeview_operations_Columns() 
+
+		TreeView_Operations_Columns()
 		{ 
 			add( operation_description );
 			add( elapsed_time );
 			add( status_icon ) ;
 		} 
 	};
-	treeview_operations_Columns treeview_operations_columns;
+	TreeView_Operations_Columns m_treeview_operations_columns;
+
+	Glib::RefPtr<Gdk::Pixbuf> m_icon_execute;
+	Glib::RefPtr<Gdk::Pixbuf> m_icon_success;
+	Glib::RefPtr<Gdk::Pixbuf> m_icon_error;
+	Glib::RefPtr<Gdk::Pixbuf> m_icon_info;
+	Glib::RefPtr<Gdk::Pixbuf> m_icon_warning;
 
 	const std::vector<Device>& m_devices;
-	std::vector<Operation *> operations ;
-	Glib::ustring progress_text;
-	bool succes, cancel;
-	double fraction ;
-	unsigned int m_curr_op;
-	unsigned int warnings;
+	const OperationVector&     m_operations;
+	const double               m_fraction;
+	bool                       m_success;
+	bool                       m_cancel;
+	unsigned int               m_curr_op;
+	unsigned int               m_warnings;
+	Glib::ustring              m_progress_text;
+	Glib::ustring              m_label_current_sub_text;
+	unsigned int               m_cancel_countdown;
+
 	sigc::connection pulsetimer;
-	Glib::ustring label_current_sub_text ;
-	unsigned int cancel_countdown;
 	sigc::connection canceltimer;
-	bool cancel_timeout();
 };
 
-}//GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_DIALOG_PROGRESS_H */

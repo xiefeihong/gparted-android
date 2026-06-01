@@ -23,8 +23,10 @@
 #include <unistd.h>
 #include <map>
 
+
 namespace GParted
 {
+
 
 struct MM_Number
 {
@@ -71,9 +73,6 @@ BlockSpecial::BlockSpecial( const Glib::ustring & name ) : m_name( name ), m_maj
 	mm_number_cache[name] = pair;
 }
 
-BlockSpecial::~BlockSpecial()
-{
-}
 
 void BlockSpecial::clear_cache()
 {
@@ -110,4 +109,5 @@ bool operator<( const BlockSpecial & lhs, const BlockSpecial & rhs )
 		return lhs.m_major < rhs.m_major || ( lhs.m_major == rhs.m_major && lhs.m_minor < rhs.m_minor );
 }
 
-} //GParted
+
+}  // namespace GParted

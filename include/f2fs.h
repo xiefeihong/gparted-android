@@ -18,11 +18,15 @@
 #ifndef GPARTED_F2FS_H
 #define GPARTED_F2FS_H
 
+
 #include "FileSystem.h"
+#include "OperationDetail.h"
 #include "Partition.h"
+
 
 namespace GParted
 {
+
 
 class f2fs : public FileSystem
 {
@@ -34,6 +38,8 @@ public:
 	bool check_repair(const Partition & partition, OperationDetail & operationdetail);
 };
 
-} //GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_F2FS_H */

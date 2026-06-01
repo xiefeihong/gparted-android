@@ -16,20 +16,98 @@
 
 #include "FileSystem.h"
 #include "GParted_Core.h"
+#include "OperationDetail.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <cerrno>
 #include <iostream>
+#include <memory>
 #include <glibmm/miscutils.h>
 #include <glibmm/stringutils.h>
-#include <glibmm/shell.h>
-#include <glibmm/main.h>
-#include <gtkmm/main.h>
-#include <signal.h>
-#include <fcntl.h>
-#include <sigc++/slot.h>
+#include <glibmm/ustring.h>
+
 
 namespace GParted
 {
+
+
+namespace  // unnamed
+{
+
+
+// Custom deleter class for use with smart pointer type:
+//     std::unique_ptr<Glib::ustring, TempWorkingDirDeleter>
+// A custom deleter is only called when it contains a none nullptr when destructed.  When
+// called this deleter removes the temporary working directory from the file system and
+// then deletes (frees) the memory storing it's name.
+struct TempWorkingDirDeleter
+{
+	void operator()(const Glib::ustring* dir_name)
+	{
+		if (rmdir(dir_name->c_str()) != 0)
+		{
+			int e = errno;
+			std::cerr << "rmdir(\"" << *dir_name << "\"): " + Glib::strerror(e) << std::endl;
+		}
+		delete dir_name;
+		dir_name = nullptr;
+	}
+};
+
+
+typedef std::unique_ptr<Glib::ustring, TempWorkingDirDeleter> UniqueTempWorkingDirPtr;
+
+
+// Unique smart pointer managing the temporary working directory.  Contains either the
+// nullptr or a pointer to the name of the temporary working directory only when GParted
+// successfully created said directory.  This global variable goes out of scope and is
+// destructed after main() returns or exit() is called.  At which point the temporary
+// working directory is removed, only if it was created.
+static UniqueTempWorkingDirPtr temp_working_dir = nullptr;
+
+
+// Create private temporary working directory named "$TMPDIR/gparted-XXXXXX" with
+// permissions 0700 using mkdtemp(3).  Everything is logged to the operation detail.  On
+// success returns unique pointer to the created directory name or on error returns unique
+// pointer of the nullptr.
+UniqueTempWorkingDirPtr mk_temp_working_dir(OperationDetail& operationdetail)
+{
+	char dir_buf[4096+1];
+	snprintf(dir_buf, sizeof(dir_buf), "%s/gparted-XXXXXX", Glib::get_tmp_dir().c_str());
+
+	// Looks like "mkdir -v" command was run to the user
+	operationdetail.add_child(OperationDetail(
+	                        Glib::ustring("mkdir -v ") + dir_buf, STATUS_EXECUTE, FONT_BOLD_ITALIC));
+	OperationDetail& child_od = operationdetail.get_last_child();
+	const char* dir_name = mkdtemp(dir_buf);
+	if (nullptr == dir_name)
+	{
+		int e = errno;
+		child_od.add_child(OperationDetail(
+		                        Glib::ustring::compose("mkdtemp(\"%1\"): %2", dir_buf, Glib::strerror(e)),
+		                        STATUS_NONE,
+		                        FONT_MONOSPACE));
+		child_od.set_success_and_capture_errors(false);
+		return UniqueTempWorkingDirPtr(nullptr);
+	}
+
+	// Update command with actually created temporary working directory
+	child_od.set_description(Glib::ustring("mkdir -v ") + dir_name, FONT_BOLD_ITALIC);
+	child_od.add_child(OperationDetail(
+	                        /* TO TRANSLATORS: looks like   Created directory /tmp/gparted-CEzvSp */
+	                        Glib::ustring::compose(_("Created directory %1"), dir_name),
+	                        STATUS_NONE,
+	                        FONT_MONOSPACE));
+	child_od.set_success_and_capture_errors(true);
+
+	return UniqueTempWorkingDirPtr(new Glib::ustring(dir_name));
+}
+
+
+}  // unnamed namespace
+
 
 FileSystem::FileSystem()
 {
@@ -57,245 +135,84 @@ const Glib::ustring & FileSystem::get_generic_text( CUSTOM_TEXT ttype, int index
 	}
 }
 
-void FileSystem::store_exit_status( GPid pid, int status )
-{
-	exit_status = Utils::decode_wait_status( status );
-	running = false;
-	if (pipecount == 0) // pipes finished first
-		Gtk::Main::quit();
-	Glib::spawn_close_pid( pid );
-}
 
-//Callback passing the latest partial output from the external command
-//  to operation detail for updating in the UI
-static void update_command_output( OperationDetail *operationdetail, Glib::ustring *str )
-{
-	operationdetail->set_description( *str, FONT_ITALIC );
-}
-
-static void cancel_command( bool force, Glib::Pid pid, bool cancel_safe )
-{
-	if( force || cancel_safe )
-		kill( -pid, SIGINT );
-}
-
-static void setup_child()
-{
-	setpgrp();
-}
-
-
-// Execute command and capture stdout and stderr to operation details.
-int FileSystem::execute_command( const Glib::ustring & command, OperationDetail & operationdetail,
-                                 ExecFlags flags )
-{
-	StreamSlot empty_stream_slot;
-	TimedSlot empty_timed_slot;
-	return execute_command_internal(command, nullptr, operationdetail, flags, empty_stream_slot, empty_timed_slot);
-}
-
-
-// Execute command, pass string to stdin and capture stdout and stderr to operation
-// details.
-int FileSystem::execute_command(const Glib::ustring& command, const char *input, OperationDetail& operationdetail,
-                                ExecFlags flags)
-{
-	StreamSlot empty_stream_slot;
-	TimedSlot empty_timed_slot;
-	return execute_command_internal(command, input, operationdetail, flags, empty_stream_slot, empty_timed_slot);
-}
-
-
-// Execute command, capture stdout and stderr to operation details and run progress
-// tracking callback when either stdout or stderr is updated (as requested by flag
-// EXEC_PROGRESS_STDOUT or EXEC_PROGRESS_STDERR respectively).
-int FileSystem::execute_command( const Glib::ustring & command, OperationDetail & operationdetail,
-                                 ExecFlags flags,
-                                 StreamSlot stream_progress_slot )
-{
-	TimedSlot empty_timed_slot;
-	return execute_command_internal(command, nullptr, operationdetail, flags, stream_progress_slot, empty_timed_slot);
-}
-
-
-// Execute command, capture stdout and stderr to operation details and run progress
-// tracking callback periodically (when requested by flag EXEC_PROGRESS_TIMED).
-int FileSystem::execute_command( const Glib::ustring & command, OperationDetail & operationdetail,
-                                 ExecFlags flags,
-                                 TimedSlot timed_progress_slot )
-{
-	StreamSlot empty_stream_slot;
-	return execute_command_internal(command, nullptr, operationdetail, flags, empty_stream_slot, timed_progress_slot);
-}
-
-
-int FileSystem::execute_command_internal(const Glib::ustring& command, const char *input,
-                                         OperationDetail& operationdetail,
-                                         ExecFlags flags,
-                                         StreamSlot stream_progress_slot,
-                                         TimedSlot timed_progress_slot)
-{
-	operationdetail.add_child( OperationDetail( command, STATUS_EXECUTE, FONT_BOLD_ITALIC ) );
-	OperationDetail & cmd_operationdetail = operationdetail.get_last_child();
-	Glib::Pid pid;
-	int in = -1;
-	// set up pipes for capture
-	int out, err;
-	// spawn external process
-	running = true;
-	try {
-		Glib::spawn_async_with_pipes(
-			std::string( "." ),
-			Glib::shell_parse_argv( command ),
-			Glib::SPAWN_DO_NOT_REAP_CHILD | Glib::SPAWN_SEARCH_PATH,
-			sigc::ptr_fun(setup_child),
-			&pid,
-			(input != nullptr) ? &in : 0,
-			&out,
-			&err );
-	} catch (Glib::SpawnError &e) {
-		std::cerr << e.what() << std::endl;
-		cmd_operationdetail.add_child( OperationDetail( e.what(), STATUS_ERROR, FONT_ITALIC ) );
-		return Utils::get_failure_status( e );
-	}
-	fcntl( out, F_SETFL, O_NONBLOCK );
-	fcntl( err, F_SETFL, O_NONBLOCK );
-	Glib::signal_child_watch().connect( sigc::mem_fun( *this, &FileSystem::store_exit_status ), pid );
-	pipecount = 2;
-	PipeCapture outputcapture( out, output );
-	PipeCapture errorcapture( err, error );
-	outputcapture.signal_eof.connect( sigc::mem_fun( *this, &FileSystem::execute_command_eof ) );
-	errorcapture.signal_eof.connect( sigc::mem_fun( *this, &FileSystem::execute_command_eof ) );
-	cmd_operationdetail.add_child( OperationDetail( output, STATUS_NONE, FONT_ITALIC ) );
-	cmd_operationdetail.add_child( OperationDetail( error, STATUS_NONE, FONT_ITALIC ) );
-	std::vector<OperationDetail*> &children = cmd_operationdetail.get_childs();
-	outputcapture.signal_update.connect( sigc::bind( sigc::ptr_fun( update_command_output ),
-	                                                 children[children.size() - 2],
-	                                                 &output ) );
-	errorcapture.signal_update.connect( sigc::bind( sigc::ptr_fun( update_command_output ),
-	                                                children[children.size() - 1],
-	                                                &error ) );
-	sigc::connection timed_conn;
-	if ( flags & EXEC_PROGRESS_STDOUT && ! stream_progress_slot.empty() )
-		// Call progress tracking callback when stdout updates
-		outputcapture.signal_update.connect( sigc::bind( stream_progress_slot, &cmd_operationdetail ) );
-	else if ( flags & EXEC_PROGRESS_STDERR && ! stream_progress_slot.empty() )
-		// Call progress tracking callback when stderr updates
-		errorcapture.signal_update.connect( sigc::bind( stream_progress_slot, &cmd_operationdetail ) );
-	else if ( flags & EXEC_PROGRESS_TIMED && ! timed_progress_slot.empty() )
-		// Call progress tracking callback every 500 ms
-		timed_conn = Glib::signal_timeout().connect( sigc::bind( timed_progress_slot, &cmd_operationdetail ), 500 );
-	outputcapture.connect_signal();
-	errorcapture.connect_signal();
-
-	cmd_operationdetail.signal_cancel.connect(
-		sigc::bind(
-			sigc::ptr_fun( cancel_command ),
-			pid,
-			flags & EXEC_CANCEL_SAFE ) );
-
-	if (input != nullptr && in != -1)
-	{
-		// Write small amount of input to pipe to the child process.  Linux will
-		// always accept up to 4096 bytes without blocking.  See pipe(7).
-		size_t len = strlen(input);
-		ssize_t written = write(in, input, len);
-		if (written == -1 || (size_t)written < len)
-		{
-			int e = errno;
-			std::cerr << "Write to child failed: " << Glib::strerror(e) << std::endl;
-			cmd_operationdetail.add_child(OperationDetail("Write to child failed: " + Glib::strerror(e),
-			                                              STATUS_NONE, FONT_ITALIC));
-		}
-		close(in);
-	}
-
-	Gtk::Main::run();
-
-	if ( flags & EXEC_CHECK_STATUS )
-		cmd_operationdetail.set_success_and_capture_errors( exit_status == 0 );
-	close( out );
-	close( err );
-	if ( timed_conn.connected() )
-		timed_conn.disconnect();
-	cmd_operationdetail.stop_progressbar();
-	return exit_status;
-}
-
-void FileSystem::set_status( OperationDetail & operationdetail, bool success )
-{
-	operationdetail.get_last_child().set_success_and_capture_errors( success );
-}
-
-void FileSystem::execute_command_eof()
-{
-	if (--pipecount)
-		return; // wait for second pipe to eof
-	if ( !running ) // already got exit status
-		Gtk::Main::quit();
-}
-
-//Create uniquely named temporary directory and add results to operation detail
+// Create uniquely named temporary mount point directory and add results to operation
+// detail.  Will be named "$TMPDIR/gparted-XXXXXX/mnt-N" or ".../mnt-INFIX-N".  Returns
+// the name of the created directory or the empty string on error.
 Glib::ustring FileSystem::mk_temp_dir( const Glib::ustring & infix, OperationDetail & operationdetail )
 {
-	// Construct template like "$TMPDIR/gparted-XXXXXX" or "$TMPDIR/gparted-INFIX-XXXXXX"
-	Glib::ustring dir_template = Glib::get_tmp_dir() + "/gparted-" ;
-	if ( ! infix .empty() )
-		dir_template += infix + "-" ;
-	dir_template += "XXXXXX" ;
-	//Secure Programming for Linux and Unix HOWTO, Chapter 6. Avoid Buffer Overflow
-	//  http://tldp.org/HOWTO/Secure-Programs-HOWTO/library-c.html
-	char dir_buf[4096+1];
-	sprintf( dir_buf, "%.*s", (int) sizeof(dir_buf)-1, dir_template .c_str() ) ;
+	// Create private temporary working directory once when first needed.
+	if (nullptr == temp_working_dir)
+	{
+		temp_working_dir = mk_temp_working_dir(operationdetail);
+		if (nullptr == temp_working_dir)
+			return "";
+	}
+
+	// Prepare unique temporary mount point directory name.  Use forever incrementing
+	// number (mnt_number) to make names unique.  This is so that there is no chance
+	// of mounting over the top of a previous file system in the unlikely event that
+	// it could not be unmounted.
+	static unsigned int mnt_number = 0;
+	mnt_number++;
+	char dir_buf [4096+1];
+	snprintf(dir_buf, sizeof(dir_buf), "%s/mnt-%s%s%u",
+	                        temp_working_dir->c_str(),      // "$TMPDIR/gparted-XXXXXX"
+	                        infix.c_str(),
+	                        (infix.size() > 0 ? "-" : ""),
+	                        mnt_number);
 
 	//Looks like "mkdir -v" command was run to the user
 	operationdetail .add_child( OperationDetail(
 			Glib::ustring( "mkdir -v " ) + dir_buf, STATUS_EXECUTE, FONT_BOLD_ITALIC ) ) ;
-	const char * dir_name = mkdtemp( dir_buf ) ;
-	if (nullptr == dir_name)
+	OperationDetail& child_od = operationdetail.get_last_child();
+	if (mkdir(dir_buf, 0700) != 0)
 	{
 		int e = errno ;
-		operationdetail .get_last_child() .add_child( OperationDetail(
-				Glib::ustring::compose( "mkdtemp(%1): %2", dir_buf, Glib::strerror( e ) ), STATUS_NONE ) ) ;
-		operationdetail.get_last_child().set_success_and_capture_errors( false );
-		dir_name = "" ;
-	}
-	else
-	{
-		//Update command with actually created temporary directory
-		operationdetail .get_last_child() .set_description(
-				Glib::ustring( "mkdir -v " ) + dir_name, FONT_BOLD_ITALIC ) ;
-		operationdetail .get_last_child() .add_child( OperationDetail(
-				/*TO TRANSLATORS: looks like   Created directory /tmp/gparted-CEzvSp */
-				Glib::ustring::compose( _("Created directory %1"), dir_name ), STATUS_NONE ) ) ;
-		operationdetail.get_last_child().set_success_and_capture_errors( true );
+		child_od.add_child(OperationDetail(
+		                        Glib::ustring::compose("mkdir(\"%1\", 0700): %2", dir_buf, Glib::strerror(e)),
+		                        STATUS_NONE,
+		                        FONT_MONOSPACE));
+		child_od.set_success_and_capture_errors(false);
+		return "";
 	}
 
-	return Glib::ustring( dir_name ) ;
+	child_od.add_child(OperationDetail(
+	                        Glib::ustring::compose(_("Created directory %1"), dir_buf),
+	                        STATUS_NONE,
+	                        FONT_MONOSPACE));
+	child_od.set_success_and_capture_errors(true);
+	return Glib::ustring(dir_buf);
 }
 
+
 //Remove directory and add results to operation detail
-void FileSystem::rm_temp_dir( const Glib::ustring dir_name, OperationDetail & operationdetail )
+void FileSystem::rm_temp_dir(const Glib::ustring& dir_name, OperationDetail& operationdetail)
 {
 	//Looks like "rmdir -v" command was run to the user
 	operationdetail .add_child( OperationDetail( Glib::ustring( "rmdir -v " ) + dir_name,
 	                                             STATUS_EXECUTE, FONT_BOLD_ITALIC ) ) ;
+	OperationDetail& child_od = operationdetail.get_last_child();
 	if ( rmdir( dir_name .c_str() ) )
 	{
 		// Don't mark operation as errored just because rmdir failed.  Set to
 		// Warning instead.
 		int e = errno ;
-		operationdetail .get_last_child() .add_child( OperationDetail(
-				Glib::ustring::compose( "rmdir(%1): ", dir_name ) + Glib::strerror( e ), STATUS_NONE ) ) ;
-		operationdetail.get_last_child().set_status( STATUS_WARNING );
+		child_od.add_child(OperationDetail(
+		                        Glib::ustring::compose("rmdir(\"%1\"): ", dir_name) + Glib::strerror(e),
+		                        STATUS_NONE,
+		                        FONT_MONOSPACE));
+		child_od.set_status(STATUS_WARNING);
+		return;
 	}
-	else
-	{
-		operationdetail .get_last_child() .add_child( OperationDetail(
-				/*TO TRANSLATORS: looks like   Removed directory /tmp/gparted-CEzvSp */
-				Glib::ustring::compose( _("Removed directory %1"), dir_name ), STATUS_NONE ) ) ;
-		operationdetail.get_last_child().set_success_and_capture_errors( true );
-	}
+
+	child_od.add_child(OperationDetail(
+				/* TO TRANSLATORS: looks like   Removed directory /tmp/gparted-CEzvSp */
+				Glib::ustring::compose(_("Removed directory %1"), dir_name),
+	                        STATUS_NONE,
+	                        FONT_MONOSPACE));
+	child_od.set_success_and_capture_errors(true);
 }
 
-} //GParted
+
+}  // namespace GParted

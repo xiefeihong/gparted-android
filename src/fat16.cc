@@ -17,14 +17,20 @@
 
 #include "fat16.h"
 #include "FileSystem.h"
+#include "OperationDetail.h"
 #include "Partition.h"
+#include "Utils.h"
 
 #include <glibmm/miscutils.h>
 #include <glibmm/shell.h>
+#include <glibmm/ustring.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 
 namespace GParted
 {
+
 
 const Glib::ustring & fat16::get_custom_text( CUSTOM_TEXT ttype, int index ) const
 {
@@ -51,9 +57,10 @@ const Glib::ustring & fat16::get_custom_text( CUSTOM_TEXT ttype, int index ) con
 	}
 }
 
+
 FS fat16::get_filesystem_support()
 {
-	FS fs( specific_type );
+	FS fs(m_specific_fstype);
 
 	// hack to disable silly mtools warnings
 	setenv( "MTOOLS_SKIP_CHECK", "1", 0 );
@@ -79,34 +86,53 @@ FS fat16::get_filesystem_support()
 		fs.check = FS::EXTERNAL;
 	}
 
-	if ( ! Glib::find_program_in_path( "mlabel" ) .empty() ) {
-		fs .read_label = FS::EXTERNAL ;
-		fs .write_label = FS::EXTERNAL ;
-		fs .write_uuid = FS::EXTERNAL ;
+	bool fatlabel_found = ! Glib::find_program_in_path("fatlabel").empty();
+	bool mlabel_found   = ! Glib::find_program_in_path("mlabel").empty();
+	if (fatlabel_found)                  { fs.read_label  = FS::EXTERNAL; }
+	if (fatlabel_found && mlabel_found)  { fs.write_label = FS::EXTERNAL; }
+	if (mlabel_found)                    { fs.write_uuid  = FS::EXTERNAL; }
+
+	if (fatlabel_found)
+	{
+		Glib::ustring output;
+		Glib::ustring error;
+		Utils::execute_command("fatlabel --version", output, error, true);
+		int fatlabel_major_ver = 0;
+		int fatlabel_minor_ver = 0;
+		if (sscanf(output.c_str(), "fatlabel %d.%d", &fatlabel_major_ver, &fatlabel_minor_ver) == 2)
+		{
+			// When a FAT file system doesn't have a label it will have no
+			// volume entry in the root directory and the FAT Boot Sector will
+			// contain "NO NAME".  fatlabel <= 4.1 incorrectly fell back to
+			// reporting the label from the FAT Boot Sector when there was no
+			// volume entry in the root directory.  Detect old versions of
+			// fatlabel with this fault.
+			m_ignore_label_noname =    (fatlabel_major_ver < 4)
+			                        || (fatlabel_major_ver == 4 && fatlabel_minor_ver <= 1);
+		}
 	}
 
-#ifdef HAVE_LIBPARTED_FS_RESIZE
 	//resizing of start and endpoint are provided by libparted
 	fs.grow = FS::LIBPARTED;
 	fs.shrink = FS::LIBPARTED;
-#endif
 	fs .move = FS::GPARTED ;
 	fs.copy = FS::GPARTED;
 	fs .online_read = FS::GPARTED ;
 
 	if (fs.fstype == FS_FAT16)
 	{
-		fs_limits.min_size = 16 * MEBIBYTE;
-		fs_limits.max_size = (4096 - 1) * MEBIBYTE;  // Maximum seems to be just less than 4096 MiB.
+		m_fs_limits.min_size = 16 * MEBIBYTE;
+		m_fs_limits.max_size = (4096 - 1) * MEBIBYTE;  // Maximum seems to be just less than 4096 MiB.
 	}
 	else //FS_FAT32
 	{
-		fs_limits.min_size = 33 * MEBIBYTE;  // Smaller file systems will cause Windows' scandisk to fail.
+		// Smaller file systems will cause Windows' scandisk to fail.
+		m_fs_limits.min_size = 33 * MEBIBYTE;
 
 		// Maximum FAT32 volume size with 512 byte sectors is 2 TiB.
 		// *   Wikipedia: File Allocation Table / FAT32
 		//     https://en.wikipedia.org/wiki/File_Allocation_Table#FAT32
-		fs_limits.max_size = 2 * TEBIBYTE;
+		m_fs_limits.max_size = 2 * TEBIBYTE;
 	}
 
 	return fs ;
@@ -116,8 +142,10 @@ void fat16::set_used_sectors( Partition & partition )
 {
 	// Use mdir's scanning of the FAT to get the free space.
 	// https://en.wikipedia.org/wiki/Design_of_the_FAT_file_system#File_Allocation_Table
-	exit_status = Utils::execute_command("mdir -i " + Glib::shell_quote(partition.get_path()) + " ::/",
-	                                     output, error, true);
+	Glib::ustring output;
+	Glib::ustring error;
+	int exit_status = Utils::execute_command("mdir -i " + Glib::shell_quote(partition.get_path()) + " ::/",
+	                        output, error, true);
 	if (exit_status != 0)
 	{
 		if (! output.empty())
@@ -192,8 +220,10 @@ void fat16::set_used_sectors( Partition & partition )
 
 void fat16::read_label(Partition& partition)
 {
-	exit_status = Utils::execute_command("mlabel -s -i " + Glib::shell_quote(partition.get_path()) + " ::",
-	                                     output, error, true);
+	Glib::ustring output;
+	Glib::ustring error;
+	int exit_status = Utils::execute_command("fatlabel " + Glib::shell_quote(partition.get_path()),
+	                        output, error, true);
 	if (exit_status != 0)
 	{
 		if (! output.empty())
@@ -203,27 +233,48 @@ void fat16::read_label(Partition& partition)
 		return;
 	}
 
-	partition.set_filesystem_label(Utils::trim(Utils::regexp_label(output, "Volume label is ([^(]*)")));
+	// (#286) Separate fatlabel output using heuristic that the label is on the last
+	// or only line and optional FSCK type messages are before that.
+	Glib::ustring label = Utils::trim_trailing_new_line(output);
+	Glib::ustring::size_type prev_new_line = label.find_last_of('\n');
+	if (prev_new_line != label.npos)
+	{
+		Glib::ustring fsck_messages = label.substr(0, prev_new_line);
+		partition.push_back_message(fsck_messages);
+		label = label.substr(prev_new_line, label.npos);
+	}
+	label = Utils::trim(label);
+
+	if (m_ignore_label_noname && label == "NO NAME")
+		// fatlabel <= 4.1 reported the label as "NO NAME".  Ignore it as it was
+		// very likely read from the the FAT Boot Sector when the FAT file system
+		// has no label.
+		label = "";
+	partition.set_filesystem_label(label);
 }
 
 
 bool fat16::write_label( const Partition & partition, OperationDetail & operationdetail )
 {
-	Glib::ustring cmd = "" ;
+	Glib::ustring cmd;
 	if ( partition.get_filesystem_label().empty() )
+		// Use mlabel to clear the label because fatlabel --reset option didn't
+		// exist before dosfstools 4.2 and that isn't available everywhere yet.
 		cmd = "mlabel -c -i " + Glib::shell_quote(partition.get_path()) + " ::";
 	else
-		cmd = "mlabel -i " + Glib::shell_quote(partition.get_path()) +
-		      " ::" + Glib::shell_quote(sanitize_label(partition.get_filesystem_label()));
+		cmd = "fatlabel " + Glib::shell_quote(partition.get_path()) + " " +
+		      Glib::shell_quote(sanitize_label(partition.get_filesystem_label()));
 
-	return ! execute_command( cmd, operationdetail, EXEC_CHECK_STATUS );
+	return ! operationdetail.execute_command(cmd, EXEC_CHECK_STATUS);
 }
 
 
 void fat16::read_uuid(Partition& partition)
 {
-	exit_status = Utils::execute_command("mdir -f -i " + Glib::shell_quote(partition.get_path()) + " ::/",
-	                                     output, error, true);
+	Glib::ustring output;
+	Glib::ustring error;
+	int exit_status = Utils::execute_command("mdir -f -i " + Glib::shell_quote(partition.get_path()) + " ::/",
+	                        output, error, true);
 	if (exit_status != 0)
 	{
 		if (! output.empty())
@@ -241,31 +292,38 @@ void fat16::read_uuid(Partition& partition)
 
 bool fat16::write_uuid( const Partition & partition, OperationDetail & operationdetail )
 {
-	return ! execute_command("mlabel -s -n -i " + Glib::shell_quote(partition.get_path()) + " ::",
-	                         operationdetail, EXEC_CHECK_STATUS);
+	return ! operationdetail.execute_command("mlabel -s -n -i " + Glib::shell_quote(partition.get_path()) + " ::",
+	                        EXEC_CHECK_STATUS);
 }
 
 
 bool fat16::create( const Partition & new_partition, OperationDetail & operationdetail )
 {
-	Glib::ustring fat_size = specific_type == FS_FAT16 ? "16" : "32" ;
+	Glib::ustring fat_size = m_specific_fstype == FS_FAT16 ? "16" : "32";
 	Glib::ustring label_args = new_partition.get_filesystem_label().empty() ? "" :
 	                           "-n " + Glib::shell_quote( sanitize_label( new_partition.get_filesystem_label() ) ) + " ";
-	return ! execute_command("mkfs.fat -F" + fat_size + " -v -I " + label_args +
-	                         Glib::shell_quote(new_partition.get_path()),
-	                         operationdetail,
-	                         EXEC_CHECK_STATUS|EXEC_CANCEL_SAFE);
+	return ! operationdetail.execute_command("mkfs.fat -F" + fat_size + " -v -I " + label_args +
+	                        Glib::shell_quote(new_partition.get_path()),
+	                        EXEC_CHECK_STATUS|EXEC_CANCEL_SAFE);
 }
+
 
 bool fat16::check_repair( const Partition & partition, OperationDetail & operationdetail )
 {
-	exit_status = execute_command("fsck.fat -a -w -v " + Glib::shell_quote(partition.get_path()),
-	                              operationdetail,
-	                              EXEC_CANCEL_SAFE);
-	bool success = ( exit_status == 0 || exit_status == 1 );
-	set_status( operationdetail, success );
+	int exit_status = operationdetail.execute_command("fsck.fat -a -w -v " +
+	                        Glib::shell_quote(partition.get_path()),
+	                        EXEC_CANCEL_SAFE);
+	// From fsck.fat(8) manual page:
+	//     EXIT STATUS
+	//         0   No recoverable errors have been detected.
+	//         1   Recoverable errors have been detected or fsck.fat has discovered an
+	//             internal inconsistency.
+	//         2   Usage error.
+	bool success = (exit_status == 0 || exit_status == 1);
+	operationdetail.get_last_child().set_success_and_capture_errors(success);
 	return success;
 }
+
 
 //Private methods
 
@@ -284,14 +342,11 @@ const Glib::ustring fat16::sanitize_label( const Glib::ustring &label ) const
 	//   Windows;
 	// * ASCII control characters below SPACE because mlabel requests input in the
 	//   same way it does for prohibited characters causing GParted to wait forever.
-	Glib::ustring prohibited_chars( "*?.,;:/\\|+=<>[]\"'" );
+	static const Glib::ustring prohibited_chars("*?.,;:/\\|+=<>[]\"'");
 	for ( unsigned int i = 0 ; i < uppercase_label.size() ; i ++ )
 		if ( prohibited_chars.find( uppercase_label[i] ) == Glib::ustring::npos &&
 		     uppercase_label[i] >= ' '                                             )
 			new_label.push_back( uppercase_label[i] );
-
-	// Pad with spaces to prevent mlabel writing corrupted labels.  See bug #700228.
-	new_label .resize( Utils::get_filesystem_label_maxlength( specific_type ), ' ' ) ;
 
 	return new_label ;
 }
@@ -311,4 +366,4 @@ Glib::ustring fat16::remove_spaces(const Glib::ustring& str)
 }
 
 
-} //GParted
+}  // namespace GParted

@@ -24,8 +24,10 @@
 #include "Partition.h"
 #include "PartitionVector.h"
 
+
 namespace GParted
 {
+
 
 class Dialog_Partition_Resize_Move : public Dialog_Base_Partition
 {
@@ -34,17 +36,18 @@ public:
 	                             const FS_Limits& fs_limits,
 	                             const Partition& selected_partition,
 	                             const PartitionVector& partitions);
-	~Dialog_Partition_Resize_Move();
+
+	Dialog_Partition_Resize_Move(const Dialog_Partition_Resize_Move& src) = delete;             // Copy construction prohibited
+	Dialog_Partition_Resize_Move& operator=(const Dialog_Partition_Resize_Move& rhs) = delete;  // Copy assignment prohibited
 
 private:
-	Dialog_Partition_Resize_Move( const Dialog_Partition_Resize_Move & src );              // Not implemented copy constructor
-	Dialog_Partition_Resize_Move & operator=( const Dialog_Partition_Resize_Move & rhs );  // Not implemented assignment operator
-
 	void set_data( const Partition & selected_partition, const PartitionVector & partitions );
 	void Resize_Move_Normal( const PartitionVector & partitions );
 	void Resize_Move_Extended( const PartitionVector & partitions );
 };
 
-} //GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_DIALOG_PARTITION_RESIZE_MOVE_H */

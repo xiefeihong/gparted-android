@@ -18,11 +18,17 @@
 #ifndef GPARTED_LVM2_PV_H
 #define GPARTED_LVM2_PV_H
 
+
 #include "FileSystem.h"
+#include "OperationDetail.h"
 #include "Partition.h"
+
+#include <glibmm/ustring.h>
+
 
 namespace GParted
 {
+
 
 class lvm2_pv : public FileSystem
 {
@@ -37,6 +43,8 @@ public:
 	bool remove( const Partition & partition, OperationDetail & operationdetail ) ;
 };
 
-} //GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_LVM2_PV_H */

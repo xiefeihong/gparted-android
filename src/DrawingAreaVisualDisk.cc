@@ -28,48 +28,48 @@
 #define SEP 4
 #define HEIGHT 70 + 2 * MAIN_BORDER
 
+
 namespace GParted
 {
 
+
 DrawingAreaVisualDisk::DrawingAreaVisualDisk()
+ : m_selected_vp(nullptr), m_tot_sep(0), m_min_size(0), m_color_used(Utils::get_color(FS_USED)),
+   m_color_unused(Utils::get_color(FS_UNUSED)), m_color_unallocated(Utils::get_color(FS_UNALLOCATED)),
+   m_color_text("black")
 {
-	selected_vp = nullptr;
-
-	// Set some standard colors
-	color_used.set(Utils::get_color(FS_USED));
-	color_unused.set(Utils::get_color(FS_UNUSED));
-	color_unallocated.set(Utils::get_color(FS_UNALLOCATED));
-	color_text .set( "black" );
 	add_events( Gdk::BUTTON_PRESS_MASK );
-
 	set_size_request( -1, HEIGHT ) ;
 }
+
 
 void DrawingAreaVisualDisk::load_partitions( const PartitionVector & partitions, Sector device_length )
 {
 	clear() ;	
-	
-	TOT_SEP = get_total_separator_px( partitions ) ;
-	set_static_data( partitions, visual_partitions, device_length ) ;
+
+	m_tot_sep = get_total_separator_px(partitions);
+	set_static_data(partitions, m_visual_partitions, device_length);
 
 	queue_resize() ;
 }
 
+
 void DrawingAreaVisualDisk::set_selected( const Partition * partition_ptr )
 {
-	selected_vp = nullptr;
-	set_selected( visual_partitions, partition_ptr );
+	set_selected_by_ptn(m_visual_partitions, partition_ptr);
 
 	queue_draw() ;
 }
 
+
 void DrawingAreaVisualDisk::clear()
 {
-	visual_partitions .clear() ;
-	selected_vp = nullptr;
+	m_visual_partitions.clear();
+	m_selected_vp = nullptr;
 
 	queue_resize() ;
 }
+
 
 int DrawingAreaVisualDisk::get_total_separator_px( const PartitionVector & partitions )
 {
@@ -80,17 +80,18 @@ int DrawingAreaVisualDisk::get_total_separator_px( const PartitionVector & parti
 	return ( partitions .size() -1 ) * SEP ;
 }	
 
-void DrawingAreaVisualDisk::set_static_data( const PartitionVector & partitions,
-                                             std::vector<visual_partition> & visual_partitions,
-                                             Sector length )
+
+void DrawingAreaVisualDisk::set_static_data(const PartitionVector& partitions,
+                                            std::vector<VisualPartition>& visual_partitions,
+                                            Sector device_length)
 {
 	for ( unsigned int t = 0 ; t < partitions .size() ; t++ )
 	{
-		visual_partitions .push_back( visual_partition() ) ;
+		visual_partitions.push_back(VisualPartition());
 
 		visual_partitions.back().partition_ptr = & partitions[t];
 		Sector partition_length = partitions[ t ] .get_sector_length() ;
-		visual_partitions .back() .fraction = partition_length / static_cast<double>( length ) ;
+		visual_partitions.back().fraction = partition_length / static_cast<double>(device_length);
 
 		Glib::ustring color_str = Utils::get_color(partitions[t].get_filesystem_partition().fstype);
 		visual_partitions.back().color.set( color_str );
@@ -104,7 +105,8 @@ void DrawingAreaVisualDisk::set_static_data( const PartitionVector & partitions,
 	}
 }
 
-int DrawingAreaVisualDisk::calc_length( std::vector<visual_partition> & visual_partitions, int length_px ) 
+
+int DrawingAreaVisualDisk::calc_length(std::vector<VisualPartition>& visual_partitions, int length_px)
 {
 	int calced_length = 0 ;
 
@@ -116,18 +118,19 @@ int DrawingAreaVisualDisk::calc_length( std::vector<visual_partition> & visual_p
 			visual_partitions[ t ] .length = 
 				calc_length( visual_partitions[ t ] .logicals, 
 					     visual_partitions[ t ] .length - (2 * BORDER) ) + (2 * BORDER) ;
-		else if ( visual_partitions[ t ] .length < MIN_SIZE )
-			visual_partitions[ t ] .length = MIN_SIZE ;
-	
+		else if (visual_partitions[t].length < m_min_size)
+			visual_partitions[t].length = m_min_size;
+
 		calced_length += visual_partitions[ t ] .length ;
 	}
 	
 	return calced_length + (visual_partitions .size() - 1) * SEP ;
 }
 
-void DrawingAreaVisualDisk::calc_position_and_height( std::vector<visual_partition> & visual_partitions,
-						      int start,
-						      int border ) 
+
+void DrawingAreaVisualDisk::calc_position_and_height(std::vector<VisualPartition>& visual_partitions,
+                                                     int start,
+                                                     int border)
 {
 	for ( unsigned int t = 0 ; t < visual_partitions .size() ; t++ )
 	{
@@ -144,7 +147,8 @@ void DrawingAreaVisualDisk::calc_position_and_height( std::vector<visual_partiti
 	}
 }
 
-void DrawingAreaVisualDisk::calc_usage( std::vector<visual_partition> & visual_partitions )
+
+void DrawingAreaVisualDisk::calc_usage(std::vector<VisualPartition>& visual_partitions)
 {
 	for ( unsigned int t = 0 ; t < visual_partitions .size() ; t++ )
 	{
@@ -188,7 +192,8 @@ void DrawingAreaVisualDisk::calc_usage( std::vector<visual_partition> & visual_p
 	}
 }
 	
-void DrawingAreaVisualDisk::calc_text( std::vector<visual_partition> & visual_partitions ) 
+
+void DrawingAreaVisualDisk::calc_text(std::vector<VisualPartition>& visual_partitions)
 {
 	int length, height ;
 	
@@ -217,7 +222,7 @@ void DrawingAreaVisualDisk::calc_text( std::vector<visual_partition> & visual_pa
 
 
 void DrawingAreaVisualDisk::draw_partition(const Cairo::RefPtr<Cairo::Context>& cr,
-                                           const visual_partition& vp)
+                                           const VisualPartition& vp)
 {
 	//partition...
 	Gdk::Cairo::set_source_rgba(cr, vp.color);
@@ -230,7 +235,7 @@ void DrawingAreaVisualDisk::draw_partition(const Cairo::RefPtr<Cairo::Context>& 
 	//used..
 	if ( vp .used_length > 0 )
 	{
-		Gdk::Cairo::set_source_rgba(cr, color_used);
+		Gdk::Cairo::set_source_rgba(cr, m_color_used);
 		cr->rectangle(vp.x_used_start,
 		              vp.y_usage_start,
 		              vp.used_length,
@@ -241,7 +246,7 @@ void DrawingAreaVisualDisk::draw_partition(const Cairo::RefPtr<Cairo::Context>& 
 	//unused
 	if ( vp .unused_length > 0 )
 	{
-		Gdk::Cairo::set_source_rgba(cr, color_unused);
+		Gdk::Cairo::set_source_rgba(cr, m_color_unused);
 		cr->rectangle(vp.x_unused_start,
 		              vp.y_usage_start,
 		              vp.unused_length,
@@ -252,7 +257,7 @@ void DrawingAreaVisualDisk::draw_partition(const Cairo::RefPtr<Cairo::Context>& 
 	//unallocated
 	if ( vp .unallocated_length > 0 )
 	{
-		Gdk::Cairo::set_source_rgba(cr, color_unallocated);
+		Gdk::Cairo::set_source_rgba(cr, m_color_unallocated);
 		cr->rectangle(vp.x_unallocated_start,
 		              vp.y_usage_start,
 		              vp.unallocated_length,
@@ -263,7 +268,7 @@ void DrawingAreaVisualDisk::draw_partition(const Cairo::RefPtr<Cairo::Context>& 
 	//text
 	if ( vp .x_text > 0 )
 	{
-		Gdk::Cairo::set_source_rgba(cr, color_text);
+		Gdk::Cairo::set_source_rgba(cr, m_color_text);
 		cr->move_to(vp.x_text, vp.y_text);
 		vp.pango_layout->show_in_cairo_context(cr);
 	}
@@ -271,7 +276,7 @@ void DrawingAreaVisualDisk::draw_partition(const Cairo::RefPtr<Cairo::Context>& 
 
 
 void DrawingAreaVisualDisk::draw_partitions(const Cairo::RefPtr<Cairo::Context>& cr,
-                                            const std::vector<visual_partition>& visual_partitions)
+                                            const std::vector<VisualPartition>& visual_partitions)
 {
 	for ( unsigned int t = 0 ; t < visual_partitions .size() ; t++ )
 	{
@@ -282,35 +287,55 @@ void DrawingAreaVisualDisk::draw_partitions(const Cairo::RefPtr<Cairo::Context>&
 	}
 }
 
-void DrawingAreaVisualDisk::set_selected( const std::vector<visual_partition> & visual_partitions, int x, int y ) 
+
+bool DrawingAreaVisualDisk::set_selected_by_coord(const std::vector<VisualPartition>& visual_partitions,
+                                                  int x, int y)
 {
-	for ( unsigned int t = 0 ; t < visual_partitions .size() && ! selected_vp ; t++ )
+	m_selected_vp = nullptr;
+
+	for (unsigned int i = 0; i < visual_partitions.size(); i++)
 	{
-		if ( visual_partitions[ t ] .logicals .size() > 0  ) 
-			set_selected( visual_partitions[ t ] .logicals, x, y ) ;
-		
-		if ( ! selected_vp &&
-		     visual_partitions[ t ] .x_start <= x && 
-		     x < visual_partitions[ t ] .x_start + visual_partitions[ t ] .length &&
-		     visual_partitions[ t ] .y_start <= y &&
-		     y < visual_partitions[ t ] .y_start + visual_partitions[ t ] .height )
+		if (visual_partitions[i].logicals.size() > 0)
 		{
-			selected_vp = & visual_partitions[ t ] ;
+			if (set_selected_by_coord(visual_partitions[i].logicals, x, y))
+				return true;  // Was selected in recursive call
+		}
+
+		if (visual_partitions[i].x_start <= x &&
+		                    x < visual_partitions[i].x_start + visual_partitions[i].length &&
+		    visual_partitions[i].y_start <= y &&
+		                    y < visual_partitions[i].y_start + visual_partitions[i].height   )
+		{
+			m_selected_vp = &visual_partitions[i];
+			return true;  // Selected
 		}
 	}
+
+	return false;  // Not selected
 }
 
-void DrawingAreaVisualDisk::set_selected( const std::vector<visual_partition> & visual_partitions,
-                                          const Partition * partition_ptr )
-{
-	for ( unsigned int t = 0 ; t < visual_partitions .size() && ! selected_vp ; t++ )
-	{
-		if ( visual_partitions[ t ] .logicals .size() > 0 )
-			set_selected( visual_partitions[t].logicals, partition_ptr );
 
-		if ( ! selected_vp && *visual_partitions[t].partition_ptr == *partition_ptr )
-			selected_vp = & visual_partitions[ t ] ;
+bool DrawingAreaVisualDisk::set_selected_by_ptn(const std::vector<VisualPartition>& visual_partitions,
+                                                const Partition* partition_ptr)
+{
+	m_selected_vp = nullptr;
+
+	for (unsigned int i = 0; i < visual_partitions.size(); i++)
+	{
+		if (visual_partitions[i].logicals.size() > 0)
+		{
+			if (set_selected_by_ptn(visual_partitions[i].logicals, partition_ptr))
+				return true;  // Was selected in recursive call
+		}
+
+		if (*visual_partitions[i].partition_ptr == *partition_ptr)
+		{
+			m_selected_vp = &visual_partitions[i];
+			return true;  // Selected
+		}
 	}
+
+	return false;  // Not selected
 }
 
 
@@ -323,16 +348,16 @@ bool DrawingAreaVisualDisk::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
 	cr->set_line_cap(Cairo::LINE_CAP_BUTT);     // default
 	cr->set_dash(std::vector<double>(1, 4.0), 0.0);
 
-	draw_partitions(cr, visual_partitions);
+	draw_partitions(cr, m_visual_partitions);
 
 	//selection 
-	if ( selected_vp )
+	if (m_selected_vp)
 	{
-		Gdk::Cairo::set_source_rgba(cr, color_used);
-		cr->rectangle(selected_vp->x_start + BORDER/2,
-		              selected_vp->y_start + BORDER/2,
-		              selected_vp->length - BORDER,
-		              selected_vp->height - BORDER);
+		Gdk::Cairo::set_source_rgba(cr, m_color_used);
+		cr->rectangle(m_selected_vp->x_start + BORDER/2,
+		              m_selected_vp->y_start + BORDER/2,
+		              m_selected_vp->length - BORDER,
+		              m_selected_vp->height - BORDER);
 		cr->stroke();
 	}
 
@@ -343,13 +368,12 @@ bool DrawingAreaVisualDisk::on_button_press_event( GdkEventButton * event )
 {
 	bool ret_val = Gtk::DrawingArea::on_button_press_event( event ) ;
 
-	selected_vp = nullptr;
-	set_selected( visual_partitions, static_cast<int>( event ->x ), static_cast<int>( event ->y ) ) ;
+	set_selected_by_coord(m_visual_partitions, static_cast<int>(event->x), static_cast<int>(event->y));
 	queue_draw() ;
-	
-	if ( selected_vp )
+
+	if (m_selected_vp)
 	{
-		signal_partition_selected.emit( selected_vp->partition_ptr, false );
+		signal_partition_selected.emit(m_selected_vp->partition_ptr, false);
 
 		if ( event ->type == GDK_2BUTTON_PRESS ) 
 			signal_partition_activated .emit() ;
@@ -364,44 +388,45 @@ void DrawingAreaVisualDisk::on_size_allocate( Gtk::Allocation & allocation )
 {
 	Gtk::DrawingArea::on_size_allocate( allocation ) ;
 
-	MIN_SIZE = BORDER * 2 + 2 ;
+	m_min_size = BORDER * 2 + 2;
 
-	int available_size = allocation .get_width() - (2 * MAIN_BORDER),
-	calced = 0,
-	px_left ;
-	
+	int available_size = allocation.get_width() - (2 * MAIN_BORDER);
+	int calced = 0;
+	int px_left;
+
 	do
 	{
-		px_left = available_size - TOT_SEP ;
+		px_left = available_size - m_tot_sep;
 		calced = available_size ; //for first time :)
 		do 
 		{
 			px_left -= ( calced - available_size ) ;
-			calced = calc_length( visual_partitions, px_left ) ;
+			calced = calc_length(m_visual_partitions, px_left);
 		}
 		while ( calced > available_size && px_left > 0 ) ; 
-		
-		MIN_SIZE-- ;
+
+		m_min_size--;
 	}
-	while ( px_left <= 0 && MIN_SIZE > 0 ) ; 
+	while (px_left <= 0 && m_min_size > 0);
 
 	//due to rounding a few px may be lost. here we salvage them.. 
-	if ( visual_partitions .size() && calced > 0 )
+	if (m_visual_partitions.size() && calced > 0)
 	{
 		px_left = available_size - calced ;
 		
 		while ( px_left > 0 )
-			px_left = spreadout_leftover_px( visual_partitions, px_left ) ;
+			px_left = spreadout_leftover_px(m_visual_partitions, px_left);
 	}
-	
+
 	//and calculate the rest..
-	calc_position_and_height( visual_partitions, MAIN_BORDER, MAIN_BORDER ) ;//0, 0 ) ;
-	calc_usage( visual_partitions ) ;
-	calc_text( visual_partitions ) ;
+	calc_position_and_height(m_visual_partitions, MAIN_BORDER, MAIN_BORDER);  // 0, 0);
+	calc_usage(m_visual_partitions);
+	calc_text(m_visual_partitions);
 	queue_draw();
 }
 
-int DrawingAreaVisualDisk::spreadout_leftover_px( std::vector<visual_partition> & visual_partitions, int pixels ) 
+
+int DrawingAreaVisualDisk::spreadout_leftover_px(std::vector<VisualPartition>& visual_partitions, int pixels)
 {
 	int extended = -1 ;
 
@@ -430,4 +455,5 @@ DrawingAreaVisualDisk::~DrawingAreaVisualDisk()
 	clear() ;
 }
 
-} //GParted
+
+}  // namespace GParted

@@ -62,6 +62,7 @@ gpartedbin_SOURCES = \
 	TreeView_Detail.cc		\
 	Utils.cc			\
 	Win_GParted.cc			\
+	bcachefs.cc			\
 	btrfs.cc			\
 	exfat.cc			\
 	ext2.cc				\
@@ -82,8 +83,6 @@ gpartedbin_SOURCES = \
 	udf.cc				\
 	xfs.cc
 
-gpartedbin_LDADD = $(GTHREAD_LIBS) $(GTKMM_LIBS)
-
 if USE_ADB_BACKEND
 gpartedbin_SOURCES += \
 	GParted_Core_Adb.cc	\
@@ -94,4 +93,6 @@ else
 gpartedbin_SOURCES += \
 	GParted_Core.cc
 endif
+
+gpartedbin_LDADD = $(GTHREAD_LIBS) $(GTKMM_LIBS)
 

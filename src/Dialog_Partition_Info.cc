@@ -29,10 +29,12 @@
 #include <gtkmm/label.h>
 #include <atkmm/relation.h>
 #include <gdkmm/general.h>
+#include <sigc++/signal.h>
 
 
 namespace GParted
 {
+
 
 Dialog_Partition_Info::Dialog_Partition_Info( const Partition & partition ) : partition( partition )
 {
@@ -53,7 +55,7 @@ Dialog_Partition_Info::Dialog_Partition_Info( const Partition & partition ) : pa
 
 	// Place info and optional messages in scrollable window
 	info_msg_vbox.set_orientation(Gtk::ORIENTATION_VERTICAL);
-	info_msg_vbox .set_border_width( 6 ) ;
+	info_msg_vbox.set_border_width(5);
 	info_scrolled .set_policy( Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC ) ;
 #if HAVE_SET_PROPAGATE_NATURAL_WIDTH
 	info_scrolled.set_propagate_natural_width(true);
@@ -67,7 +69,7 @@ Dialog_Partition_Info::Dialog_Partition_Info( const Partition & partition ) : pa
 	if (child_viewport)
 		child_viewport->set_shadow_type(Gtk::SHADOW_NONE);
 	//horizontally center the information scrolled window to match partition graphic
-	Gtk::Alignment * center_widget = manage( new Gtk::Alignment(0.5, 0.5, 0.0, 1.0) ) ;
+	Gtk::Alignment* center_widget = Gtk::manage(new Gtk::Alignment(0.5, 0.5, 0.0, 1.0));
 	center_widget ->add( info_scrolled ) ;
 	this->get_content_area()->pack_start(*center_widget);
 
@@ -77,12 +79,12 @@ Dialog_Partition_Info::Dialog_Partition_Info( const Partition & partition ) : pa
 	//display messages (if any)
 	if ( partition.have_messages() )
 	{
-		frame = manage( new Gtk::Frame() );
+		frame = Gtk::manage(new Gtk::Frame());
 
 		{
 			Gtk::Image* image = Utils::mk_image(Gtk::Stock::DIALOG_WARNING, Gtk::ICON_SIZE_BUTTON);
 
-			hbox = manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
+			hbox = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
 			hbox->pack_start(*image, Gtk::PACK_SHRINK);
 		}
 
@@ -107,7 +109,7 @@ Dialog_Partition_Info::Dialog_Partition_Info( const Partition & partition ) : pa
 
 			concatenated_messages += "<i>" + Utils::trim_trailing_new_line(messages[i]) + "</i>";
 		}
-		Gtk::Box *vbox = manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
+		Gtk::Box* vbox = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
 		vbox ->set_border_width( 5 ) ;
 		vbox->pack_start( *Utils::mk_label( concatenated_messages, true, true, true ), Gtk::PACK_SHRINK );
 		frame ->add( *vbox ) ;
@@ -115,7 +117,7 @@ Dialog_Partition_Info::Dialog_Partition_Info( const Partition & partition ) : pa
 		info_msg_vbox .pack_start( *frame, Gtk::PACK_EXPAND_WIDGET ) ;
 	}
 
-	this ->add_button( Gtk::Stock::CLOSE, Gtk::RESPONSE_OK ) ;
+	this->add_button(Gtk::Stock::CLOSE, Gtk::RESPONSE_CLOSE);
 	this ->show_all_children() ;
 }
 
@@ -166,12 +168,12 @@ void Dialog_Partition_Info::init_drawingarea()
 	drawingarea .set_size_request( 400, 60 ) ;
 	drawingarea.signal_draw().connect(sigc::mem_fun(*this, &Dialog_Partition_Info::drawingarea_on_draw));
 
-	frame = manage( new Gtk::Frame() ) ;
+	frame = Gtk::manage(new Gtk::Frame());
 	frame ->add( drawingarea ) ;
-	
+
 	frame ->set_shadow_type( Gtk::SHADOW_ETCHED_OUT ) ;
 	frame ->set_border_width( 10 ) ;
-	hbox = manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
+	hbox = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
 	hbox ->pack_start( *frame, Gtk::PACK_EXPAND_PADDING ) ;
 
 	this->get_content_area()->pack_start(*hbox, Gtk::PACK_SHRINK);
@@ -228,7 +230,7 @@ void Dialog_Partition_Info::Display_Info()
 
 	Sector ptn_sectors = partition .get_sector_length() ;
 
-	Glib::ustring vgname = "" ;  //Also used in partition status message
+	Glib::ustring vgname;
 	if (filesystem_ptn.fstype == FS_LVM2_PV)
 		vgname = LVM2_PV_Info::get_vg_name( filesystem_ptn.get_path() );
 
@@ -238,7 +240,7 @@ void Dialog_Partition_Info::Display_Info()
 		// file system is accessible.
 		filesystem_accessible = true;
 
-	Gtk::Grid *grid(Gtk::manage(new Gtk::Grid()));
+	Gtk::Grid* grid(Gtk::manage(new Gtk::Grid()));
 
 	grid->set_border_width(5);
 	grid->set_column_spacing(10);
@@ -619,7 +621,8 @@ void Dialog_Partition_Info::Display_Info()
 		// Flags
 		Gtk::Label *label_flags = Utils::mk_label("<b>" + Glib::ustring(_("Flags:")) + "</b>");
 		grid->attach(*label_flags, 1, top, 1, 1);
-		Gtk::Label *value_flags = Utils::mk_label(Glib::build_path(", ", partition.flags), true, false, true);
+		Gtk::Label* value_flags = Utils::mk_label(Glib::build_path(", ", partition.get_flags()),
+		                                          true, false, true);
 		grid->attach(*value_flags, 2, top++, 1, 1);
 		value_flags->get_accessible()->add_relationship(Atk::RELATION_LABELLED_BY,
 		                                                label_flags->get_accessible());
@@ -652,8 +655,4 @@ void Dialog_Partition_Info::Display_Info()
 }
 
 
-Dialog_Partition_Info::~Dialog_Partition_Info()
-{
-}
-
-} //GParted
+}  // namespace GParted

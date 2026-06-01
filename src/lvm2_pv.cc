@@ -14,16 +14,22 @@
  *  along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
+
+#include "lvm2_pv.h"
+
 #include "FileSystem.h"
 #include "LVM2_PV_Info.h"
-#include "lvm2_pv.h"
+#include "OperationDetail.h"
 #include "Partition.h"
+#include "Utils.h"
 
 #include <glibmm/shell.h>
+#include <glibmm/ustring.h>
 
 
 namespace GParted
 {
+
 
 const Glib::ustring & lvm2_pv::get_custom_text( CUSTOM_TEXT ttype, int index ) const
 {
@@ -64,13 +70,11 @@ FS lvm2_pv::get_filesystem_support()
 		fs .check  = FS::EXTERNAL ;
 		fs .remove = FS::EXTERNAL ;
 		fs .online_read = FS::EXTERNAL ;
-#ifdef ENABLE_ONLINE_RESIZE
 		if ( Utils::kernel_version_at_least( 3, 6, 0 ) )
 		{
 			fs .online_grow = fs .grow ;
 			fs .online_shrink = fs.shrink ;
 		}
-#endif
 	}
 
 	return fs ;
@@ -97,27 +101,32 @@ void lvm2_pv::set_used_sectors( Partition & partition )
 	partition.append_messages( error_messages );
 }
 
+
 bool lvm2_pv::create( const Partition & new_partition, OperationDetail & operationdetail )
 {
-	return ! execute_command( "lvm pvcreate -M 2 " + Glib::shell_quote( new_partition.get_path() ),
-	                          operationdetail, EXEC_CHECK_STATUS );
+	return ! operationdetail.execute_command("lvm pvcreate -M 2 " + Glib::shell_quote(new_partition.get_path()),
+	                        EXEC_CHECK_STATUS);
 }
+
 
 bool lvm2_pv::resize( const Partition & partition_new, OperationDetail & operationdetail, bool fill_partition )
 {
-	Glib::ustring size = "" ;
+	Glib::ustring size;
 	if ( ! fill_partition )
 		size = " --yes --setphysicalvolumesize " +
 		       Utils::num_to_str(partition_new.get_byte_length() / KIBIBYTE) + "K ";
-	return ! execute_command( "lvm pvresize -v " + size + Glib::shell_quote( partition_new.get_path() ),
-	                          operationdetail, EXEC_CHECK_STATUS );
+	return ! operationdetail.execute_command("lvm pvresize -v " + size +
+	                        Glib::shell_quote(partition_new.get_path()),
+	                        EXEC_CHECK_STATUS);
 }
+
 
 bool lvm2_pv::check_repair( const Partition & partition, OperationDetail & operationdetail )
 {
-	return ! execute_command( "lvm pvck -v " + Glib::shell_quote( partition.get_path() ),
-	                          operationdetail, EXEC_CHECK_STATUS );
+	return ! operationdetail.execute_command("lvm pvck -v " + Glib::shell_quote(partition.get_path()),
+	                        EXEC_CHECK_STATUS);
 }
+
 
 bool lvm2_pv::remove( const Partition & partition, OperationDetail & operationdetail )
 {
@@ -128,7 +137,8 @@ bool lvm2_pv::remove( const Partition & partition, OperationDetail & operationde
 	else
 		//Must force the removal of a PV which is a member of a VG
 		cmd = "lvm pvremove --force --force --yes " + Glib::shell_quote( partition.get_path() );
-	return ! execute_command( cmd, operationdetail, EXEC_CHECK_STATUS );
+	return ! operationdetail.execute_command(cmd, EXEC_CHECK_STATUS);
 }
 
-} //GParted
+
+}  // namespace GParted

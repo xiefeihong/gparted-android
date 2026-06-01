@@ -24,20 +24,23 @@
 #include <gtkmm/dialog.h>
 #include <gtkmm/entry.h>
 
+
 namespace GParted
 {
+
 
 class Dialog_Partition_Name: public Gtk::Dialog
 {
 public:
 	Dialog_Partition_Name( const Partition & partition, int max_length );
-	~Dialog_Partition_Name();
 	Glib::ustring get_new_name();
 
 private:
 	Gtk::Entry *entry;
 };
 
-} //GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_DIALOG_PARTITION_NAME_H */

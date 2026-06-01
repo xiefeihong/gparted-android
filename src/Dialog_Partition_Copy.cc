@@ -15,15 +15,23 @@
  *  along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Device.h"
+
 #include "Dialog_Partition_Copy.h"
+
+#include "Device.h"
 #include "FileSystem.h"
 #include "GParted_Core.h"
 #include "Partition.h"
 #include "Utils.h"
 
+#include <glibmm/ustring.h>
+#include <gdkmm/rgba.h>
+#include <glib.h>
+
+
 namespace GParted
 {
+
 
 Dialog_Partition_Copy::Dialog_Partition_Copy(const Device& device, const FS& fs,
                                              const FS_Limits& fs_limits,
@@ -40,11 +48,6 @@ Dialog_Partition_Copy::Dialog_Partition_Copy(const Device& device, const FS& fs,
 	set_data( selected_partition, copied_partition );
 }
 
-Dialog_Partition_Copy::~Dialog_Partition_Copy()
-{
-	delete new_partition;
-	new_partition = nullptr;
-}
 
 void Dialog_Partition_Copy::set_data( const Partition & selected_partition, const Partition & copied_partition )
 {
@@ -52,7 +55,7 @@ void Dialog_Partition_Copy::set_data( const Partition & selected_partition, cons
 
 	// Set partition color
 	Gdk::RGBA partition_color(Utils::get_color(copied_partition.fstype));
-	frame_resizer_base->set_rgb_partition_color( partition_color );
+	m_frame_resizer_base->set_rgb_partition_color(partition_color);
 
 	//set some widely used values...
 	MIN_SPACE_BEFORE_MB = Dialog_Base_Partition::MB_Needed_for_Boot_Record( selected_partition ) ;
@@ -68,12 +71,12 @@ void Dialog_Partition_Copy::set_data( const Partition & selected_partition, cons
 	long COPIED_LENGTH_MB = ceil( Utils::sector_to_unit( copied_min_sectors, selected_partition .sector_size, UNIT_MIB ) ) ;
 
 	//now calculate proportional length of partition 
-	frame_resizer_base ->set_x_min_space_before( Utils::round( MIN_SPACE_BEFORE_MB / MB_PER_PIXEL ) ) ;
-	frame_resizer_base ->set_x_start( Utils::round(MIN_SPACE_BEFORE_MB / MB_PER_PIXEL) ) ;
+	m_frame_resizer_base->set_x_min_space_before(Utils::round(MIN_SPACE_BEFORE_MB / MB_PER_PIXEL));
+	m_frame_resizer_base->set_x_start(Utils::round(MIN_SPACE_BEFORE_MB / MB_PER_PIXEL));
 	int x_end = Utils::round( (MIN_SPACE_BEFORE_MB + COPIED_LENGTH_MB) / ( TOTAL_MB/500.00 ) ) ; //> 500 px only possible with xfs...
-	frame_resizer_base ->set_x_end( x_end > 500 ? 500 : x_end ) ;
+	m_frame_resizer_base->set_x_end(x_end > 500 ? 500 : x_end);
 	Sector min_resize = copied_partition .estimated_min_size() ;
-	frame_resizer_base ->set_used( 
+	m_frame_resizer_base->set_used(
 		Utils::round( Utils::sector_to_unit( min_resize, copied_partition .sector_size, UNIT_MIB ) / (TOTAL_MB/500.00) ) ) ;
 
 	//Only allow pasting into a new larger partition if growing the file
@@ -107,20 +110,20 @@ void Dialog_Partition_Copy::set_data( const Partition & selected_partition, cons
 	spinbutton_after.set_range( 0, TOTAL_MB - MIN_SPACE_BEFORE_MB - ceil( fs_limits.min_size / double(MEBIBYTE) ) );
 	spinbutton_after .set_value( TOTAL_MB - MIN_SPACE_BEFORE_MB - COPIED_LENGTH_MB ) ; 
 	GRIP = false ;
-	
-	frame_resizer_base->set_size_limits( Utils::round( fs_limits.min_size / (MB_PER_PIXEL * MEBIBYTE) ),
-	                                     Utils::round( fs_limits.max_size / (MB_PER_PIXEL * MEBIBYTE) ) );
+
+	m_frame_resizer_base->set_size_limits(Utils::round(fs_limits.min_size / (MB_PER_PIXEL * MEBIBYTE)),
+	                                      Utils::round(fs_limits.max_size / (MB_PER_PIXEL * MEBIBYTE)));
 
 	//set contents of label_minmax
 	Set_MinMax_Text( ceil( fs_limits.min_size / double(MEBIBYTE) ),
 	                 ceil( fs_limits.max_size / double(MEBIBYTE) ) );
 
 	// Set member variable used in Dialog_Base_Partition::prepare_new_partition()
-	new_partition = copied_partition.clone();
-	new_partition->device_path     = selected_partition.device_path;
-	new_partition->inside_extended = selected_partition.inside_extended;
-	new_partition->type            = selected_partition.inside_extended ? TYPE_LOGICAL : TYPE_PRIMARY;
-	new_partition->sector_size     = selected_partition.sector_size;
+	m_new_partition.reset(copied_partition.clone());
+	m_new_partition->device_path     = selected_partition.device_path;
+	m_new_partition->inside_extended = selected_partition.inside_extended;
+	m_new_partition->type            = selected_partition.inside_extended ? TYPE_LOGICAL : TYPE_PRIMARY;
+	m_new_partition->sector_size     = selected_partition.sector_size;
 	if ( copied_partition.sector_usage_known() )
 	{
 		// Handle situation where src sector size is smaller than dst sector size
@@ -132,28 +135,30 @@ void Dialog_Partition_Copy::set_data( const Partition & selected_partition, cons
 		                              selected_partition.sector_size;
 		Sector dst_unused_sectors   = ( src_unused_bytes + selected_partition.sector_size - 1 ) /
 		                              selected_partition.sector_size;
-		new_partition->set_sector_usage( dst_fs_sectors, dst_unused_sectors );
+		m_new_partition->set_sector_usage(dst_fs_sectors, dst_unused_sectors);
 	}
 	else
 	{
 		// FS usage of src is unknown so set dst usage unknown too.
-		new_partition->set_sector_usage( -1, -1 );
+		m_new_partition->set_sector_usage(-1, -1);
 	}
 
 	this ->show_all_children() ;
 }
 
-const Partition & Dialog_Partition_Copy::Get_New_Partition()
+
+const Partition& Dialog_Partition_Copy::get_new_partition()
 {
-	g_assert(new_partition != nullptr);  // Bug: Not initialised by constructor calling set_data()
+	g_assert(m_new_partition != nullptr);  // Bug: Not initialised by constructor calling set_data()
 
 	//first call baseclass to get the correct new partition
 	Dialog_Base_Partition::prepare_new_partition();
 
-	//set proper name and status for partition
-	new_partition->status = STAT_COPY;
+	m_new_partition->status = STAT_COPY;
+	GParted_Core::compose_partition_flags(*m_new_partition, m_device.disktype);
 
-	return *new_partition;
+	return *m_new_partition;
 }
 
-} //GParted
+
+}  // namespace GParted

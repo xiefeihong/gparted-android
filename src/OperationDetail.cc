@@ -16,14 +16,88 @@
 
 
 #include "OperationDetail.h"
+#include "PipeCapture.h"
 #include "ProgressBar.h"
 #include "Utils.h"
+
+#include <cerrno>
+#include <unistd.h>
+#include <fcntl.h>
+#include <glibmm/main.h>
+#include <glibmm/ustring.h>
+#include <glibmm/stringutils.h>
+#include <glibmm/spawn.h>
+#include <glibmm/shell.h>
+#include <gtkmm/main.h>
+#include <sigc++/bind.h>
+#include <sigc++/signal.h>
+
 
 namespace GParted
 {
 
+
+namespace  // unnamed
+{
+
+
 // The single progress bar for the current operation
 static ProgressBar single_progressbar;
+
+
+// Single set of coordination data between execute_command_internal() and helpers
+static struct CommandStatus {
+	bool          running;
+	int           pipecount;
+	Glib::ustring output;
+	Glib::ustring error;
+	int           exit_status;
+
+	// Default constructor to initialise POD (Plain Old Data) members
+	CommandStatus() : running(false), pipecount(0), exit_status(0)  {};
+} cmd_status;
+
+
+static void setup_child_process()
+{
+	setpgrp();
+}
+
+
+static void execute_command_eof()
+{
+	if (--cmd_status.pipecount)
+		return;  // Wait for second pipe to encounter EOF.
+	if (! cmd_status.running)  // Already got exit status.
+		Gtk::Main::quit();
+}
+
+
+static void store_exit_status(GPid pid, int status)
+{
+	cmd_status.exit_status = Utils::decode_wait_status(status);
+	cmd_status.running = false;
+	if (cmd_status.pipecount == 0)  // Both pipes finished first.
+		Gtk::Main::quit();
+	Glib::spawn_close_pid(pid);
+}
+
+
+static void update_command_output(OperationDetail* operationdetail, Glib::ustring* str)
+{
+	operationdetail->set_description(*str, FONT_MONOSPACE);
+}
+
+
+static void cancel_command(bool force, Glib::Pid pid, bool cancel_safe)
+{
+	if (force || cancel_safe)
+		kill(-pid, SIGINT);
+}
+
+
+}  // unnamed namespace
+
 
 OperationDetail::OperationDetail() : cancelflag( 0 ), status( STATUS_NONE ), time_start( -1 ), time_elapsed( -1 ),
                                      no_more_children( false )
@@ -47,32 +121,36 @@ OperationDetail::~OperationDetail()
 	}
 }
 
-void OperationDetail::set_description( const Glib::ustring & description, Font font )
+
+void OperationDetail::set_description(const Glib::ustring& description, Font font)
 {
 	try
 	{
-		switch ( font )
+		switch (font)
 		{
 			case FONT_NORMAL:
-		 		this ->description = Glib::Markup::escape_text( description ) ;
-			 	break ;
+				this->description = Glib::Markup::escape_text(description);
+				break;
 			case FONT_BOLD:
-		 		this ->description = "<b>" + Glib::Markup::escape_text( description ) + "</b>" ;
-			 	break ;
+				this->description = "<b>" + Glib::Markup::escape_text(description) + "</b>";
+				break;
 			case FONT_ITALIC:
-		 		this ->description = "<i>" + Glib::Markup::escape_text( description ) + "</i>" ;
-			 	break ;
+				this->description = "<i>" + Glib::Markup::escape_text(description) + "</i>";
+				break;
 			case FONT_BOLD_ITALIC:
-		 		this ->description = "<b><i>" + Glib::Markup::escape_text( description ) + "</i></b>" ;
-			 	break ;
+				this->description = "<b><i>" + Glib::Markup::escape_text(description) + "</i></b>";
+				break;
+			case FONT_MONOSPACE:
+				this->description = "<tt>" + Glib::Markup::escape_text(description) + "</tt>";
+				break;
 		}
 	}
-	catch ( Glib::Exception & e )
+	catch (Glib::Exception& e)
 	{
-		this ->description = e .what() ;
+		this->description = e.what();
 	}
 
-	on_update( *this ) ;
+	on_update(*this);
 }
 
 
@@ -160,15 +238,18 @@ void OperationDetail::add_child( const OperationDetail & operationdetail )
 	add_child_implement( operationdetail );
 }
 
-std::vector<OperationDetail*> & OperationDetail::get_childs()
+
+std::vector<OperationDetail*>& OperationDetail::get_children()
 {
-	return sub_details ;
+	return sub_details;
 }
 
-const std::vector<OperationDetail*> & OperationDetail::get_childs() const
+
+const std::vector<OperationDetail*>& OperationDetail::get_children() const
 {
-	return sub_details ;
+	return sub_details;
 }
+
 
 OperationDetail & OperationDetail::get_last_child()
 {
@@ -195,6 +276,57 @@ void OperationDetail::stop_progressbar()
 		signal_update.emit( *this );
 	}
 }
+
+
+// Execute command and capture stdout and stderr to operation details.
+int OperationDetail::execute_command(const Glib::ustring& command, ExecFlags flags)
+{
+	StreamSlot empty_stream_slot;
+	TimedSlot empty_timed_slot;
+	return execute_command_internal(command, nullptr, flags, empty_stream_slot, empty_timed_slot);
+}
+
+
+// Execute command, pass string to stdin and capture stdout and stderr to operation
+// details.
+int OperationDetail::execute_command(const Glib::ustring& command, const char *input, ExecFlags flags)
+{
+	StreamSlot empty_stream_slot;
+	TimedSlot empty_timed_slot;
+	return execute_command_internal(command, input, flags, empty_stream_slot, empty_timed_slot);
+}
+
+
+// Execute command, capture stdout and stderr to operation details and run progress
+// tracking callback when either stdout or stderr is updated (as requested by flag
+// EXEC_PROGRESS_STDOUT or EXEC_PROGRESS_STDERR respectively).
+int OperationDetail::execute_command(const Glib::ustring& command, ExecFlags flags, StreamSlot stream_progress_slot)
+{
+	TimedSlot empty_timed_slot;
+	return execute_command_internal(command, nullptr, flags, stream_progress_slot, empty_timed_slot);
+}
+
+
+// Execute command, capture stdout and stderr to operation details and run progress
+// tracking callback periodically (when requested by flag EXEC_PROGRESS_TIMED).
+int OperationDetail::execute_command(const Glib::ustring& command, ExecFlags flags, TimedSlot timed_progress_slot)
+{
+	StreamSlot empty_stream_slot;
+	return execute_command_internal(command, nullptr, flags, empty_stream_slot, timed_progress_slot);
+}
+
+
+const Glib::ustring& OperationDetail::get_command_output()
+{
+	return cmd_status.output;
+}
+
+
+const Glib::ustring& OperationDetail::get_command_error()
+{
+	return cmd_status.error;
+}
+
 
 // Private methods
 
@@ -232,4 +364,98 @@ const ProgressBar& OperationDetail::get_progressbar() const
 	return single_progressbar;
 }
 
-} //GParted
+
+int OperationDetail::execute_command_internal(const Glib::ustring& command, const char *input, ExecFlags flags,
+                                              StreamSlot stream_progress_slot,
+                                              TimedSlot timed_progress_slot)
+{
+	add_child(OperationDetail(command, STATUS_EXECUTE, FONT_BOLD_ITALIC));
+	OperationDetail& cmd_operationdetail = get_last_child();
+	Glib::Pid pid;
+	int in = -1;
+	// set up pipes for capture
+	int out;
+	int err;
+	// spawn external process
+	cmd_status.running = true;
+	cmd_status.pipecount = 2;
+	cmd_status.exit_status = 255;  // Set to actual value by store_exit_status()
+	try {
+		Glib::spawn_async_with_pipes(std::string("."),
+		                             Glib::shell_parse_argv(command),
+		                             Glib::SPAWN_DO_NOT_REAP_CHILD | Glib::SPAWN_SEARCH_PATH,
+		                             sigc::ptr_fun(setup_child_process),
+		                             &pid,
+		                             (input != nullptr) ? &in : 0,
+		                             &out,
+		                             &err);
+	}
+	catch (Glib::SpawnError &e)
+	{
+		std::cerr << e.what() << std::endl;
+		cmd_operationdetail.add_child(OperationDetail( e.what(), STATUS_ERROR, FONT_ITALIC));
+		return Utils::get_failure_status(e);
+	}
+	fcntl(out, F_SETFL, O_NONBLOCK);
+	fcntl(err, F_SETFL, O_NONBLOCK);
+	Glib::signal_child_watch().connect(sigc::ptr_fun(store_exit_status), pid);
+	PipeCapture outputcapture(out, cmd_status.output);
+	PipeCapture errorcapture(err, cmd_status.error);
+	outputcapture.signal_eof.connect(sigc::ptr_fun(execute_command_eof));
+	errorcapture.signal_eof.connect(sigc::ptr_fun(execute_command_eof));
+	cmd_operationdetail.add_child(OperationDetail(cmd_status.output, STATUS_NONE, FONT_ITALIC));
+	cmd_operationdetail.add_child(OperationDetail(cmd_status.error, STATUS_NONE, FONT_ITALIC));
+	std::vector<OperationDetail*>& children = cmd_operationdetail.get_children();
+	outputcapture.signal_update.connect(sigc::bind(sigc::ptr_fun(update_command_output),
+	                                               children[children.size() - 2],
+	                                               &cmd_status.output));
+	errorcapture.signal_update.connect(sigc::bind(sigc::ptr_fun(update_command_output),
+	                                              children[children.size() - 1],
+	                                              &cmd_status.error));
+	sigc::connection timed_conn;
+	if (flags & EXEC_PROGRESS_STDOUT && ! stream_progress_slot.empty())
+		// Register progress tracking callback called when stdout updates
+		outputcapture.signal_update.connect(sigc::bind(stream_progress_slot, &cmd_operationdetail));
+	else if (flags & EXEC_PROGRESS_STDERR && ! stream_progress_slot.empty())
+		// Register progress tracking callback called when stderr updates
+		errorcapture.signal_update.connect(sigc::bind(stream_progress_slot, &cmd_operationdetail));
+	else if (flags & EXEC_PROGRESS_TIMED && ! timed_progress_slot.empty())
+		// Register progress tracking callback called every 500 ms
+		timed_conn = Glib::signal_timeout().connect(sigc::bind(timed_progress_slot, &cmd_operationdetail), 500);
+	outputcapture.connect_signal();
+	errorcapture.connect_signal();
+
+	cmd_operationdetail.signal_cancel.connect(sigc::bind(sigc::ptr_fun(cancel_command),
+	                                                     pid,
+	                                                     flags & EXEC_CANCEL_SAFE));
+
+	if (input != nullptr && in != -1)
+	{
+		// Write small amount of input to pipe to the child process.  Linux will
+		// always accept up to 4096 bytes without blocking.  See pipe(7).
+		size_t len = strlen(input);
+		ssize_t written = write(in, input, len);
+		if (written == -1 || (size_t)written < len)
+		{
+			int e = errno;
+			std::cerr << "Write to child failed: " << Glib::strerror(e) << std::endl;
+			cmd_operationdetail.add_child(OperationDetail("Write to child failed: " + Glib::strerror(e),
+			                                              STATUS_NONE, FONT_ITALIC));
+		}
+		close(in);
+	}
+
+	Gtk::Main::run();
+
+	if (flags & EXEC_CHECK_STATUS)
+		cmd_operationdetail.set_success_and_capture_errors(cmd_status.exit_status == 0);
+	close(out);
+	close(err);
+	if (timed_conn.connected())
+		timed_conn.disconnect();
+	cmd_operationdetail.stop_progressbar();
+	return cmd_status.exit_status;
+}
+
+
+}  // namespace GParted

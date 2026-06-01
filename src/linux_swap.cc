@@ -15,19 +15,27 @@
  *  along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
+
 #include "linux_swap.h"
+
 #include "BlockSpecial.h"
 #include "FileSystem.h"
+#include "OperationDetail.h"
 #include "Partition.h"
+#include "Utils.h"
 
 #include <cerrno>
+#include <fstream>
 #include <glibmm/miscutils.h>
-#include <glibmm/stringutils.h>
 #include <glibmm/shell.h>
+#include <glibmm/stringutils.h>
+#include <glibmm/ustring.h>
+#include <stdio.h>
 
 
 namespace GParted
 {
+
 
 const Glib::ustring & linux_swap::get_custom_text( CUSTOM_TEXT ttype, int index ) const
 {
@@ -75,105 +83,114 @@ FS linux_swap::get_filesystem_support()
 	return fs ;
 }
 
-void linux_swap::set_used_sectors( Partition & partition )
+
+void linux_swap::set_used_sectors(Partition& partition)
 {
-	if ( partition .busy )
-	{
-		long long used_kib = -1;
-		std::string line ;
-		std::ifstream input( "/proc/swaps" ) ;
-		if ( input )
-		{
-			BlockSpecial bs_path = BlockSpecial( partition.get_path() );
-			while ( getline( input, line ) )
-			{
-				Glib::ustring filename = Utils::regexp_label( line, "^([[:graph:]]+)" );
-				if ( bs_path == BlockSpecial( filename ) )
-				{
-					sscanf(line.c_str(), "%*s %*s %*d %lld", &used_kib);
-					break ;
-				}
-			}
-			input .close() ;
-		}
-		else
-		{
-			partition.push_back_message( "open(\"/proc/swaps\", O_RDONLY): " + Glib::strerror( errno ) );
-		}
-		if (used_kib > -1)
-		{
-			// Ignore swap space reported size to ignore 1 page format
-			// overhead.  Instead use partition size as sectors_fs_size so
-			// reported used figure for active swap space starts from 0
-			// upwards, matching what 'swapon -s' reports.
-			Sector fs_size = partition.get_sector_length();
-			Sector fs_used = used_kib * KIBIBYTE / partition.sector_size;
-			Sector fs_free = fs_size - fs_used;
-			partition.set_sector_usage(fs_size, fs_free);
-		}
-	}
-	else
+	if (! partition.busy)
 	{
 		// By definition inactive swap space is 100% free.
 		Sector fs_size = partition.get_sector_length();
 		partition.set_sector_usage(fs_size, fs_size);
+		return;
+	}
+
+	std::ifstream input("/proc/swaps");
+	if (! input)
+	{
+		partition.push_back_message("open(\"/proc/swaps\", O_RDONLY): " + Glib::strerror(errno));
+		return;
+	}
+
+	std::string line;
+	BlockSpecial bs_path = BlockSpecial(partition.get_path());
+	long long used_kib = -1;
+	while (getline(input, line))
+	{
+		Glib::ustring filename = Utils::regexp_label(line, "^([[:graph:]]+)");
+		if (bs_path == BlockSpecial(filename))
+		{
+			sscanf(line.c_str(), "%*s %*s %*d %lld", &used_kib);
+			break;
+		}
+	}
+	input.close();
+
+	if (used_kib > -1)
+	{
+		// Ignore swap space reported size to ignore 1 page format overhead.
+		// Instead use partition size as sectors_fs_size so reported used figure
+		// for active swap space starts from 0 upwards, matching what 'swapon -s'
+		// reports.
+		Sector fs_size = partition.get_sector_length();
+		Sector fs_used = used_kib * KIBIBYTE / partition.sector_size;
+		Sector fs_free = fs_size - fs_used;
+		partition.set_sector_usage(fs_size, fs_free);
 	}
 }
 
 
-void linux_swap::read_label( Partition & partition )
+void linux_swap::read_label(Partition& partition)
 {
-	if ( ! Utils::execute_command( "swaplabel " + Glib::shell_quote( partition.get_path() ), output, error, true ) )
+	Glib::ustring output;
+	Glib::ustring error;
+	int exit_status = Utils::execute_command("swaplabel " + Glib::shell_quote(partition.get_path()),
+	                                         output, error, true);
+	if (exit_status != 0)
 	{
-		partition.set_filesystem_label( Utils::regexp_label( output, "^LABEL:[[:blank:]]*(.*)$" ) );
+		if (! output.empty())
+			partition.push_back_message(output);
+		if (! error.empty())
+			partition.push_back_message(error);
+		return;
 	}
-	else
-	{
-		if ( ! output .empty() )
-			partition.push_back_message( output );
-		
-		if ( ! error .empty() )
-			partition.push_back_message( error );
-	}
+
+	partition.set_filesystem_label(Utils::regexp_label(output, "^LABEL:[[:blank:]]*(.*)$"));
 }
+
 
 bool linux_swap::write_label( const Partition & partition, OperationDetail & operationdetail )
 {
-	return ! execute_command( "swaplabel -L " + Glib::shell_quote( partition.get_filesystem_label() ) +
-	                          " " + Glib::shell_quote( partition.get_path() ),
-	                          operationdetail, EXEC_CHECK_STATUS );
+	return ! operationdetail.execute_command("swaplabel -L " + Glib::shell_quote(partition.get_filesystem_label()) +
+	                        " " + Glib::shell_quote(partition.get_path()),
+	                        EXEC_CHECK_STATUS);
 }
 
-void linux_swap::read_uuid( Partition & partition )
-{
-	if ( ! Utils::execute_command( "swaplabel " + Glib::shell_quote( partition.get_path() ), output, error, true ) )
-	{
-		partition .uuid = Utils::regexp_label( output, "^UUID:[[:blank:]]*(" RFC4122_NONE_NIL_UUID_REGEXP ")" ) ;
-	}
-	else
-	{
-		if ( ! output .empty() )
-			partition.push_back_message( output );
 
-		if ( ! error .empty() )
-			partition.push_back_message( error );
+void linux_swap::read_uuid(Partition& partition)
+{
+	Glib::ustring output;
+	Glib::ustring error;
+	int exit_status = Utils::execute_command("swaplabel " + Glib::shell_quote(partition.get_path()),
+	                                         output, error, true);
+	if (exit_status != 0)
+	{
+		if (! output.empty())
+			partition.push_back_message(output);
+		if (! error.empty())
+			partition.push_back_message(error);
+		return;
 	}
+
+	partition.uuid = Utils::regexp_label(output, "^UUID:[[:blank:]]*(" RFC4122_NONE_NIL_UUID_REGEXP ")");
 }
 
 
 bool linux_swap::write_uuid( const Partition & partition, OperationDetail & operationdetail )
 {
-	return ! execute_command( "swaplabel -U " + Glib::shell_quote( Utils::generate_uuid() ) +
-	                          " " + Glib::shell_quote( partition.get_path() ),
-	                          operationdetail, EXEC_CHECK_STATUS );
+	return ! operationdetail.execute_command("swaplabel -U " + Glib::shell_quote(Utils::generate_uuid()) +
+	                        " " + Glib::shell_quote(partition.get_path()),
+	                        EXEC_CHECK_STATUS);
 }
+
 
 bool linux_swap::create( const Partition & new_partition, OperationDetail & operationdetail )
 {
-	return ! execute_command( "mkswap -L " + Glib::shell_quote( new_partition.get_filesystem_label() ) +
-	                          " " + Glib::shell_quote( new_partition.get_path() ),
-	                          operationdetail, EXEC_CHECK_STATUS );
+	return ! operationdetail.execute_command("mkswap -L " +
+	                        Glib::shell_quote(new_partition.get_filesystem_label()) +
+	                        " " + Glib::shell_quote(new_partition.get_path()),
+	                        EXEC_CHECK_STATUS);
 }
+
 
 bool linux_swap::resize( const Partition & partition_new, OperationDetail & operationdetail, bool fill_partition )
 {
@@ -182,8 +199,9 @@ bool linux_swap::resize( const Partition & partition_new, OperationDetail & oper
 	if ( ! partition_new .uuid .empty() )
 		command +=  " -U " + Glib::shell_quote( partition_new.uuid ) + " ";
 	command += Glib::shell_quote( partition_new.get_path() );
-	return ! execute_command( command, operationdetail, EXEC_CHECK_STATUS );
+	return ! operationdetail.execute_command(command, EXEC_CHECK_STATUS);
 }
+
 
 bool linux_swap::move( const Partition & partition_new
                      , const Partition & partition_old
@@ -224,4 +242,5 @@ bool linux_swap::copy( const Partition & src_part,
 	return true ;
 }
 
-} //GParted
+
+}  // namespace GParted

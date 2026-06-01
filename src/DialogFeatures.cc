@@ -35,6 +35,7 @@
 namespace GParted
 {
 
+
 DialogFeatures::DialogFeatures() 
 {
 	set_title( _("File System Support") ) ;
@@ -42,52 +43,56 @@ DialogFeatures::DialogFeatures()
 	set_size_request( -1, 500 ) ;
 
 	//initialize icons
-	icon_yes = Utils::mk_pixbuf(*this, Gtk::Stock::APPLY, Gtk::ICON_SIZE_LARGE_TOOLBAR);
-	icon_no = Utils::mk_pixbuf(*this, Gtk::Stock::CANCEL, Gtk::ICON_SIZE_LARGE_TOOLBAR);
-	icon_blank = Gdk::Pixbuf::create( Gdk::COLORSPACE_RGB, true, 8,
-	                                  icon_yes ->get_width(), icon_yes ->get_height() );
-	icon_blank ->fill( 0xFFFFFF00 );
+	m_icon_yes = Utils::mk_pixbuf(*this, Gtk::Stock::APPLY, Gtk::ICON_SIZE_LARGE_TOOLBAR);
+	m_icon_no = Utils::mk_pixbuf(*this, Gtk::Stock::CANCEL, Gtk::ICON_SIZE_LARGE_TOOLBAR);
+	int width = 0;
+	int height = 0;
+	if (Gtk::IconSize::lookup(Gtk::ICON_SIZE_LARGE_TOOLBAR, width, height) && width > 0 && height > 0)
+	{
+		m_icon_blank = Gdk::Pixbuf::create(Gdk::COLORSPACE_RGB, true, 8, width, height);
+		m_icon_blank->fill(0xFFFFFF00);
+	}
 
 	//treeview
 	Gtk::TreeView::Column *col;
-	liststore_filesystems = Gtk::ListStore::create( treeview_filesystems_columns );
-	treeview_filesystems .set_model( liststore_filesystems );
-	treeview_filesystems.append_column(_("File System"), treeview_filesystems_columns.fsname);
-	treeview_filesystems .append_column( _("Create"), treeview_filesystems_columns .create );
-	col = manage( new Gtk::TreeView::Column( _("Grow") ) );
-	col ->pack_start( treeview_filesystems_columns .grow, false );
-	col ->pack_start( treeview_filesystems_columns .online_grow, false );
-	treeview_filesystems .append_column( *col );
-	col = manage( new Gtk::TreeView::Column( _("Shrink") ) );
-	col ->pack_start( treeview_filesystems_columns .shrink, false );
-	col ->pack_start( treeview_filesystems_columns .online_shrink, false );
-	treeview_filesystems .append_column( *col );
-	treeview_filesystems .append_column( _("Move"), treeview_filesystems_columns .move );
-	treeview_filesystems .append_column( _("Copy"), treeview_filesystems_columns .copy );
-	treeview_filesystems .append_column( _("Check"), treeview_filesystems_columns .check );
-	col = manage(new Gtk::TreeView::Column(_("Label")));
-	col->pack_start(treeview_filesystems_columns.label, false);
-	col->pack_start(treeview_filesystems_columns.online_label, false);
-	treeview_filesystems.append_column(*col);
-	treeview_filesystems .append_column( _("UUID"), treeview_filesystems_columns .uuid );
-	treeview_filesystems .append_column( _("Required Software"), treeview_filesystems_columns .software );
-	treeview_filesystems .get_selection() ->set_mode( Gtk::SELECTION_NONE );
-	treeview_filesystems .set_rules_hint( true ) ;
+	m_liststore_filesystems = Gtk::ListStore::create(m_treeview_filesystems_columns);
+	m_treeview_filesystems.set_model(m_liststore_filesystems);
+	m_treeview_filesystems.append_column(_("File System"), m_treeview_filesystems_columns.fsname);
+	m_treeview_filesystems.append_column(_("Create"), m_treeview_filesystems_columns .create);
+	col = Gtk::manage(new Gtk::TreeView::Column(_("Grow")));
+	col->pack_start(m_treeview_filesystems_columns.grow, false);
+	col->pack_start(m_treeview_filesystems_columns.online_grow, false);
+	m_treeview_filesystems.append_column(*col);
+	col = Gtk::manage(new Gtk::TreeView::Column(_("Shrink")));
+	col->pack_start(m_treeview_filesystems_columns.shrink, false);
+	col->pack_start(m_treeview_filesystems_columns.online_shrink, false);
+	m_treeview_filesystems.append_column(*col);
+	m_treeview_filesystems.append_column(_("Move"), m_treeview_filesystems_columns.move);
+	m_treeview_filesystems.append_column(_("Copy"), m_treeview_filesystems_columns.copy);
+	m_treeview_filesystems.append_column(_("Check"), m_treeview_filesystems_columns.check);
+	col = Gtk::manage(new Gtk::TreeView::Column(_("Label")));
+	col->pack_start(m_treeview_filesystems_columns.label, false);
+	col->pack_start(m_treeview_filesystems_columns.online_label, false);
+	m_treeview_filesystems.append_column(*col);
+	m_treeview_filesystems.append_column(_("UUID"), m_treeview_filesystems_columns.uuid);
+	m_treeview_filesystems.append_column(_("Required Software"), m_treeview_filesystems_columns.software);
+	m_treeview_filesystems.get_selection()->set_mode(Gtk::SELECTION_NONE);
+	m_treeview_filesystems.set_rules_hint(true);
 
 	//scrollable file system list
-	filesystems_scrolled .set_policy( Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC ) ;
-	filesystems_scrolled .add( treeview_filesystems ) ;
+	m_filesystems_scrolled.set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
+	m_filesystems_scrolled.add(m_treeview_filesystems);
 
-	Gtk::Box *filesystems_hbox(manage( new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL)));
-	filesystems_hbox ->set_border_width( 6 ) ;
-	filesystems_hbox ->pack_start( filesystems_scrolled ) ;
+	Gtk::Box* filesystems_hbox(Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL)));
+	filesystems_hbox->set_border_width(5);
+	filesystems_hbox->pack_start(m_filesystems_scrolled);
 	this->get_content_area()->pack_start(*filesystems_hbox);
 
 	// File system support legend
-	Gtk::Box *legend_hbox(manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL, 6)));
-	legend_hbox ->set_border_width( 6 ) ;
+	Gtk::Box* legend_hbox(Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL, 6)));
+	legend_hbox->set_border_width(5);
 
-	Gtk::Box *legend_narrative_hbox(manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL)));
+	Gtk::Box* legend_narrative_hbox(Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL)));
 	Glib::ustring str_temp( _("This chart shows the actions supported on file systems.") ) ;
 	str_temp += "\n" ;
 	str_temp += _("Not all actions are available on all file systems, in part due to the nature of file systems and limitations in the required software.") ;
@@ -97,12 +102,12 @@ DialogFeatures::DialogFeatures()
 	legend_hbox ->pack_start( *legend_narrative_hbox, Gtk::PACK_EXPAND_WIDGET, 6 ) ;
 
 	// Icon legend
-	Gtk::Box *icon_legend_vbox(manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL)));
+	Gtk::Box* icon_legend_vbox(Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL)));
 
-	Gtk::Box *available_both_hbox(manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL)));
-	Gtk::Image *image_yes( manage( new Gtk::Image( icon_yes ) ) ) ;
+	Gtk::Box* available_both_hbox(Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL)));
+	Gtk::Image* image_yes(Gtk::manage(new Gtk::Image(m_icon_yes)));
 	available_both_hbox ->pack_start( *image_yes, Gtk::PACK_SHRINK ) ;
-	image_yes = manage( new Gtk::Image( icon_yes ) ) ;
+	image_yes = Gtk::manage(new Gtk::Image(m_icon_yes));
 	available_both_hbox ->pack_start( *image_yes, Gtk::PACK_SHRINK ) ;
 	available_both_hbox ->pack_start( *Utils::mk_label(
 			/* TO TRANSLATORS:  Available offline and online
@@ -112,10 +117,10 @@ DialogFeatures::DialogFeatures()
 			_("Available offline and online")), Gtk::PACK_EXPAND_WIDGET ) ;
 	icon_legend_vbox ->pack_start( *available_both_hbox ) ;
 
-	Gtk::Box *available_online_hbox = manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-	Gtk::Image *image_no( manage( new Gtk::Image( icon_no ) ) );
+	Gtk::Box* available_online_hbox = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
+	Gtk::Image* image_no(Gtk::manage(new Gtk::Image(m_icon_no)));
 	available_online_hbox->pack_start( *image_no, Gtk::PACK_SHRINK );
-	image_yes = manage( new Gtk::Image( icon_yes ) );
+	image_yes = Gtk::manage(new Gtk::Image(m_icon_yes));
 	available_online_hbox->pack_start( *image_yes, Gtk::PACK_SHRINK );
 	available_online_hbox->pack_start( *Utils::mk_label(
 			/* TO TRANSLATORS:  Available online only
@@ -125,10 +130,10 @@ DialogFeatures::DialogFeatures()
 			_("Available online only")), Gtk::PACK_EXPAND_WIDGET );
 	icon_legend_vbox->pack_start( *available_online_hbox );
 
-	Gtk::Box *available_offline_hbox = manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-	image_yes = manage( new Gtk::Image( icon_yes ) ) ;
+	Gtk::Box* available_offline_hbox = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
+	image_yes = Gtk::manage(new Gtk::Image(m_icon_yes));
 	available_offline_hbox ->pack_start( *image_yes, Gtk::PACK_SHRINK ) ;
-	Gtk::Image *image_blank( manage( new Gtk::Image( icon_blank ) ) ) ;
+	Gtk::Image* image_blank(Gtk::manage(new Gtk::Image(m_icon_blank)));
 	available_offline_hbox ->pack_start( *image_blank, Gtk::PACK_SHRINK ) ;
 	available_offline_hbox ->pack_start( *Utils::mk_label(
 			/* TO TRANSLATORS:  Available offline only
@@ -138,10 +143,10 @@ DialogFeatures::DialogFeatures()
 			_("Available offline only")), Gtk::PACK_EXPAND_WIDGET ) ;
 	icon_legend_vbox ->pack_start( *available_offline_hbox ) ;
 
-	Gtk::Box *not_available_hbox = manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-	image_no = manage( new Gtk::Image( icon_no ) );
+	Gtk::Box* not_available_hbox = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
+	image_no = Gtk::manage(new Gtk::Image(m_icon_no));
 	not_available_hbox ->pack_start( *image_no, Gtk::PACK_SHRINK ) ;
-	image_blank = manage( new Gtk::Image( icon_blank ) ) ;
+	image_blank = Gtk::manage(new Gtk::Image(m_icon_blank));
 	not_available_hbox ->pack_start( *image_blank, Gtk::PACK_SHRINK ) ;
 	not_available_hbox->pack_start(*Utils::mk_label(
 			/* TO TRANSLATORS:  Not Available
@@ -154,10 +159,10 @@ DialogFeatures::DialogFeatures()
 	str_temp = "<b>" ;
 	str_temp += _("Legend") ;
 	str_temp += "</b>" ;
-	legend_frame .set_label_widget( *Utils::mk_label( str_temp ) ) ;
-	legend_frame .set_shadow_type( Gtk::SHADOW_NONE ) ;
-	legend_frame .add( *legend_hbox ) ;
-	this->get_content_area()->pack_start(legend_frame, Gtk::PACK_SHRINK);
+	m_legend_frame.set_label_widget(*Utils::mk_label(str_temp));
+	m_legend_frame.set_shadow_type(Gtk::SHADOW_NONE);
+	m_legend_frame.add(*legend_hbox);
+	this->get_content_area()->pack_start(m_legend_frame, Gtk::PACK_SHRINK);
 
 	/*TO TRANSLATORS: This is a button that will search for the software tools installed and then refresh the screen with the file system actions supported. */
 	add_button( _("Rescan For Supported Actions"), Gtk::RESPONSE_OK );
@@ -168,7 +173,7 @@ DialogFeatures::DialogFeatures()
 
 void DialogFeatures::load_filesystems(const std::vector<FS>& fss)
 {
-	liststore_filesystems ->clear() ;
+	m_liststore_filesystems->clear();
 
 	// Fill the features chart with fully supported file systems.
 	for (unsigned i = 0; i < fss.size(); i++)
@@ -191,27 +196,23 @@ void DialogFeatures::load_filesystems(const std::vector<FS>& fss)
 
 void DialogFeatures::load_one_filesystem(const FS& fs)
 {
-	treerow = *(liststore_filesystems->append());
-	treerow[treeview_filesystems_columns.fsname] = Utils::get_filesystem_string(fs.fstype);
+	m_treerow = *(m_liststore_filesystems->append());
+	m_treerow[m_treeview_filesystems_columns.fsname] = Utils::get_filesystem_string(fs.fstype);
 
-	treerow[treeview_filesystems_columns.create       ] = fs.create             ? icon_yes : icon_no;
-	treerow[treeview_filesystems_columns.grow         ] = fs.grow               ? icon_yes : icon_no;
-	treerow[treeview_filesystems_columns.online_grow  ] = fs.online_grow        ? icon_yes : icon_blank;
-	treerow[treeview_filesystems_columns.shrink       ] = fs.shrink             ? icon_yes : icon_no;
-	treerow[treeview_filesystems_columns.online_shrink] = fs.online_shrink      ? icon_yes : icon_blank;
-	treerow[treeview_filesystems_columns.move         ] = fs.move               ? icon_yes : icon_no;
-	treerow[treeview_filesystems_columns.copy         ] = fs.copy               ? icon_yes : icon_no;
-	treerow[treeview_filesystems_columns.check        ] = fs.check              ? icon_yes : icon_no;
-	treerow[treeview_filesystems_columns.label        ] = fs.write_label        ? icon_yes : icon_no;
-	treerow[treeview_filesystems_columns.online_label ] = fs.online_write_label ? icon_yes : icon_blank;
-	treerow[treeview_filesystems_columns.uuid         ] = fs.write_uuid         ? icon_yes : icon_no;
+	m_treerow[m_treeview_filesystems_columns.create       ] = fs.create             ? m_icon_yes : m_icon_no;
+	m_treerow[m_treeview_filesystems_columns.grow         ] = fs.grow               ? m_icon_yes : m_icon_no;
+	m_treerow[m_treeview_filesystems_columns.online_grow  ] = fs.online_grow        ? m_icon_yes : m_icon_blank;
+	m_treerow[m_treeview_filesystems_columns.shrink       ] = fs.shrink             ? m_icon_yes : m_icon_no;
+	m_treerow[m_treeview_filesystems_columns.online_shrink] = fs.online_shrink      ? m_icon_yes : m_icon_blank;
+	m_treerow[m_treeview_filesystems_columns.move         ] = fs.move               ? m_icon_yes : m_icon_no;
+	m_treerow[m_treeview_filesystems_columns.copy         ] = fs.copy               ? m_icon_yes : m_icon_no;
+	m_treerow[m_treeview_filesystems_columns.check        ] = fs.check              ? m_icon_yes : m_icon_no;
+	m_treerow[m_treeview_filesystems_columns.label        ] = fs.write_label        ? m_icon_yes : m_icon_no;
+	m_treerow[m_treeview_filesystems_columns.online_label ] = fs.online_write_label ? m_icon_yes : m_icon_blank;
+	m_treerow[m_treeview_filesystems_columns.uuid         ] = fs.write_uuid         ? m_icon_yes : m_icon_no;
 
-	treerow[treeview_filesystems_columns.software] = Utils::get_filesystem_software(fs.fstype);
+	m_treerow[m_treeview_filesystems_columns.software] = Utils::get_filesystem_software(fs.fstype);
 }
 
 
-DialogFeatures::~DialogFeatures() 
-{
-}
-
-} //GParted
+}  // namespace GParted

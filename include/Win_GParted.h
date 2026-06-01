@@ -18,13 +18,15 @@
 #ifndef GPARTED_WIN_GPARTED_H
 #define GPARTED_WIN_GPARTED_H
 
+
 #include "Device.h"
 #include "DrawingAreaVisualDisk.h"
-#include "Partition.h"
-#include "PartitionVector.h"
-#include "TreeView_Detail.h"
 #include "GParted_Core.h"
 #include "HBoxOperations.h"
+#include "Operation.h"
+#include "Partition.h"
+#include "TreeView_Detail.h"
+#include "Utils.h"
 
 #include <gtkmm/paned.h>
 #include <gtkmm/toolbar.h>
@@ -35,17 +37,14 @@
 #include <gtkmm/combobox.h>
 #include <gtkmm/progressbar.h>
 #include <gtkmm/window.h>
+#include <sigc++/connection.h>
+#include <vector>
+#include <memory>
 
 
 namespace GParted
 {
 
-enum MergeType
-{
-	MERGE_LAST_WITH_PREV = 0,
-	MERGE_LAST_WITH_ANY  = 1,
-	MERGE_ALL_ADJACENT   = 2
-};
 
 class Win_GParted : public Gtk::Window
 {
@@ -53,10 +52,10 @@ public:
 	Win_GParted( const std::vector<Glib::ustring> & user_devices ) ;
 	~Win_GParted();
 
-private:
-	Win_GParted( const Win_GParted & src );              // Not implemented copy constructor
-	Win_GParted & operator=( const Win_GParted & rhs );  // Not implemented copy assignment operator
+	Win_GParted(const Win_GParted& src) = delete;             // Copy construction prohibited
+	Win_GParted& operator=(const Win_GParted& rhs) = delete;  // Copy assignment prohibited
 
+private:
 	void init_menubar() ;
 	void init_toolbar() ;
 	void init_partition_menu() ;
@@ -71,9 +70,9 @@ private:
 	void hide_pulsebar();
 	void Fill_Label_Device_Info( bool clear = false );
 
-	void Add_Operation( const Device & device, Operation * operation );
-	bool merge_two_operations( unsigned int first, unsigned int second );
-	void merge_operations( MergeType mergetype );
+	void add_operation(const Device& device, std::unique_ptr<Operation> operation);
+	bool merge_operation(const Operation& candidate);
+	static bool operations_affect_same_partition(const Operation& first_op, const Operation& second_op);
 	void Refresh_Visual();
 	bool valid_display_partition_ptr( const Partition * partition_ptr );
 	bool Quit_Check_Operations();
@@ -198,21 +197,28 @@ private:
 	void activate_name_partition();
 
 	void activate_undo();
-	void remove_operation( int index = -1, bool remove_all = false ) ;
+
+	enum OperationRemoveType
+	{
+		REMOVE_ALL,
+		REMOVE_LAST,
+		REMOVE_AT
+	};
+	void remove_operation(OperationRemoveType rmtype, int index = -1);
 	int  partition_in_operation_queue_count( const Partition & partition ) ;
 	int  active_partitions_on_device_count( const Device & device ) ;
 	void activate_apply();
 	bool remove_non_empty_lvm2_pv_dialog( const OperationType optype ) ;
 
-//private variables
-	unsigned int current_device ;
-	std::vector<Device> devices;
-	Device m_display_device;                    // Copy of devices[current_device] with pending operations
-	                                            // operations applied to partitions for displaying in the UI.
+	// private variables
+	unsigned int        m_current_device;
+	std::vector<Device> m_devices;
+	Device              m_display_device;       // Copy of m_devices[m_current_device] with pending operations
+	                                            // applied to partitions for displaying in the UI.
 	const Partition * selected_partition_ptr;   // Pointer to the selected partition.  (Alias to element
 	                                            // in Win_GParted::m_display_device.partitions[] vector).
 	const Partition* copied_partition;          // nullptr or copy of source partition object.
-	std::vector<Operation *> operations;
+	OperationVector     m_operations;
 
 //gui stuff
 	Gtk::Paned hpaned_main;
@@ -239,21 +245,21 @@ private:
 	Glib::RefPtr<Gtk::ListStore> liststore_devices ;
 	sigc::connection combo_devices_changed_connection;
 
-	struct treeview_devices_Columns : public Gtk::TreeModelColumnRecord
+	struct TreeView_Devices_Columns : public Gtk::TreeModelColumnRecord
 	{
 		Gtk::TreeModelColumn< Glib::RefPtr<Gdk::Pixbuf> > icon ;
 		Gtk::TreeModelColumn<Glib::ustring> device ;
 		Gtk::TreeModelColumn<Glib::ustring> size ;
 
-		treeview_devices_Columns()
+		TreeView_Devices_Columns()
 		{
 			add( icon ) ;
 			add( device ) ;
 			add( size ) ;
 		}
 	};
-	treeview_devices_Columns treeview_devices_columns ;
-	
+	TreeView_Devices_Columns m_treeview_devices_columns;
+
 	// Indices for toolbar
 	int
 	TOOLBAR_NEW,
@@ -301,7 +307,7 @@ private:
 
 	//usefull variables which are used by many different functions...
 	unsigned short new_count;//new_count keeps track of the new created partitions
-	bool OPERATIONSLIST_OPEN ;
+	bool m_operationslist_open;
 
 	GParted_Core gparted_core ;
 	std::vector<Gtk::Label *> device_info ;
@@ -311,6 +317,8 @@ private:
 	sigc::connection pulsetimer;
 };
 
-} //GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_WIN_GPARTED_H */

@@ -29,9 +29,12 @@
 namespace GParted
 {
 
+
 //initialize static data elements
 bool FS_Info::fs_info_cache_initialized = false ;
 bool FS_Info::blkid_found  = false ;
+Glib::ustring FS_Info::full_blkid_version;
+
 // Assume workaround is needed just in case determination fails and as
 // it only costs a fraction of a second to run blkid command again.
 bool FS_Info::need_blkid_vfat_cache_update_workaround = true;
@@ -51,20 +54,48 @@ bool FS_Info::need_blkid_vfat_cache_update_workaround = true;
 std::vector<FS_Entry> FS_Info::fs_info_cache;
 
 
+const Glib::ustring& FS_Info::get_blkid_version_string()
+{
+	set_command_found();
+	return full_blkid_version;
+}
+
+
 void FS_Info::clear_cache()
 {
-	set_commands_found();
+	set_command_found();
 	fs_info_cache.clear();
 	fs_info_cache_initialized = true;
 }
 
 
-void FS_Info::load_cache_for_paths(const std::vector<Glib::ustring>& paths)
+void FS_Info::load_cache_for_device_and_partition_names(const std::vector<DeviceAndPartitionNames>& dev_ptn_names)
 {
 	if (not_initialised_then_error())
 		return;
 
-	run_blkid_load_cache(paths);
+	// Create plain vector from structured device and partition names
+	std::vector<Glib::ustring> all_names;
+	for (unsigned int i = 0; i < dev_ptn_names.size(); i++)
+	{
+		const DeviceAndPartitionNames& dpn = dev_ptn_names[i];
+		all_names.push_back(dpn.m_device_name);
+		all_names.insert(all_names.end(), dpn.m_partition_names.begin(), dpn.m_partition_names.end());
+	}
+
+	run_blkid_load_cache(all_names);
+	apply_blkid_whole_drive_zfs_detection_workaround(dev_ptn_names);
+}
+
+
+void FS_Info::load_cache_for_one_device_name(const Glib::ustring& device_name)
+{
+	if (not_initialised_then_error())
+		return;
+
+	std::vector<Glib::ustring> one_name;
+	one_name.push_back(device_name);
+	run_blkid_load_cache(one_name);
 }
 
 
@@ -180,30 +211,36 @@ bool FS_Info::not_initialised_then_error()
 }
 
 
-void FS_Info::set_commands_found()
+void FS_Info::set_command_found()
 {
-	//Set status of commands found 
 	blkid_found = (! Glib::find_program_in_path( "blkid" ) .empty() ) ;
-	if ( blkid_found )
+	if (! blkid_found)
 	{
-		// Blkid from util-linux before 2.23 has a cache update bug which prevents
-		// correct identification between FAT16 and FAT32 when overwriting one
-		// with the other.  Detect the need for a workaround.
-		Glib::ustring output, error;
-		Utils::execute_command( "blkid -v", output, error, true );
-		Glib::ustring blkid_version = Utils::regexp_label( output, "blkid.* ([0-9\\.]+) " );
-		int blkid_major_ver = 0;
-		int blkid_minor_ver = 0;
-		if ( sscanf( blkid_version.c_str(), "%d.%d", &blkid_major_ver, &blkid_minor_ver ) == 2 )
-		{
-			need_blkid_vfat_cache_update_workaround =
-					( blkid_major_ver < 2                              ||
-					  ( blkid_major_ver == 2 && blkid_minor_ver < 23 )    );
-		}
+		full_blkid_version = "blkid command not found";
+		return;
+	}
+
+	Glib::ustring output;
+	Glib::ustring error;
+	Utils::execute_command("blkid -v", output, error, true);
+	full_blkid_version = Utils::trim_trailing_new_line(output);
+
+	// Blkid from util-linux before 2.23 has a cache update bug which prevents correct
+	// identification between FAT16 and FAT32 when overwriting one with the other.
+	// Detect the need for a workaround.
+	Glib::ustring blkid_version = Utils::regexp_label(output, "blkid.* ([0-9\\.]+) ");
+	int blkid_major_ver = 0;
+	int blkid_minor_ver = 0;
+	if (sscanf(blkid_version.c_str(), "%d.%d", &blkid_major_ver, &blkid_minor_ver) == 2)
+	{
+		need_blkid_vfat_cache_update_workaround =
+				(blkid_major_ver < 2                            ||
+				 (blkid_major_ver == 2 && blkid_minor_ver < 23)   );
 	}
 }
 
-const FS_Entry & FS_Info::get_cache_entry_by_path( const Glib::ustring & path )
+
+FS_Entry& FS_Info::get_cache_entry_by_path(const Glib::ustring& path)
 {
 	BlockSpecial bs = BlockSpecial( path );
 	for ( unsigned int i = 0 ; i < fs_info_cache.size() ; i ++ )
@@ -263,6 +300,45 @@ void FS_Info::run_blkid_load_cache(const std::vector<Glib::ustring>& paths)
 }
 
 
+// blkid has twice incorrectly reported zfs_members on the whole disk when it was only in
+// one of it's partitions, with the same UUID (ZFS pool UUID).  Detect this and clear the
+// cache entry for ZFS on the whole disk to avoid GParted displaying ZFS on the whole
+// disk.
+// *   util-linux issue 918 - blkid reports disk as zfs_member if it has a zfs_member
+//     partition
+//     https://github.com/util-linux/util-linux/issues/918
+// *   util-linux issue 4078 - blkid reports whole disk as zfs_member if the ending
+//     partition is a zfs_member
+//     https://github.com/util-linux/util-linux/issues/4078
+void FS_Info::apply_blkid_whole_drive_zfs_detection_workaround(
+                        const std::vector<DeviceAndPartitionNames>& dev_ptn_names)
+{
+	for (unsigned int i = 0; i < dev_ptn_names.size(); i++)
+	{
+		if (dev_ptn_names[i].m_partition_names.size() == 0)
+			continue;
+		FS_Entry& device_entry = get_cache_entry_by_path(dev_ptn_names[i].m_device_name);
+		for (unsigned int j = 0; j < dev_ptn_names[i].m_partition_names.size(); j++)
+		{
+			const FS_Entry& partition_entry = get_cache_entry_by_path(
+			                        dev_ptn_names[i].m_partition_names[j]);
+			if (device_entry.type    == "zfs_member"         &&
+			    partition_entry.type == "zfs_member"         &&
+			    device_entry.uuid    == partition_entry.uuid   )
+			{
+				// Clear incorrect whole disk ZFS entry with the same UUID
+				// as one of it's partitions.
+				device_entry.type.clear();
+				device_entry.sec_type.clear();
+				device_entry.uuid.clear();
+				device_entry.have_label = false;
+				device_entry.label.clear();
+			}
+		}
+	}
+}
+
+
 void FS_Info::update_fs_info_cache_all_labels()
 {
 	if ( ! blkid_found )
@@ -298,4 +374,5 @@ bool FS_Info::run_blkid_update_cache_one_label( FS_Entry & fs_entry )
 	return true;
 }
 
-}//GParted
+
+}  // namespace GParted

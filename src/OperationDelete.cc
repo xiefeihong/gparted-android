@@ -15,51 +15,55 @@
  *  along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
+
 #include "OperationDelete.h"
+
+#include "Device.h"
+#include "Operation.h"
 #include "Partition.h"
 #include "PartitionVector.h"
+#include "Utils.h"
+
+#include <glib.h>
+#include <glibmm/ustring.h>
+
 
 namespace GParted
 {
 
+
 OperationDelete::OperationDelete( const Device & device, const Partition & partition_orig )
+ : Operation(OPERATION_DELETE, device, partition_orig)
 {
-	type = OPERATION_DELETE ;
-
-	this->device = device.get_copy_without_partitions();
-	this->partition_original = partition_orig.clone();
 }
 
-OperationDelete::~OperationDelete()
-{
-	delete partition_original;
-	partition_original = nullptr;
-}
 
 Partition & OperationDelete::get_partition_new()
 {
-	g_assert( false );  // Bug: OperationDelete class doesn't use partition_new
+	g_assert(false);  // Bug: OperationDelete class doesn't use m_partition_new
 
 	// Not reached.  Return value to keep compiler quiet.
-	return *partition_new;
+	return *m_partition_new;
 }
+
 
 const Partition & OperationDelete::get_partition_new() const
 {
-	g_assert( false );  // Bug: OperationDelete class doesn't use partition_new
+	g_assert(false);  // Bug: OperationDelete class doesn't use m_partition_new
 
 	// Not reached.  Return value to keep compiler quiet.
-	return *partition_new;
+	return *m_partition_new;
 }
+
 
 void OperationDelete::apply_to_visual( PartitionVector & partitions )
 {
-	g_assert(partition_original != nullptr);  // Bug: Not initialised by constructor or reset later
+	g_assert(m_partition_original != nullptr);  // Bug: Not initialised by constructor or reset later
 
 	int index_extended;
 	int index;
 
-	if ( partition_original->inside_extended )
+	if (m_partition_original->inside_extended)
 	{
 		index_extended = find_extended_partition( partitions );
 		if ( index_extended >= 0 )
@@ -70,19 +74,19 @@ void OperationDelete::apply_to_visual( PartitionVector & partitions )
 			{
 				remove_original_and_adjacent_unallocated( partitions[index_extended].logicals, index );
 
-				insert_unallocated( partitions[index_extended].logicals,
-				                    partitions[index_extended].sector_start,
-				                    partitions[index_extended].sector_end,
-				                    device.sector_size,
-				                    true );
+				insert_unallocated(partitions[index_extended].logicals,
+				                   partitions[index_extended].sector_start,
+				                   partitions[index_extended].sector_end,
+				                   m_device.sector_size,
+				                   true);
 
 				// If deleted partition was logical we have to decrease
 				// the partition numbers of the logicals with higher
 				// numbers by one (only if its a real partition)
-				if ( partition_original->status != STAT_NEW )
+				if (m_partition_original->status != STAT_NEW)
 					for ( unsigned int t = 0 ; t < partitions[index_extended].logicals .size() ; t++ )
-						if ( partitions[index_extended].logicals[t].partition_number >
-						     partition_original->partition_number                      )
+						if (partitions[index_extended].logicals[t].partition_number >
+						    m_partition_original->partition_number                   )
 							partitions[index_extended].logicals[t].Update_Number(
 								partitions[index_extended].logicals[t].partition_number -1 );
 			}
@@ -96,28 +100,30 @@ void OperationDelete::apply_to_visual( PartitionVector & partitions )
 		{
 			remove_original_and_adjacent_unallocated( partitions, index ) ;
 			
-			insert_unallocated( partitions, 0, device .length -1, device .sector_size, false ) ;
+			insert_unallocated(partitions, 0, m_device.length -1, m_device.sector_size, false);
 		}
 	}
 }
 
+
 void OperationDelete::create_description() 
 {
-	g_assert(partition_original != nullptr);  // Bug: Not initialised by constructor or reset later
+	g_assert(m_partition_original != nullptr);  // Bug: Not initialised by constructor or reset later
 
-	if ( partition_original->type == TYPE_LOGICAL )
-		description = _("Logical Partition") ;
+	if (m_partition_original->type == TYPE_LOGICAL)
+		m_description = _("Logical Partition");
 	else
-		description = partition_original->get_path();
+		m_description = m_partition_original->get_path();
 
 	/*TO TRANSLATORS: looks like   Delete /dev/hda2 (ntfs, 345 MiB) from /dev/hda */
-	description = Glib::ustring::compose( _("Delete %1 (%2, %3) from %4"),
-	                                description,
-	                                partition_original->get_filesystem_string(),
-	                                Utils::format_size( partition_original->get_sector_length(),
-	                                                    partition_original->sector_size ),
-	                                partition_original->device_path );
+	m_description = Glib::ustring::compose(_("Delete %1 (%2, %3) from %4"),
+	                                m_description,
+	                                m_partition_original->get_filesystem_string(),
+	                                Utils::format_size(m_partition_original->get_sector_length(),
+	                                                   m_partition_original->sector_size),
+	                                m_partition_original->device_path);
 }
+
 
 bool OperationDelete::merge_operations( const Operation & candidate )
 {
@@ -139,4 +145,5 @@ void OperationDelete::remove_original_and_adjacent_unallocated( PartitionVector 
 	partitions .erase( partitions .begin() + index_orig ) ;
 }
 
-} //GParted
+
+}  // namespace GParted

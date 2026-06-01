@@ -15,27 +15,30 @@
  *  along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
+
 #include "hfs.h"
+
 #include "FileSystem.h"
+#include "OperationDetail.h"
 #include "Partition.h"
+#include "Utils.h"
 
 #include <glibmm/miscutils.h>
 #include <glibmm/shell.h>
+#include <glibmm/ustring.h>
 
 
 namespace GParted
 {
+
 
 FS hfs::get_filesystem_support()
 {
 	FS fs( FS_HFS );
 
 	fs .busy = FS::GPARTED ;
-
-#ifdef HAVE_LIBPARTED_FS_RESIZE
 	fs.read = FS::LIBPARTED;
 	fs.shrink = FS::LIBPARTED;
-#endif
 
 	if ( ! Glib::find_program_in_path( "hformat" ) .empty() )
 	{
@@ -50,27 +53,29 @@ FS hfs::get_filesystem_support()
 	fs.move = FS::GPARTED;
 	fs .online_read = FS::GPARTED ;
 
-	fs_limits.max_size = 2048 * MEBIBYTE;
+	m_fs_limits.max_size = 2048 * MEBIBYTE;
 
 	return fs ;
 }
 
 bool hfs::create( const Partition & new_partition, OperationDetail & operationdetail )
 {
-	Glib::ustring cmd = "";
+	Glib::ustring cmd;
 	if( new_partition.get_filesystem_label().empty() )
 		cmd = "hformat " + Glib::shell_quote( new_partition.get_path() );
 	else
 		cmd = "hformat -l " + Glib::shell_quote( new_partition.get_filesystem_label() ) +
 		      " " + Glib::shell_quote( new_partition.get_path() );
-	return ! execute_command( cmd , operationdetail, EXEC_CHECK_STATUS );
+	return ! operationdetail.execute_command(cmd, EXEC_CHECK_STATUS);
 }
+
 
 bool hfs::check_repair( const Partition & partition, OperationDetail & operationdetail )
 {
 	//FIXME: find out what the returnvalue is in case of modified.. also check what the -a flag does.. (there is no manpage)
-	return ! execute_command( "hfsck -v " + Glib::shell_quote( partition.get_path() ),
-	                          operationdetail, EXEC_CHECK_STATUS );
+	return ! operationdetail.execute_command("hfsck -v " + Glib::shell_quote(partition.get_path()),
+	                        EXEC_CHECK_STATUS);
 }
 
-} //GParted
+
+}  // namespace GParted

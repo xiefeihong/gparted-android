@@ -23,6 +23,7 @@
 namespace GParted
 {
 
+
 Device::Device()
 {
 	Reset() ;	
@@ -100,9 +101,5 @@ bool Device::operator!=( const Device & device ) const
 	return ! ( *this == device ) ;
 }
 	
-Device::~Device()
-{
-}
 
-
-} //GParted
+}  // namespace GParted

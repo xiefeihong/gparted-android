@@ -28,9 +28,11 @@
 #include "Dialog_FileSystem_Label.h"
 #include "Dialog_Partition_Name.h"
 #include "DialogManageFlags.h"
+#include "FileSystem.h"
 #include "GParted_Core.h"
 #include "MenuHelpers.h"
 #include "Mount_Info.h"
+#include "Operation.h"
 #include "OperationCopy.h"
 #include "OperationCheck.h"
 #include "OperationCreate.h"
@@ -63,20 +65,25 @@
 #include <glibmm/miscutils.h>
 #include <glibmm/shell.h>
 #include <glibmm/main.h>
+#include <sigc++/bind.h>
+#include <sigc++/signal.h>
+#include <vector>
+#include <memory>
+#include <utility>
 
 
 namespace GParted
 {
-	
+
+
 Win_GParted::Win_GParted( const std::vector<Glib::ustring> & user_devices )
+ : m_current_device(0), m_operationslist_open(true)
 {
 	copied_partition = nullptr;
 	selected_partition_ptr = nullptr;
 	new_count = 1;
-	current_device = 0 ;
-	OPERATIONSLIST_OPEN = true ;
 	gparted_core .set_user_devices( user_devices ) ;
-	
+
 	TOOLBAR_NEW =
 	TOOLBAR_DEL =
 	TOOLBAR_RESIZE_MOVE =
@@ -95,7 +102,7 @@ Win_GParted::Win_GParted( const std::vector<Glib::ustring> & user_devices )
 	}
 	catch ( Glib::Exception & e )
 	{
-		std::cout << e .what() << std::endl ;
+		std::cerr << Utils::convert_ustring(e.what()) << std::endl;
 	}
 
 	// Pack the main box
@@ -164,35 +171,35 @@ void Win_GParted::init_menubar()
 
 	//fill menubar_main and connect callbacks 
 	//gparted
-	menu = manage( new Gtk::Menu() ) ;
+	menu = Gtk::manage(new Gtk::Menu());
 	image = Utils::mk_image(Gtk::Stock::REFRESH, Gtk::ICON_SIZE_MENU);
-	item = manage(new GParted::Menu_Helpers::ImageMenuElem(
+	item = Gtk::manage(new GParted::Menu_Helpers::ImageMenuElem(
 		_("_Refresh Devices"),
 		Gtk::AccelKey("<control>r"),
 		*image, 
 		sigc::mem_fun(*this, &Win_GParted::menu_gparted_refresh_devices)));
 	menu->append(*item);
-	
+
 	image = Utils::mk_image(Gtk::Stock::HARDDISK, Gtk::ICON_SIZE_MENU);
-	item = manage(new GParted::Menu_Helpers::ImageMenuElem(
+	item = Gtk::manage(new GParted::Menu_Helpers::ImageMenuElem(
 		_("_Devices"), *image));
 	menu->append(*item);
 	mainmenu_items[MENU_DEVICES] = item;
-	
-	item = manage(new GParted::Menu_Helpers::SeparatorElem());
+
+	item = Gtk::manage(new GParted::Menu_Helpers::SeparatorElem());
 	menu->append(*item);
 
-	item = manage(new GParted::Menu_Helpers::StockMenuElem(
+	item = Gtk::manage(new GParted::Menu_Helpers::StockMenuElem(
 		Gtk::Stock::QUIT, sigc::mem_fun(*this, &Win_GParted::menu_gparted_quit)));
 	menu->append(*item);
 
-	item = manage(new GParted::Menu_Helpers::MenuElem(
+	item = Gtk::manage(new GParted::Menu_Helpers::MenuElem(
 		_("_GParted"), *menu));
 	menubar_main.append(*item);
-	
+
 	//edit
-	menu = manage( new Gtk::Menu() ) ;
-	item = manage(new GParted::Menu_Helpers::ImageMenuElem(
+	menu = Gtk::manage(new Gtk::Menu());
+	item = Gtk::manage(new GParted::Menu_Helpers::ImageMenuElem(
 		_("_Undo Last Operation"), 
 		Gtk::AccelKey("<control>z"),
 		*Utils::mk_image(Gtk::Stock::UNDO, Gtk::ICON_SIZE_MENU),
@@ -200,14 +207,14 @@ void Win_GParted::init_menubar()
 	menu->append(*item);
 	mainmenu_items[MENU_UNDO_OPERATION] = item;
 
-	item = manage(new GParted::Menu_Helpers::ImageMenuElem(
+	item = Gtk::manage(new GParted::Menu_Helpers::ImageMenuElem(
 		_("_Clear All Operations"), 
 		*Utils::mk_image(Gtk::Stock::CLEAR, Gtk::ICON_SIZE_MENU),
 		sigc::mem_fun(*this, &Win_GParted::clear_operationslist)));
 	menu->append(*item);
 	mainmenu_items[MENU_CLEAR_OPERATIONS] = item;
 
-	item = manage(new GParted::Menu_Helpers::ImageMenuElem(
+	item = Gtk::manage(new GParted::Menu_Helpers::ImageMenuElem(
 		_("_Apply All Operations"),
 		Gtk::AccelKey(GDK_KEY_Return, Gdk::CONTROL_MASK),
 		*Utils::mk_image(Gtk::Stock::APPLY, Gtk::ICON_SIZE_MENU),
@@ -215,45 +222,45 @@ void Win_GParted::init_menubar()
 	menu->append(*item);
 	mainmenu_items[MENU_APPLY_OPERATIONS] = item;
 
-	item = manage(new GParted::Menu_Helpers::MenuElem(
+	item = Gtk::manage(new GParted::Menu_Helpers::MenuElem(
 		_("_Edit"), *menu));
 	menubar_main.append(*item);
 	mainmenu_items[MENU_EDIT] = item;
 
 	//view
-	menu = manage( new Gtk::Menu() ) ;
+	menu = Gtk::manage(new Gtk::Menu());
 
-	item = manage(new GParted::Menu_Helpers::CheckMenuElem(
+	item = Gtk::manage(new GParted::Menu_Helpers::CheckMenuElem(
 		_("Device _Information"), sigc::mem_fun(*this, &Win_GParted::menu_view_harddisk_info)));
 	menu->append(*item);
 	mainmenu_items[MENU_DEVICE_INFORMATION] = item;
 
-	item = manage(new GParted::Menu_Helpers::CheckMenuElem(
+	item = Gtk::manage(new GParted::Menu_Helpers::CheckMenuElem(
 		_("Pending _Operations"), sigc::mem_fun(*this, &Win_GParted::menu_view_operations)));
 	menu->append(*item);
 	mainmenu_items[MENU_PENDING_OPERATIONS] = item;
 
-	item = manage(new GParted::Menu_Helpers::MenuElem(
+	item = Gtk::manage(new GParted::Menu_Helpers::MenuElem(
 		_("_View"), *menu));
 	menubar_main.append(*item);
 
-	item = manage(new GParted::Menu_Helpers::SeparatorElem());
+	item = Gtk::manage(new GParted::Menu_Helpers::SeparatorElem());
 	menu->append(*item);
 
-	item = manage( new GParted::Menu_Helpers::MenuElem(
+	item = Gtk::manage(new GParted::Menu_Helpers::MenuElem(
 		_("_File System Support"), sigc::mem_fun(*this, &Win_GParted::menu_gparted_features)));
 	menu->append(*item);
 	mainmenu_items[MENU_VIEW] = item;
 
 	//device
-	menu = manage( new Gtk::Menu() ) ;
+	menu = Gtk::manage(new Gtk::Menu());
 
-	item = manage(new GParted::Menu_Helpers::MenuElem(
+	item = Gtk::manage(new GParted::Menu_Helpers::MenuElem(
 		Glib::ustring(_("_Create Partition Table") ) + "...",
 		sigc::mem_fun(*this, &Win_GParted::activate_disklabel)));
 	menu->append(*item);
 
-	item = manage(new GParted::Menu_Helpers::MenuElem(
+	item = Gtk::manage(new GParted::Menu_Helpers::MenuElem(
 		_("_Device"), *menu));
 	menubar_main.append(*item);
 	mainmenu_items[MENU_DEVICE] = item;
@@ -261,29 +268,29 @@ void Win_GParted::init_menubar()
 	//partition
 	init_partition_menu() ;
 
-	item = manage(new GParted::Menu_Helpers::MenuElem(
+	item = Gtk::manage(new GParted::Menu_Helpers::MenuElem(
 		_("_Partition"), menu_partition));
 	menubar_main.append(*item);
 	mainmenu_items[MENU_PARTITION] = item;
 
 	//help
-	menu = manage( new Gtk::Menu() ) ;
+	menu = Gtk::manage(new Gtk::Menu());
 
-	item = manage(new GParted::Menu_Helpers::ImageMenuElem(
+	item = Gtk::manage(new GParted::Menu_Helpers::ImageMenuElem(
 		_("_Contents"), 
 		Gtk::AccelKey("F1"),
 		*Utils::mk_image(Gtk::Stock::HELP, Gtk::ICON_SIZE_MENU),
 		sigc::mem_fun(*this, &Win_GParted::menu_help_contents)));
 	menu->append(*item);
 
-	item = manage(new GParted::Menu_Helpers::SeparatorElem());
+	item = Gtk::manage(new GParted::Menu_Helpers::SeparatorElem());
 	menu->append(*item);
 
-	item = manage( new GParted::Menu_Helpers::StockMenuElem(
+	item = Gtk::manage(new GParted::Menu_Helpers::StockMenuElem(
 		Gtk::Stock::ABOUT, sigc::mem_fun(*this, &Win_GParted::menu_help_about)));
 	menu->append(*item);
 
-	item = manage(new GParted::Menu_Helpers::MenuElem(
+	item = Gtk::manage(new GParted::Menu_Helpers::MenuElem(
 		_("_Help"), *menu));
 	menubar_main.append(*item);
 }
@@ -294,12 +301,12 @@ void Win_GParted::init_toolbar()
 	// Initialize and pack toolbar_main
 	hbox_toolbar.set_orientation(Gtk::ORIENTATION_HORIZONTAL);
 	hbox_toolbar.pack_start( toolbar_main );
-	
+
 	//NEW and DELETE
 	image = Utils::mk_image(Gtk::Stock::NEW, Gtk::ICON_SIZE_BUTTON);
 	/*TO TRANSLATORS: "New" is a tool bar item for partition actions. */
 	Glib::ustring str_temp = _("New") ;
-	toolbutton = Gtk::manage(new Gtk::ToolButton( *image, str_temp ));
+	toolbutton = Gtk::manage(new Gtk::ToolButton(*image, str_temp));
 	toolbutton ->signal_clicked() .connect( sigc::mem_fun( *this, &Win_GParted::activate_new ) );
 	toolbar_main .append( *toolbutton );
 	TOOLBAR_NEW = index++ ;
@@ -312,9 +319,9 @@ void Win_GParted::init_toolbar()
 	toolbar_main.append(*toolbutton);
 	TOOLBAR_DEL = index++ ;
 	toolbutton->set_tooltip_text(_("Delete the selected partition"));
-	toolbar_main.append( *(Gtk::manage(new Gtk::SeparatorToolItem)) );
+	toolbar_main.append(*(Gtk::manage(new Gtk::SeparatorToolItem)));
 	index++ ;
-	
+
 	//RESIZE/MOVE
 	image = Utils::mk_image(Gtk::Stock::GOTO_LAST, Gtk::ICON_SIZE_BUTTON);
 	str_temp = _("Resize/Move") ;
@@ -329,12 +336,12 @@ void Win_GParted::init_toolbar()
 			display_undo = false ;
 		}
 	}
-	toolbutton = Gtk::manage(new Gtk::ToolButton( *image, str_temp ));
+	toolbutton = Gtk::manage(new Gtk::ToolButton(*image, str_temp));
 	toolbutton ->signal_clicked().connect( sigc::mem_fun(*this, &Win_GParted::activate_resize) );
 	toolbar_main.append(*toolbutton);
 	TOOLBAR_RESIZE_MOVE = index++ ;
 	toolbutton->set_tooltip_text(_("Resize/Move the selected partition"));
-	toolbar_main.append( *(Gtk::manage(new Gtk::SeparatorToolItem)) );
+	toolbar_main.append(*(Gtk::manage(new Gtk::SeparatorToolItem)));
 	index++ ;
 
 	//COPY and PASTE
@@ -354,7 +361,7 @@ void Win_GParted::init_toolbar()
 	toolbar_main.append(*toolbutton);
 	TOOLBAR_PASTE = index++ ;
 	toolbutton->set_tooltip_text(_("Paste the partition from the clipboard"));
-	toolbar_main.append( *(Gtk::manage(new Gtk::SeparatorToolItem)) );
+	toolbar_main.append(*(Gtk::manage(new Gtk::SeparatorToolItem)));
 	index++ ;
 	
 	//UNDO and APPLY
@@ -382,13 +389,13 @@ void Win_GParted::init_toolbar()
 	toolbutton->set_tooltip_text(_("Apply All Operations"));
 
 	//initialize and pack combo_devices
-	liststore_devices = Gtk::ListStore::create( treeview_devices_columns ) ;
+	liststore_devices = Gtk::ListStore::create(m_treeview_devices_columns);
 	combo_devices .set_model( liststore_devices ) ;
 
-	combo_devices .pack_start( treeview_devices_columns .icon, false ) ;
-	combo_devices .pack_start( treeview_devices_columns .device ) ;
-	combo_devices .pack_start( treeview_devices_columns .size, false ) ;
-	
+	combo_devices.pack_start(m_treeview_devices_columns.icon, false);
+	combo_devices.pack_start(m_treeview_devices_columns.device);
+	combo_devices.pack_start(m_treeview_devices_columns.size, false);
+
 	combo_devices_changed_connection =
 		combo_devices .signal_changed() .connect( sigc::mem_fun(*this, &Win_GParted::combo_devices_changed) );
 
@@ -401,7 +408,7 @@ void Win_GParted::init_partition_menu()
 
 	//fill menu_partition
 	image = Utils::mk_image(Gtk::Stock::NEW, Gtk::ICON_SIZE_MENU);
-	item = manage(new
+	item = Gtk::manage(new
 			/*TO TRANSLATORS: "_New" is a sub menu item for the partition menu. */
 			GParted::Menu_Helpers::ImageMenuElem(_("_New"),
 							  Gtk::AccelKey(GDK_KEY_Insert, Gdk::BUTTON1_MASK),
@@ -410,124 +417,125 @@ void Win_GParted::init_partition_menu()
 	menu_partition.append(*item);
 	partitionmenu_items[MENU_NEW] = item;
 
-	item = manage(new
+	item = Gtk::manage(new
 			GParted::Menu_Helpers::StockMenuElem(Gtk::Stock::DELETE,
 							  Gtk::AccelKey(GDK_KEY_Delete, Gdk::BUTTON1_MASK),
 							  sigc::mem_fun(*this, &Win_GParted::activate_delete)));
 	menu_partition.append(*item);
 	partitionmenu_items[MENU_DEL] = item;
 
-	item = manage(new GParted::Menu_Helpers::SeparatorElem());
+	item = Gtk::manage(new GParted::Menu_Helpers::SeparatorElem());
 	menu_partition.append(*item);
 
 	image = Utils::mk_image(Gtk::Stock::GOTO_LAST, Gtk::ICON_SIZE_MENU);
-	item = manage(new
+	item = Gtk::manage(new
 			GParted::Menu_Helpers::ImageMenuElem(_("_Resize/Move"),
 							  *image, 
 							  sigc::mem_fun(*this, &Win_GParted::activate_resize)));
 	menu_partition.append(*item);
 	partitionmenu_items[MENU_RESIZE_MOVE] = item;
-	
-	item = manage(new GParted::Menu_Helpers::SeparatorElem());
+
+	item = Gtk::manage(new GParted::Menu_Helpers::SeparatorElem());
 	menu_partition.append(*item);
-	
-	item = manage(new
+
+	item = Gtk::manage(new
 			GParted::Menu_Helpers::StockMenuElem(Gtk::Stock::COPY,
 							  sigc::mem_fun(*this, &Win_GParted::activate_copy)));
 	menu_partition.append(*item);
 	partitionmenu_items[MENU_COPY] = item;
-	
-	item = manage(new
+
+	item = Gtk::manage(new
 			GParted::Menu_Helpers::StockMenuElem(Gtk::Stock::PASTE,
 							  sigc::mem_fun(*this, &Win_GParted::activate_paste)));
 	menu_partition.append(*item);
 	partitionmenu_items[MENU_PASTE] = item;
-	
-	item = manage(new GParted::Menu_Helpers::SeparatorElem());
+
+	item = Gtk::manage(new GParted::Menu_Helpers::SeparatorElem());
 	menu_partition.append(*item);
 
 	image = Utils::mk_image(Gtk::Stock::CONVERT, Gtk::ICON_SIZE_MENU);
-	item = manage(new
+	item = Gtk::manage(new
 			/*TO TRANSLATORS: menuitem which holds a submenu with file systems.. */
 			GParted::Menu_Helpers::ImageMenuElem(_("_Format to"),
 							  *image,
 							  *create_format_menu()));
 	menu_partition.append(*item);
 	partitionmenu_items[MENU_FORMAT] = item;
-	
-	item = manage(new GParted::Menu_Helpers::SeparatorElem());
+
+	item = Gtk::manage(new GParted::Menu_Helpers::SeparatorElem());
 	menu_partition.append(*item);
 
-	item = manage(new
+	item = Gtk::manage(new
 			// Placeholder text, replaced in set_valid_operations() before the menu is shown
 			GParted::Menu_Helpers::MenuElem("--toggle crypt busy--",
 			                             sigc::mem_fun(*this, &Win_GParted::toggle_crypt_busy_state)));
 	menu_partition.append(*item);
 	partitionmenu_items[MENU_TOGGLE_CRYPT_BUSY] = item;
 
-	item = manage(new
+	item = Gtk::manage(new
 			// Placeholder text, replaced in set_valid_operations() before the menu is shown
 			GParted::Menu_Helpers::MenuElem("--toggle fs busy--",
 						     sigc::mem_fun(*this, &Win_GParted::toggle_fs_busy_state)));
 	menu_partition.append(*item);
 	partitionmenu_items[MENU_TOGGLE_FS_BUSY] = item;
 
-	item = manage(new
+	item = Gtk::manage(new
 			/*TO TRANSLATORS: menuitem which holds a submenu with mount points.. */
-			GParted::Menu_Helpers::MenuElem(_("_Mount on"), *manage(new Gtk::Menu())));
+			GParted::Menu_Helpers::MenuElem(_("_Mount on"), *Gtk::manage(new Gtk::Menu())));
 	menu_partition.append(*item);
 	partitionmenu_items[MENU_MOUNT] = item;
 
-	item = manage(new GParted::Menu_Helpers::SeparatorElem());
+	item = Gtk::manage(new GParted::Menu_Helpers::SeparatorElem());
 	menu_partition.append(*item);
 
-	item = manage(new
+	item = Gtk::manage(new
 			GParted::Menu_Helpers::MenuElem(_("_Name Partition"),
 			                             sigc::mem_fun(*this, &Win_GParted::activate_name_partition)));
 	menu_partition.append(*item);
 	partitionmenu_items[MENU_NAME_PARTITION] = item;
 
-	item = manage(new
+	item = Gtk::manage(new
 			GParted::Menu_Helpers::MenuElem(_("M_anage Flags"),
 						     sigc::mem_fun(*this, &Win_GParted::activate_manage_flags)));
 	menu_partition.append(*item);
 	partitionmenu_items[MENU_FLAGS] = item;
 
-	item = manage(new
+	item = Gtk::manage(new
 			GParted::Menu_Helpers::MenuElem(_("C_heck"),
 						     sigc::mem_fun(*this, &Win_GParted::activate_check)));
 	menu_partition.append(*item);
 	partitionmenu_items[MENU_CHECK] = item;
 
-	item = manage(new
+	item = Gtk::manage(new
 			GParted::Menu_Helpers::MenuElem(_("_Label File System"),
 			                             sigc::mem_fun(*this, &Win_GParted::activate_label_filesystem)));
 	menu_partition.append(*item);
 	partitionmenu_items[MENU_LABEL_FILESYSTEM] = item;
 
-	item = manage(new
+	item = Gtk::manage(new
 			GParted::Menu_Helpers::MenuElem(_("New UU_ID"),
 						     sigc::mem_fun(*this, &Win_GParted::activate_change_uuid)));
 	menu_partition.append(*item);
 	partitionmenu_items[MENU_CHANGE_UUID] = item;
 
-	item = manage(new GParted::Menu_Helpers::SeparatorElem());
+	item = Gtk::manage(new GParted::Menu_Helpers::SeparatorElem());
 	menu_partition.append(*item);
 
-	item = manage(new
+	item = Gtk::manage(new
 			GParted::Menu_Helpers::StockMenuElem(Gtk::Stock::DIALOG_INFO,
 							  sigc::mem_fun(*this, &Win_GParted::activate_info)));
 	menu_partition.append(*item);
 	partitionmenu_items[MENU_INFO] = item;
-	
+
 	menu_partition .accelerate( *this ) ;  
 }
+
 
 //Create the Partition --> Format to --> (file system list) menu
 Gtk::Menu * Win_GParted::create_format_menu()
 {
 	const std::vector<FS> & fss = gparted_core .get_filesystems() ;
-	menu = manage( new Gtk::Menu() ) ;
+	menu = Gtk::manage(new Gtk::Menu());
 
 	for ( unsigned int t = 0 ; t < fss .size() ; t++ )
 	{
@@ -545,15 +553,15 @@ Gtk::Menu * Win_GParted::create_format_menu()
 //Add one entry to the Partition --> Format to --> (file system list) menu
 void Win_GParted::create_format_menu_add_item(FSType fstype, bool activate)
 {
-	Gtk::Box *hbox = manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
+	Gtk::Box* hbox = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
 	//the colored square
-	hbox->pack_start(*manage(new Gtk::Image(Utils::get_color_as_pixbuf(fstype, 16, 16))),
+	hbox->pack_start(*Gtk::manage(new Gtk::Image(Utils::get_color_as_pixbuf(fstype, 16, 16))),
 	                 Gtk::PACK_SHRINK);
 	//the label...
 	hbox->pack_start(*Utils::mk_label(" " + Utils::get_filesystem_string(fstype)),
 	                 Gtk::PACK_SHRINK);
 
-	Gtk::MenuItem *item = manage(new Gtk::MenuItem(*hbox));
+	Gtk::MenuItem* item = Gtk::manage(new Gtk::MenuItem(*hbox));
 	menu->append(*item);
 	if ( activate )
 		item->signal_activate().connect(
@@ -575,7 +583,7 @@ void Win_GParted::init_device_info()
 		Gtk::PACK_SHRINK );
 
 	//GENERAL DEVICE INFO
-	Gtk::Grid *grid = manage(new Gtk::Grid());
+	Gtk::Grid* grid = Gtk::manage(new Gtk::Grid());
 	grid->set_column_spacing(10);
 
 	// Model
@@ -614,7 +622,7 @@ void Win_GParted::init_device_info()
 
 	//DETAILED DEVICE INFO
 	top = 0;
-	grid = manage(new Gtk::Grid());
+	grid = Gtk::manage(new Gtk::Grid());
 	grid->set_column_spacing(10);
 
 	// One blank line
@@ -675,7 +683,7 @@ void Win_GParted::init_hpaned_main()
 {
 	hpaned_main.set_orientation(Gtk::ORIENTATION_HORIZONTAL);
 	//left scrollwindow (holds device info)
-	scrollwindow = manage( new Gtk::ScrolledWindow() ) ;
+	scrollwindow = Gtk::manage(new Gtk::ScrolledWindow());
 	scrollwindow ->set_shadow_type( Gtk::SHADOW_ETCHED_IN );
 	scrollwindow ->set_policy( Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC );
 #if HAVE_SET_PROPAGATE_NATURAL_WIDTH
@@ -686,7 +694,7 @@ void Win_GParted::init_hpaned_main()
 	scrollwindow ->add( vbox_info );
 
 	//right scrollwindow (holds treeview with partitions)
-	scrollwindow = manage( new Gtk::ScrolledWindow() ) ;
+	scrollwindow = Gtk::manage(new Gtk::ScrolledWindow());
 	scrollwindow ->set_shadow_type( Gtk::SHADOW_ETCHED_IN );
 	scrollwindow ->set_policy( Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC );
 #if HAVE_SET_PROPAGATE_NATURAL_WIDTH
@@ -718,7 +726,7 @@ void Win_GParted::add_custom_css()
 	}
 	catch (Glib::Error& e)
 	{
-		std::cerr << e.what() << std::endl;
+		std::cerr << Utils::convert_ustring(e.what()) << std::endl;
 	}
 
 	Gtk::StyleContext::add_provider_for_screen(default_screen,
@@ -733,26 +741,28 @@ void Win_GParted::refresh_combo_devices()
 	// device list.
 	combo_devices_changed_connection .block();
 	liststore_devices ->clear() ;
-	
-	menu = manage( new Gtk::Menu() ) ;
+
+	menu = Gtk::manage(new Gtk::Menu());
 	Gtk::RadioButtonGroup radio_group ;
-	
-	for ( unsigned int i = 0 ; i < devices .size( ) ; i++ )
+
+	for (unsigned int i = 0; i < m_devices.size(); i++)
 	{
 		//combo...
 		treerow = *( liststore_devices ->append() ) ;
-		treerow[ treeview_devices_columns .icon ] =
-			Utils::mk_pixbuf(*this, Gtk::Stock::HARDDISK, Gtk::ICON_SIZE_LARGE_TOOLBAR);
-		treerow[ treeview_devices_columns .device ] = devices[ i ] .get_path() ;
-		treerow[ treeview_devices_columns .size ] = "(" + Utils::format_size( devices[ i ] .length, devices[ i ] .sector_size ) + ")" ; 
+		treerow[m_treeview_devices_columns.icon] =
+		                Utils::mk_pixbuf(*this, Gtk::Stock::HARDDISK, Gtk::ICON_SIZE_LARGE_TOOLBAR);
+		treerow[m_treeview_devices_columns.device] = m_devices[i].get_path();
+		treerow[m_treeview_devices_columns.size] =
+		                "(" + Utils::format_size(m_devices[i].length, m_devices[i].sector_size) + ")";
 
 		// Devices submenu...
-		Gtk::Box *hbox = manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-		hbox ->pack_start( * Utils::mk_label( devices[ i ] .get_path() ), Gtk::PACK_EXPAND_WIDGET ) ;
-		hbox ->pack_start( * Utils::mk_label( "   (" + Utils::format_size( devices[ i ] .length, devices[ i ] .sector_size ) + ")" ),
-		                   Gtk::PACK_SHRINK ) ;
+		Gtk::Box* hbox = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
+		hbox->pack_start(*Utils::mk_label(m_devices[i].get_path()), Gtk::PACK_EXPAND_WIDGET);
+		hbox->pack_start(*Utils::mk_label("   (" + Utils::format_size(m_devices[i].length,
+		                                                              m_devices[i].sector_size) + ")"),
+		                 Gtk::PACK_SHRINK);
 
-		Gtk::RadioMenuItem *item = manage(new Gtk::RadioMenuItem(radio_group));
+		Gtk::RadioMenuItem* item = Gtk::manage(new Gtk::RadioMenuItem(radio_group));
 		menu->append(*item);
 		item->add(*hbox);
 		item->signal_activate().connect(
@@ -768,8 +778,9 @@ void Win_GParted::refresh_combo_devices()
 	}
 
 	combo_devices_changed_connection .unblock();
-	combo_devices .set_active( current_device ) ;
+	combo_devices.set_active(m_current_device);
 }
+
 
 bool Win_GParted::pulsebar_pulse()
 {
@@ -826,135 +837,131 @@ void Win_GParted::Fill_Label_Device_Info( bool clear )
 		short t = 0;
 		
 		//global info...
-		device_info[ t++ ] ->set_text( devices[ current_device ] .model ) ;
-		device_info[ t++ ] ->set_text( devices[current_device].serial_number );
-		device_info[ t++ ] ->set_text( Utils::format_size( devices[ current_device ] .length, devices[ current_device ] .sector_size ) ) ;
-		device_info[ t++ ] ->set_text( devices[current_device].get_path() );
+		device_info[t++]->set_text(m_devices[m_current_device].model);
+		device_info[t++]->set_text(m_devices[m_current_device].serial_number);
+		device_info[t++]->set_text(Utils::format_size(m_devices[m_current_device].length,
+		                                              m_devices[m_current_device].sector_size));
+		device_info[t++]->set_text(m_devices[m_current_device].get_path());
 
 		//detailed info
-		device_info[ t++ ] ->set_text( devices[ current_device ] .disktype ) ;
-		device_info[ t++ ] ->set_text( Utils::num_to_str( devices[ current_device ] .heads ) );
-		device_info[ t++ ] ->set_text( Utils::num_to_str( devices[ current_device ] .sectors ) );
-		device_info[ t++ ] ->set_text( Utils::num_to_str( devices[ current_device ] .cylinders ) );
-		device_info[ t++ ] ->set_text( Utils::num_to_str( devices[ current_device ] .length ) );
-		device_info[ t++ ] ->set_text( Utils::num_to_str( devices[ current_device ] .sector_size ) );
+		device_info[t++]->set_text(m_devices[m_current_device].disktype);
+		device_info[t++]->set_text(Utils::num_to_str(m_devices[m_current_device].heads));
+		device_info[t++]->set_text(Utils::num_to_str(m_devices[m_current_device].sectors));
+		device_info[t++]->set_text(Utils::num_to_str(m_devices[m_current_device].cylinders));
+		device_info[t++]->set_text(Utils::num_to_str(m_devices[m_current_device].length));
+		device_info[t++]->set_text(Utils::num_to_str(m_devices[m_current_device].sector_size));
 	}
 }
+
 
 bool Win_GParted::on_delete_event( GdkEventAny *event )
 {
 	return ! Quit_Check_Operations();
 }	
 
-void Win_GParted::Add_Operation( const Device & device, Operation * operation )
-{
-	if ( operation )
-	{ 
-		Glib::ustring error ;
-		//Add any of the listed operations without further checking, but
-		//  for the other operations (_CREATE, _RESIZE_MOVE and _COPY)
-		//  ensure the partition is correctly aligned.
-		//FIXME: this is becoming a mess.. maybe it's better to check if partition_new > 0
-		if ( operation ->type == OPERATION_DELETE ||
-		     operation ->type == OPERATION_FORMAT ||
-		     operation ->type == OPERATION_CHECK ||
-		     operation ->type == OPERATION_CHANGE_UUID ||
-		     operation ->type == OPERATION_LABEL_FILESYSTEM ||
-		     operation ->type == OPERATION_NAME_PARTITION ||
-		     gparted_core.valid_partition(device, operation->get_partition_new(), error)
-		   )
-		{
-			operation ->create_description() ;
-			operations.push_back( operation );
-		}
-		else
-		{
-			Gtk::MessageDialog dialog( *this,
-				   _("Could not add this operation to the list"),
-				   false,
-				   Gtk::MESSAGE_ERROR,
-				   Gtk::BUTTONS_OK,
-				   true );
-			dialog .set_secondary_text( error ) ;
 
-			dialog .run() ;
+void Win_GParted::add_operation(const Device& device, std::unique_ptr<Operation> operation)
+{
+	if (nullptr == operation)
+		return;
+
+	// For operations which create new or modify existing partition boundaries ensure
+	// those boundaries are valid before allowing the operation to be added.
+	if (operation->m_type == OPERATION_CREATE      ||
+	    operation->m_type == OPERATION_COPY        ||
+	    operation->m_type == OPERATION_RESIZE_MOVE   )
+	{
+		Glib::ustring error;
+		if (! gparted_core.valid_partition(device, operation->get_partition_new(), error))
+		{
+			Gtk::MessageDialog dialog(*this,
+			                _("Could not add this operation to the list"),
+			                false,
+			                Gtk::MESSAGE_ERROR,
+			                Gtk::BUTTONS_OK,
+			                true);
+			dialog.set_secondary_text(error);
+			dialog.run();
+			return;
 		}
 	}
+
+	operation->create_description();
+
+	if (merge_operation(*operation))
+		// The operation was merged with an existing one already in the list so
+		// there's no need to append it to the list.
+		return;
+
+	m_operations.push_back(std::move(operation));
 }
 
-// Try to merge the second operation into the first in the operations[] vector.
-bool Win_GParted::merge_two_operations( unsigned int first, unsigned int second )
+
+// Try to merge the candidate operation with a previous operation affecting the same
+// partition(s) in the m_operations[] vector.
+bool Win_GParted::merge_operation(const Operation& candidate)
 {
-	unsigned int num_ops = operations.size();
-	if ( first >= num_ops-1 )
-		return false;
-	if ( first >= second || second >= num_ops )
+	// Find previous operation affecting the same partition(s).  Stop searching and
+	// attempt merge.
+	// WARNING:
+	// Index into m_operations[] vector counts backwards stopping at -1, hence needing
+	// to use signed int.
+	for (signed int i = static_cast<signed int>(m_operations.size())-1; i >= 0; i--)
+	{
+		if (operations_affect_same_partition(*m_operations[i], candidate))
+		{
+			return m_operations[i]->merge_operations(candidate);
+		}
+	}
+	return false;
+}
+
+
+// Report whether the second candidate operation affects the same partition(s) as the
+// first target operation.
+bool Win_GParted::operations_affect_same_partition(const Operation& first_op, const Operation& second_op)
+{
+	if (first_op.m_type == OPERATION_DELETE)
+		// First target operation is deleting the partition so there is no
+		// partition to merge the second candidate operation into.
 		return false;
 
-	if ( operations[first]->merge_operations( *operations[second] ) )
-	{
-		remove_operation( second );
+	if (first_op.get_partition_new().get_path() == second_op.get_partition_original().get_path())
 		return true;
+
+	// A copy operation is considered to affect both the copied source and pasted
+	// target partitions, to prevent merging of operations past either.  Two copy
+	// operations have four partition combinations to check.  The one above covering
+	// all operations and three more below.
+	Glib::ustring first_copied_path;
+	if (first_op.m_type == OPERATION_COPY)
+	{
+		const OperationCopy& first_copy_op = static_cast<const OperationCopy&>(first_op);
+		first_copied_path = first_copy_op.get_partition_copied().get_path();
+
+		if (first_copied_path == second_op.get_partition_original().get_path())
+			return true;
+	}
+
+	Glib::ustring second_copied_path;
+	if (second_op.m_type == OPERATION_COPY)
+	{
+		const OperationCopy& second_copy_op = static_cast<const OperationCopy&>(second_op);
+		second_copied_path = second_copy_op.get_partition_copied().get_path();
+
+		if (first_op.get_partition_new().get_path() == second_copied_path)
+			return true;
+	}
+
+	if (first_op.m_type == OPERATION_COPY && second_op.m_type == OPERATION_COPY)
+	{
+		if (first_copied_path == second_copied_path)
+			return true;
 	}
 
 	return false;
 }
 
-// Try to merge pending operations in the operations[] vector using the specified merge
-// type.
-//
-// Summary of all the operation merging rules for each operation type coded into the
-// ::activate_*() methods:
-//
-// Operation type      Partition status    Merge type             Method
-// -----------------   ----------------    --------------------   -----------------
-// resize/move         Real                MERGE_LAST_WITH_PREV   activate_resize()
-// resize/move         New                 MERGE_LAST_WITH_ANY    activate_resize()
-// paste               *                   none                   activate_paste()
-// new                 *                   none                   activate_new()
-// delete              Real                none                   activate_delete()
-// delete              New                 MERGE_ALL_ADJACENT     activate_delete()
-// format              Real                MERGE_LAST_WITH_PREV   activate_format()
-// format              New                 MERGE_LAST_WITH_ANY    activate_format()
-// check               Real [1]            MERGE_LAST_WITH_ANY    activate_check()
-// label file system   Real [1]            MERGE_LAST_WITH_ANY    activate_label_filesystem()
-// name partition      Real [1]            MERGE_LAST_WITH_ANY    activate_name_partition()
-// new UUID            Real [1]            MERGE_LAST_WITH_ANY    activate_change_uuid()
-//
-// [1] The UI only allows these operations to be applied to real partitions; where as the
-//     other mergeable operations can be applied to both real partitions and new, pending
-//     create partitions.
-void Win_GParted::merge_operations( MergeType mergetype )
-{
-	unsigned int num_ops = operations.size();
-	if ( num_ops <= 1 )
-		return;  // Nothing to merge.  One or fewer operations.
-
-	switch ( mergetype )
-	{
-		case MERGE_LAST_WITH_PREV:
-			merge_two_operations( num_ops-2, num_ops-1 );
-			break;
-
-		case MERGE_LAST_WITH_ANY:
-			for ( unsigned int i = 0 ; i < num_ops-1 ; i ++ )
-			{
-				if ( merge_two_operations( i, num_ops-1 ) )
-					break;
-			}
-			break;
-
-		case MERGE_ALL_ADJACENT:
-			// Must check against operations.size() as looping continues after
-			// merging which might have reduced the number of items in the
-			// vector.
-			for ( unsigned int i = 0 ; i < operations.size()-1 ; i ++ )
-			{
-				merge_two_operations( i, i+1 );
-			}
-			break;
-	}
-}
 
 void Win_GParted::Refresh_Visual()
 {
@@ -982,15 +989,15 @@ void Win_GParted::Refresh_Visual()
 	//
 	// (3) Loads the disk graphic and partition list with partitions to be shown in
 	//     the GUI.  Both classes store pointers pointing back to each partition
-	//     object in the vector of display partitions.
+	//     object in the current display device's vector of partitions.
 	//
-	//     Aliases:   Win_GParted::display_partitions[]
+	//     Aliases:   Win_GParted::m_display_device.partitions[]
 	//     Call chain:
 	//
 	//         Win_GParted::Refresh_Visual()
-	//             drawingarea_visualdisk.load_partitions( display_partitions, device_sectors )
+	//             drawingarea_visualdisk.load_partitions(m_display_device.partitions, device_sectors)
 	//                 DrawingAreaVisualDisk::set_static_data( ... )
-	//             treeview_detail.load_partitions( display_partitions )
+	//             treeview_detail.load_partitions(m_display_device.partitions)
 	//                 TreeView_Detail::create_row()
 	//                 TreeView_Detail::load_partitions()
 	//                     TreeView_Detail::create_row()
@@ -1001,12 +1008,12 @@ void Win_GParted::Refresh_Visual()
 	//     class to update it's selection.
 	//
 	//     Data owner: const Partition * Win_GParted::selected_partition_ptr
-	//     Aliases:    Win_GParted::display_partitions[]
+	//     Aliases:    Win_GParted::m_display_device.partitions[]
 	//     Lifetime:   Valid until the next call to Refresh_Visual().
 	//     Call chain: (example clicking on a partition in the disk graphic)
 	//
 	//         DrawingAreaVisualDisk::on_button_press_event()
-	//             DawingAreaVisualDisk::set_selected( visual_partitions, x, y )
+	//             DrawingAreaVisualDisk::set_selected( visual_partitions, x, y )
 	//                 signal_partition_selected.emit( ..., false )
 	//                     Win_GParted::on_partition_selected( partition_ptr, src_is_treeview )
 	//                         treeview_detail.set_selected( treestore_detail->children(), partition_ptr )
@@ -1027,8 +1034,7 @@ void Win_GParted::Refresh_Visual()
 	//     Call chain: (example setting a file system label)
 	//
 	//         Win_GParted::activate_label_filesystem()
-	//             Win_GParted::Add_Operation( operation )
-	//             Win_GParted::merge_operations( ... )
+	//             Win_GParted::add_operation(m_devices[m_current_device], operation)
 	//             Win_GParted::show_operationslist()
 	//                 Win_GParted::Refresh_Visual()
 	//
@@ -1042,24 +1048,24 @@ void Win_GParted::Refresh_Visual()
 
 
 	//make all operations visible
-	m_display_device = devices[current_device];
-	for (unsigned int i = 0; i < operations.size(); i++)
-		if (operations[i]->device == m_display_device)
-			operations[i]->apply_to_visual(m_display_device.partitions);
+	m_display_device = m_devices[m_current_device];
+	for (unsigned int i = 0; i < m_operations.size(); i++)
+		if (m_operations[i]->m_device == m_display_device)
+			m_operations[i]->apply_to_visual(m_display_device.partitions);
 
-	hbox_operations .load_operations( operations ) ;
+	hbox_operations.load_operations(m_operations);
 
 	//set new statusbartext
 	statusbar .pop() ;
 	statusbar .push( Glib::ustring::compose( ngettext( "%1 operation pending"
 	                                           , "%1 operations pending"
-	                                           , operations .size()
+	                                           , m_operations.size()
 	                                           )
-	                                 , operations .size()
+	                                 , m_operations.size()
 	                                 )
 	               );
 		
-	if ( ! operations .size() ) 
+	if (! m_operations.size())
 		allow_undo_clear_apply( false ) ;
 
 	// Refresh copy partition source as necessary and select the largest unallocated
@@ -1156,7 +1162,7 @@ bool Win_GParted::valid_display_partition_ptr( const Partition * partition_ptr )
 
 bool Win_GParted::Quit_Check_Operations()
 {
-	if ( operations .size() )
+	if (m_operations.size())
 	{
 		Gtk::MessageDialog dialog( *this,
 					   _("Quit GParted?"),
@@ -1167,9 +1173,9 @@ bool Win_GParted::Quit_Check_Operations()
 
 		dialog .set_secondary_text( Glib::ustring::compose( ngettext( "%1 operation is currently pending."
 		                                                      , "%1 operations are currently pending."
-		                                                      , operations .size()
+		                                                      , m_operations.size()
 		                                                      )
-		                                            , operations .size()
+		                                            , m_operations.size()
 		                                            )
 		                          ) ;
 	
@@ -1279,11 +1285,11 @@ void Win_GParted::set_valid_operations()
 		allow_toggle_fs_busy_state( true );
 
 	// Allow partition naming on devices that support it
-	if ( selected_partition_ptr->status == STAT_REAL          &&
-	     devices[current_device].partition_naming_supported() &&
-	     ( selected_partition_ptr->type == TYPE_PRIMARY  ||
-	       selected_partition_ptr->type == TYPE_LOGICAL  ||
-	       selected_partition_ptr->type == TYPE_EXTENDED    )    )
+	if (selected_partition_ptr->status == STAT_REAL              &&
+	    m_devices[m_current_device].partition_naming_supported() &&
+	    (selected_partition_ptr->type == TYPE_PRIMARY  ||
+	     selected_partition_ptr->type == TYPE_LOGICAL  ||
+	     selected_partition_ptr->type == TYPE_EXTENDED   )         )
 		allow_name_partition( true );
 
 	// Allow partition flag management
@@ -1293,10 +1299,9 @@ void Win_GParted::set_valid_operations()
 	       selected_partition_ptr->type == TYPE_EXTENDED    )    )
 		allow_manage_flags( true );
 
-#ifdef ENABLE_ONLINE_RESIZE
 	// Online resizing always required the ability to update the partition table ...
-	if ( ! devices[current_device].readonly &&
-	     selected_filesystem.busy              )
+	if (! m_devices[m_current_device].readonly &&
+	    selected_filesystem.busy                 )
 	{
 		// Can the plain file system be online resized?
 		if (selected_partition_ptr->fstype != FS_LUKS    &&
@@ -1313,7 +1318,6 @@ void Win_GParted::set_valid_operations()
 		if (selected_partition_ptr->type == TYPE_EXTENDED)
 			allow_resize(true);
 	}
-#endif
 
 	// Allow labelling of mounted file systems that support it.
 	if (selected_filesystem.busy                    &&
@@ -1339,9 +1343,9 @@ void Win_GParted::set_valid_operations()
 		// Temporarily disable copying of encrypted content into new partitions
 		// which can't yet be encrypted, until full LUKS read-write support is
 		// implemented.
-		if ( copied_partition             != nullptr &&
-		     ! devices[current_device].readonly      &&
-		     copied_partition->fstype     != FS_LUKS    )
+		if (copied_partition             != nullptr   &&
+		    ! m_devices[m_current_device].readonly    &&
+		    copied_partition->fstype     != FS_LUKS     )
 		{
 			const Partition & copied_filesystem_ptn = copied_partition->get_filesystem_partition();
 			Byte_Value required_size ;
@@ -1368,17 +1372,17 @@ void Win_GParted::set_valid_operations()
 			        || ( selected_partition_ptr->type == TYPE_LOGICAL )
 			       )
 			    && ( selected_partition_ptr->sector_end
-			         < ( devices[ current_device ] .length
-			             - ( 2 * MEBIBYTE / devices[ current_device ] .sector_size )
+			         < ( m_devices[m_current_device].length
+			             - ( 2 * MEBIBYTE / m_devices[m_current_device].sector_size )
 			           )
 			       )
 			   )
 				required_size += MEBIBYTE;
 
 			//Determine if space is needed for the backup partition on a GPT partition table
-			if (   ( devices[ current_device ] .disktype == "gpt" )
-			    && ( ( devices[current_device].length - selected_partition_ptr->sector_end )
-			         < ( MEBIBYTE / devices[ current_device ] .sector_size )
+			if (   ( m_devices[m_current_device].disktype == "gpt" )
+			    && ( ( m_devices[m_current_device].length - selected_partition_ptr->sector_end )
+			         < ( MEBIBYTE / m_devices[m_current_device].sector_size )
 			       )
 			   )
 				required_size += MEBIBYTE ;
@@ -1398,7 +1402,7 @@ void Win_GParted::set_valid_operations()
 		     selected_partition_ptr->logicals.back().type == TYPE_UNALLOCATED    )
 			allow_delete( true ) ;
 		
-		if ( ! devices[ current_device ] .readonly )
+		if (! m_devices[m_current_device].readonly)
 			allow_resize( true ) ; 
 
 		return ;
@@ -1420,7 +1424,7 @@ void Win_GParted::set_valid_operations()
 
 		// Resizing/moving always requires the ability to update the partition
 		// table ...
-		if ( ! devices[current_device].readonly )
+		if (! m_devices[m_current_device].readonly)
 		{
 			// Can the plain file system be resized or moved?
 			if (selected_partition_ptr->fstype != FS_LUKS     &&
@@ -1463,13 +1467,13 @@ void Win_GParted::set_valid_operations()
 		{
 			partitionmenu_items[MENU_MOUNT]->unset_submenu();
 
-			Gtk::Menu *menu = manage(new Gtk::Menu());
+			Gtk::Menu* menu = Gtk::manage(new Gtk::Menu());
 			const std::vector<Glib::ustring>& temp_mountpoints = selected_filesystem.get_mountpoints();
 			for ( unsigned int t = 0 ; t < temp_mountpoints.size() ; t++ )
 			{
 				Gtk::MenuItem *item;
 
-				item = manage(new
+				item = Gtk::manage(new
 					GParted::Menu_Helpers::MenuElem(
 						temp_mountpoints[t],
 						sigc::bind<unsigned int>(sigc::mem_fun(*this, &Win_GParted::activate_mount_partition), t)));
@@ -1497,15 +1501,16 @@ void Win_GParted::set_valid_operations()
 	}
 }
 
+
 void Win_GParted::show_operationslist()
 {
 	//Enable (or disable) Undo and Apply buttons
-	allow_undo_clear_apply( operations .size() ) ;
+	allow_undo_clear_apply(m_operations.size());
 
 	//Updates view of operations list and sensitivity of Undo and Apply buttons
 	Refresh_Visual();
 
-	if ( operations .size() == 1 ) //first operation, open operationslist
+	if (m_operations.size() == 1)  // first operation, open operationslist
 		open_operationslist() ;
 
 	//FIXME:  A slight flicker may be introduced by this extra display refresh.
@@ -1519,13 +1524,14 @@ void Win_GParted::show_operationslist()
 	drawingarea_visualdisk .queue_draw() ;
 }
 
+
 void Win_GParted::open_operationslist() 
 {
-	if ( ! OPERATIONSLIST_OPEN )
+	if (! m_operationslist_open)
 	{
-		OPERATIONSLIST_OPEN = true ;
+		m_operationslist_open = true;
 		hbox_operations .show() ;
-	
+
 		for ( int t = vpaned_main .get_height() ; t > ( vpaned_main .get_height() - 100 ) ; t -= 5 )
 		{
 			vpaned_main .set_position( t );
@@ -1538,12 +1544,13 @@ void Win_GParted::open_operationslist()
 	}
 }
 
+
 void Win_GParted::close_operationslist() 
 {
-	if ( OPERATIONSLIST_OPEN )
+	if (m_operationslist_open)
 	{
-		OPERATIONSLIST_OPEN = false ;
-		
+		m_operationslist_open = false;
+
 		for ( int t = vpaned_main .get_position() ; t < vpaned_main .get_height() ; t += 5 )
 		{
 			vpaned_main .set_position( t ) ;
@@ -1559,25 +1566,27 @@ void Win_GParted::close_operationslist()
 	}
 }
 
+
 void Win_GParted::clear_operationslist() 
 {
-	remove_operation( -1, true ) ;
+	remove_operation(REMOVE_ALL);
 	close_operationslist() ;
 
 	Refresh_Visual() ;
 }
 
+
 void Win_GParted::combo_devices_changed()
 {
-	unsigned int old_current_device = current_device;
+	unsigned int old_current_device = m_current_device;
 	//set new current device
-	current_device = combo_devices .get_active_row_number() ;
-	if ( current_device == (unsigned int) -1 )
-		current_device = old_current_device;
-	if ( current_device >= devices .size() )
-		current_device = 0 ;
-	set_title( Glib::ustring::compose( _("%1 - GParted"), devices[ current_device ] .get_path() ) );
-	
+	m_current_device = combo_devices .get_active_row_number() ;
+	if (m_current_device == (unsigned int)-1)
+		m_current_device = old_current_device;
+	if (m_current_device >= m_devices.size())
+		m_current_device = 0;
+	set_title(Glib::ustring::compose(_("%1 - GParted"), m_devices[m_current_device].get_path()));
+
 	//refresh label_device_info
 	Fill_Label_Device_Info();
 	
@@ -1588,10 +1597,11 @@ void Win_GParted::combo_devices_changed()
 	if (mainmenu_items[MENU_DEVICES]->has_submenu())
 	{
 		static_cast<Gtk::RadioMenuItem *>
-		(mainmenu_items[MENU_DEVICES]->get_submenu()->get_children()[current_device])
+		(mainmenu_items[MENU_DEVICES]->get_submenu()->get_children()[m_current_device])
 			->set_active(true);
 	}
 }
+
 
 void Win_GParted::radio_devices_changed( unsigned int item ) 
 {
@@ -1625,31 +1635,33 @@ gboolean Win_GParted::initial_device_refresh( gpointer data )
 	return false;  // one shot g_idle_add() callback
 }
 
+
 void Win_GParted::menu_gparted_refresh_devices()
 {
 	show_pulsebar( _("Scanning all devices...") ) ;
-	gparted_core.set_devices( devices );
+	gparted_core.set_devices(m_devices);
 	hide_pulsebar();
-	
-	//check if current_device is still available (think about hotpluggable stuff like usbdevices)
-	if ( current_device >= devices .size() )
-		current_device = 0 ;
+
+	// Check if m_current_device is still available (think about hotpluggable stuff like USB devices)
+	if (m_current_device >= m_devices.size())
+		m_current_device = 0;
 
 	//see if there are any pending operations on non-existent devices
 	//NOTE that this isn't 100% foolproof since some stuff (e.g. sourcedevice of copy) may slip through.
 	//but anyone who removes the sourcedevice before applying the operations gets what he/she deserves :-)
 	//FIXME: this actually sucks ;) see if we can use STL predicates here..
 	unsigned int i ;
-	for ( unsigned int t = 0 ; t < operations .size() ; t++ )
+	for (unsigned int t = 0; t < m_operations.size(); t++)
 	{
-		for ( i = 0 ; i < devices .size() && devices[ i ] != operations[ t ] ->device ; i++ ) {}
-		
-		if ( i >= devices .size() )
-			remove_operation( t-- ) ;
+		for (i = 0; i < m_devices.size() && m_devices[i] != m_operations[t]->m_device; i++)
+		{}
+
+		if (i >= m_devices.size())
+			remove_operation(REMOVE_AT, t--);
 	}
-		
+
 	//if no devices were detected we disable some stuff and show a message in the statusbar
-	if ( devices .empty() )
+	if (m_devices.empty())
 	{
 		this ->set_title( _("GParted") );
 		combo_devices .hide() ;
@@ -1671,8 +1683,8 @@ void Win_GParted::menu_gparted_refresh_devices()
 		//hmzz, this is really paranoid, but i think it's the right thing to do ;)
 		hbox_operations .clear() ;
 		close_operationslist() ;
-		remove_operation( -1, true ) ;
-		
+		remove_operation(REMOVE_ALL);
+
 		statusbar .pop() ;
 		statusbar .push( _( "No devices detected" ) );
 	}
@@ -1884,11 +1896,9 @@ void Win_GParted::menu_help_about()
 	dialog .set_logo_icon_name( "gparted" ) ;
 	dialog .set_version( VERSION ) ;
 	dialog .set_comments( _( "GNOME Partition Editor" ) ) ;
-	std::string names ;
-	names =    "Copyright © 2004-2006 Bart Hakvoort" ;
-	names += "\nCopyright © 2008-2024 Curtis Gedak" ;
-	names += "\nCopyright © 2011-2024 Mike Fleetwood" ;
-	dialog .set_copyright( names ) ;
+	dialog.set_copyright(  "Copyright © 2004-2006 Bart Hakvoort"
+	                     "\nCopyright © 2008-2026 Curtis Gedak"
+	                     "\nCopyright © 2011-2026 Mike Fleetwood");
 
 	//authors
 	//Names listed in alphabetical order by LAST name.
@@ -2070,30 +2080,13 @@ void Win_GParted::activate_resize()
 
 		// Apply resize/move from the dialog to a copy of the selected partition.
 		Partition * resized_ptn = selected_partition_ptr->clone();
-		resized_ptn->resize( dialog.Get_New_Partition() );
+		resized_ptn->resize(dialog.get_new_partition());
 
-		// When resizing/moving a partition which already exists on the disk all
-		// possible operations could be pending so only try merging with the
-		// previous operation.
-		MergeType mergetype = MERGE_LAST_WITH_PREV;
-
-		// If selected partition is NEW we simply remove the NEW operation from the list and add
-		// it again with the new size and position ( unless it's an EXTENDED )
-		if ( selected_partition_ptr->status == STAT_NEW && selected_partition_ptr->type != TYPE_EXTENDED )
-		{
-			resized_ptn->status = STAT_NEW;
-			// On a partition which is pending creation only resize/move and
-			// format operations are possible.  These operations are always
-			// mergeable with the pending operation which will create the
-			// partition.  Hence merge with any earlier operations to achieve
-			// this.
-			mergetype = MERGE_LAST_WITH_ANY;
-		}
-
-		Operation * operation = new OperationResizeMove( devices[current_device],
-		                                                 *selected_partition_ptr,
-		                                                 *resized_ptn );
-		operation->icon = Utils::mk_pixbuf(*this, Gtk::Stock::GOTO_LAST, Gtk::ICON_SIZE_MENU);
+		std::unique_ptr<Operation> operation = std::make_unique<OperationResizeMove>(
+		                        m_devices[m_current_device],
+		                        *selected_partition_ptr,
+		                        *resized_ptn);
+		operation->m_icon = Utils::mk_pixbuf(*this, Gtk::Stock::GOTO_LAST, Gtk::ICON_SIZE_MENU);
 
 		delete resized_ptn;
 		resized_ptn = nullptr;
@@ -2126,8 +2119,7 @@ void Win_GParted::activate_resize()
 			dialog.run();
 		}
 
-		Add_Operation( devices[current_device], operation );
-		merge_operations( mergetype );
+		add_operation(m_devices[m_current_device], std::move(operation));
 	}
 
 	show_operationslist() ;
@@ -2225,7 +2217,7 @@ void Win_GParted::activate_paste()
 	if (selected_partition_ptr->type   == TYPE_UNPARTITIONED &&
 	    selected_partition_ptr->fstype == FS_UNALLOCATED       )
 	{
-		show_disklabel_unrecognized( devices [current_device ] .get_path() ) ;
+		show_disklabel_unrecognized(m_devices[m_current_device].get_path());
 		return ;
 	}
 
@@ -2233,6 +2225,8 @@ void Win_GParted::activate_paste()
 
 	if ( selected_partition_ptr->type == TYPE_UNALLOCATED )
 	{
+		// Pasting into empty space composing new partition.
+
 		if ( ! max_amount_prim_reached() )
 		{
 			FS_Limits fs_limits = gparted_core.get_filesystem_limits(
@@ -2259,26 +2253,29 @@ void Win_GParted::activate_paste()
 			{
 				dialog .hide() ;
 
-				Operation * operation = new OperationCopy( devices[current_device],
-				                                           *selected_partition_ptr,
-				                                           dialog.Get_New_Partition(),
-				                                           *copied_partition );
-				operation->icon = Utils::mk_pixbuf(*this, Gtk::Stock::COPY, Gtk::ICON_SIZE_MENU);
+				std::unique_ptr<Operation> operation = std::make_unique<OperationCopy>(
+				                        m_devices[m_current_device],
+				                        *selected_partition_ptr,
+				                        dialog.get_new_partition(),
+				                        *copied_partition);
+				operation->m_icon = Utils::mk_pixbuf(*this, Gtk::Stock::COPY, Gtk::ICON_SIZE_MENU);
 
 				// When pasting into unallocated space set a temporary
 				// path of "Copy of /dev/SRC" for display purposes until
 				// the partition is created and the real path queried.
-				OperationCopy * copy_op = static_cast<OperationCopy*>( operation );
+				OperationCopy* copy_op = static_cast<OperationCopy*>(operation.get());
 				copy_op->get_partition_new().set_path(
 				        Glib::ustring::compose( _("Copy of %1"),
 				                          copy_op->get_partition_copied().get_path() ) );
 
-				Add_Operation( devices[current_device], operation );
+				add_operation(m_devices[m_current_device], std::move(operation));
 			}
 		}
 	}
 	else
 	{
+		// Pasting into existing partition.
+
 		const Partition & selected_filesystem_ptn = selected_partition_ptr->get_filesystem_partition();
 
 		bool shown_dialog = false ;
@@ -2354,17 +2351,20 @@ void Win_GParted::activate_paste()
 			}
 			filesystem_ptn_new.clear_messages();
 		}
+
+		GParted_Core::compose_partition_flags(*partition_new, m_devices[m_current_device].disktype);
  
-		Operation * operation = new OperationCopy( devices[current_device],
-		                                           *selected_partition_ptr,
-		                                           *partition_new,
-		                                           *copied_partition );
-		operation->icon = Utils::mk_pixbuf(*this, Gtk::Stock::COPY, Gtk::ICON_SIZE_MENU);
+		std::unique_ptr<Operation> operation = std::make_unique<OperationCopy>(
+		                        m_devices[m_current_device],
+		                        *selected_partition_ptr,
+		                        *partition_new,
+		                        *copied_partition);
+		operation->m_icon = Utils::mk_pixbuf(*this, Gtk::Stock::COPY, Gtk::ICON_SIZE_MENU);
 
 		delete partition_new;
 		partition_new = nullptr;
 
-		Add_Operation( devices[current_device], operation );
+		add_operation(m_devices[m_current_device], std::move(operation));
 
 		if ( ! shown_dialog )
 		{
@@ -2397,7 +2397,7 @@ void Win_GParted::activate_new()
 	if (selected_partition_ptr->type   == TYPE_UNPARTITIONED &&
 	    selected_partition_ptr->fstype == FS_UNALLOCATED       )
 	{
-		show_disklabel_unrecognized( devices [current_device ] .get_path() ) ;
+		show_disklabel_unrecognized(m_devices[m_current_device].get_path());
 	}
 	else if ( ! max_amount_prim_reached() )
 	{
@@ -2417,17 +2417,19 @@ void Win_GParted::activate_new()
 			dialog .hide() ;
 			
 			new_count++ ;
-			Operation * operation = new OperationCreate( devices[current_device],
-			                                             *selected_partition_ptr,
-			                                             dialog.Get_New_Partition() );
-			operation->icon = Utils::mk_pixbuf(*this, Gtk::Stock::NEW, Gtk::ICON_SIZE_MENU);
+			std::unique_ptr<Operation> operation = std::make_unique<OperationCreate>(
+			                        m_devices[m_current_device],
+			                        *selected_partition_ptr,
+			                        dialog.get_new_partition());
+			operation->m_icon = Utils::mk_pixbuf(*this, Gtk::Stock::NEW, Gtk::ICON_SIZE_MENU);
 
-			Add_Operation( devices[current_device], operation );
+			add_operation(m_devices[m_current_device], std::move(operation));
 
 			show_operationslist() ;
 		}
 	}
 }
+
 
 void Win_GParted::activate_delete()
 { 
@@ -2448,9 +2450,9 @@ void Win_GParted::activate_delete()
 	 * the new situation is now /dev/hda5 /dev/hda6. If /dev/hda7 was mounted 
 	 * the OS cannot find /dev/hda7 anymore and the results aren't that pretty.
 	 * It seems best to check for this and prohibit deletion with some explanation to the user.*/
-	 if ( selected_partition_ptr->type             == TYPE_LOGICAL                         &&
-	      selected_partition_ptr->status           != STAT_NEW                             &&
-	      selected_partition_ptr->partition_number <  devices[current_device].highest_busy    )
+	 if (selected_partition_ptr->type             == TYPE_LOGICAL                             &&
+	     selected_partition_ptr->status           != STAT_NEW                                 &&
+	     selected_partition_ptr->partition_number <  m_devices[m_current_device].highest_busy   )
 	{	
 		Gtk::MessageDialog dialog( *this,
 		                           Glib::ustring::compose( _("Unable to delete %1!"), selected_partition_ptr->get_path() ),
@@ -2504,43 +2506,41 @@ void Win_GParted::activate_delete()
 	if ( selected_partition_ptr->status == STAT_NEW )
 	{
 		//remove all operations done on this new partition (this includes creation)	
-		for ( int t = 0 ; t < static_cast<int>( operations .size() ) ; t++ ) 
-			if ( operations[t]->type                           != OPERATION_DELETE                   &&
-			     operations[t]->get_partition_new().get_path() == selected_partition_ptr->get_path()    )
-				remove_operation( t-- ) ;
-				
+		for (int t = 0; t < static_cast<int>(m_operations.size()); t++)
+			if (m_operations[t]->m_type                         != OPERATION_DELETE                   &&
+			    m_operations[t]->get_partition_new().get_path() == selected_partition_ptr->get_path()   )
+			{
+				remove_operation(REMOVE_AT, t--);
+			}
+
 		//determine lowest possible new_count
 		new_count = 0 ; 
-		for ( unsigned int t = 0 ; t < operations .size() ; t++ )
-			if ( operations[t]->type                                 != OPERATION_DELETE &&
-			     operations[t]->get_partition_new().status           == STAT_NEW         &&
-			     operations[t]->get_partition_new().partition_number >  new_count           )
-				new_count = operations[t]->get_partition_new().partition_number;
-			
+		for (unsigned int t = 0; t < m_operations.size(); t++)
+			if (m_operations[t]->m_type                               != OPERATION_DELETE &&
+			    m_operations[t]->get_partition_new().status           == STAT_NEW         &&
+			    m_operations[t]->get_partition_new().partition_number >  new_count          )
+				new_count = m_operations[t]->get_partition_new().partition_number;
+
 		new_count += 1 ;
 
-		// After deleting all operations for the never applied partition creation,
-		// try to merge all remaining adjacent operations to catch any which are
-		// newly adjacent and can now be merged.  (Applies to resize/move and
-		// format operations on real, already existing partitions which are only
-		// merged when adjacent).
-		merge_operations( MERGE_ALL_ADJACENT );
-
 		Refresh_Visual(); 
-				
-		if ( ! operations .size() )
+
+		if (! m_operations.size())
 			close_operationslist() ;
 	}
 	else //deletion of a real partition...
 	{
-		Operation * operation = new OperationDelete( devices[ current_device ], *selected_partition_ptr );
-		operation->icon = Utils::mk_pixbuf(*this, Gtk::Stock::DELETE, Gtk::ICON_SIZE_MENU);
+		std::unique_ptr<Operation> operation = std::make_unique<OperationDelete>(
+		                        m_devices[m_current_device],
+		                        *selected_partition_ptr);
+		operation->m_icon = Utils::mk_pixbuf(*this, Gtk::Stock::DELETE, Gtk::ICON_SIZE_MENU);
 
-		Add_Operation( devices[current_device], operation );
+		add_operation(m_devices[m_current_device], std::move(operation));
 	}
 
 	show_operationslist() ;
 }
+
 
 void Win_GParted::activate_info()
 {
@@ -2579,6 +2579,7 @@ void Win_GParted::activate_format( FSType new_fs )
 		// is added as a separate action when full LUKS read-write support is
 		// implemented.
 		temp_ptn = new Partition;
+		temp_ptn->status = selected_partition_ptr->status;
 	}
 	else
 	{
@@ -2593,6 +2594,7 @@ void Win_GParted::activate_format( FSType new_fs )
 		// before temp_ptn pointer is deallocated.
 		Partition & temp_filesystem_ptn = temp_ptn->get_filesystem_partition();
 		temp_filesystem_ptn.Reset();
+		temp_filesystem_ptn.status = filesystem_ptn.status;
 		temp_filesystem_ptn.Set( filesystem_ptn.device_path,
 		                         filesystem_ptn.get_path(),
 		                         filesystem_ptn.partition_number,
@@ -2610,6 +2612,9 @@ void Win_GParted::activate_format( FSType new_fs )
 		// file system case apart from resize case.
 	}
 	temp_ptn->name = selected_partition_ptr->name;
+	// Copy flags to allow ESP to be maintained.
+	temp_ptn->set_flags(selected_partition_ptr->get_flags());
+	GParted_Core::compose_partition_flags(*temp_ptn, m_devices[m_current_device].disktype);
 
 	// Generate minimum and maximum partition size limits for the new file system.
 	FS_Limits fs_limits = gparted_core.get_filesystem_limits( new_fs, temp_ptn->get_filesystem_partition() );
@@ -2664,31 +2669,13 @@ void Win_GParted::activate_format( FSType new_fs )
 	}
 	else
 	{
-		// When formatting a partition which already exists on the disk, all
-		// possible operations could be pending so only try merging with the
-		// previous operation.
-		MergeType mergetype = MERGE_LAST_WITH_PREV;
+		std::unique_ptr<Operation> operation = std::make_unique<OperationFormat>(
+		                        m_devices[m_current_device],
+		                        *selected_partition_ptr,
+		                        *temp_ptn);
+		operation->m_icon = Utils::mk_pixbuf(*this, Gtk::Stock::CONVERT, Gtk::ICON_SIZE_MENU);
 
-		// If selected partition is NEW we simply remove the NEW operation from
-		// the list and add it again with the new file system
-		if ( selected_partition_ptr->status == STAT_NEW )
-		{
-			temp_ptn->status = STAT_NEW;
-			// On a partition which is pending creation only resize/move and
-			// format operations are possible.  These operations are always
-			// mergeable with the pending operation which will create the
-			// partition.  Hence merge with any earlier operations to achieve
-			// this.
-			mergetype = MERGE_LAST_WITH_ANY;
-		}
-
-		Operation * operation = new OperationFormat( devices[current_device],
-		                                             *selected_partition_ptr,
-		                                             *temp_ptn );
-		operation->icon = Utils::mk_pixbuf(*this, Gtk::Stock::CONVERT, Gtk::ICON_SIZE_MENU);
-
-		Add_Operation( devices[current_device], operation );
-		merge_operations( mergetype );
+		add_operation(m_devices[m_current_device], std::move(operation));
 
 		show_operationslist();
 	}
@@ -3107,7 +3094,7 @@ void Win_GParted::activate_disklabel()
 	//If there are active mounted partitions on the device then warn
 	//  the user that all partitions must be unactive before creating
 	//  a new partition table
-	int active_count = active_partitions_on_device_count( devices[ current_device ] ) ;
+	int active_count = active_partitions_on_device_count(m_devices[m_current_device]);
 	if ( active_count > 0 )
 	{
 		Glib::ustring tmp_msg =
@@ -3118,7 +3105,7 @@ void Win_GParted::activate_disklabel()
 		                              , active_count
 		                              )
 		                    , active_count
-		                    , devices[ current_device ] .get_path()
+		                    , m_devices[m_current_device].get_path()
 		                    ) ;
 		Gtk::MessageDialog dialog( *this
 		                         , tmp_msg
@@ -3140,14 +3127,14 @@ void Win_GParted::activate_disklabel()
 	//If there are pending operations then warn the user that these
 	//  operations must either be applied or cleared before creating
 	//  a new partition table.
-	if ( operations .size() )
+	if (m_operations.size())
 	{
 		Glib::ustring tmp_msg =
 		    Glib::ustring::compose( ngettext( "%1 operation is currently pending"
 		                              , "%1 operations are currently pending"
-		                              , operations .size()
+		                              , m_operations.size()
 		                              )
-		                    , operations .size()
+		                    , m_operations.size()
 		                    ) ;
 		Gtk::MessageDialog dialog( *this
 		                         , tmp_msg
@@ -3165,12 +3152,12 @@ void Win_GParted::activate_disklabel()
 	}
 
 	//Display dialog for creating a new partition table.
-	Dialog_Disklabel dialog( devices[ current_device ] ) ;
+	Dialog_Disklabel dialog(m_devices[m_current_device]);
 	dialog .set_transient_for( *this );
 
 	if ( dialog .run() == Gtk::RESPONSE_APPLY )
 	{
-		if ( ! gparted_core.set_disklabel( devices[current_device], dialog.Get_Disklabel() ) )
+		if (! gparted_core.set_disklabel(m_devices[m_current_device],dialog.Get_Disklabel()))
 		{
 			Gtk::MessageDialog dialog( *this,
 						   _("Error while creating partition table"),
@@ -3208,8 +3195,8 @@ void Win_GParted::activate_manage_flags()
 	
 	dialog .run() ;
 	dialog .hide() ;
-	
-	if ( dialog .any_change )
+
+	if (dialog.m_changed)
 		menu_gparted_refresh_devices() ;
 }
 
@@ -3227,16 +3214,16 @@ void Win_GParted::activate_check()
 	// FIXME: Consider constructing new partition object with zero unallocated and
 	// messages cleared to represent how applying a check operation also grows the
 	// file system to fill the partition.
-	Operation * operation = new OperationCheck( devices[current_device], *selected_partition_ptr );
+	std::unique_ptr<Operation> operation = std::make_unique<OperationCheck>(
+	                        m_devices[m_current_device],
+	                        *selected_partition_ptr);
+	operation->m_icon = Utils::mk_pixbuf(*this, Gtk::Stock::EXECUTE, Gtk::ICON_SIZE_MENU);
 
-	operation->icon = Utils::mk_pixbuf(*this, Gtk::Stock::EXECUTE, Gtk::ICON_SIZE_MENU);
-
-	Add_Operation( devices[current_device], operation );
-	// Try to merge this check operation with all previous operations.
-	merge_operations( MERGE_LAST_WITH_ANY );
+	add_operation(m_devices[m_current_device], std::move(operation));
 
 	show_operationslist() ;
 }
+
 
 void Win_GParted::activate_label_filesystem()
 {
@@ -3256,29 +3243,29 @@ void Win_GParted::activate_label_filesystem()
 
 		part_temp->get_filesystem_partition().set_filesystem_label( dialog.get_new_label() );
 
-		Operation * operation = new OperationLabelFileSystem( devices[current_device],
-		                                                      *selected_partition_ptr, *part_temp );
-		operation->icon = Utils::mk_pixbuf(*this, Gtk::Stock::EXECUTE, Gtk::ICON_SIZE_MENU);
+		std::unique_ptr<Operation> operation = std::make_unique<OperationLabelFileSystem>(
+		                        m_devices[m_current_device],
+		                        *selected_partition_ptr,
+		                        *part_temp);
+		operation->m_icon = Utils::mk_pixbuf(*this, Gtk::Stock::EXECUTE, Gtk::ICON_SIZE_MENU);
 
 		delete part_temp;
 		part_temp = nullptr;
 
-		Add_Operation( devices[current_device], operation );
-		// Try to merge this label file system operation with all previous
-		// operations.
-		merge_operations( MERGE_LAST_WITH_ANY );
+		add_operation(m_devices[m_current_device], std::move(operation));
 
 		show_operationslist() ;
 	}
 }
+
 
 void Win_GParted::activate_name_partition()
 {
 	g_assert(selected_partition_ptr != nullptr);  // Bug: Partition callback without a selected partition
 	g_assert( valid_display_partition_ptr( selected_partition_ptr ) );  // Bug: Not pointing at a valid display partition object
 
-	Dialog_Partition_Name dialog( *selected_partition_ptr,
-	                              devices[current_device].get_max_partition_name_length() );
+	Dialog_Partition_Name dialog(*selected_partition_ptr,
+	                             m_devices[m_current_device].get_max_partition_name_length());
 	dialog.set_transient_for( *this );
 
 	if (	dialog.run() == Gtk::RESPONSE_OK
@@ -3290,21 +3277,21 @@ void Win_GParted::activate_name_partition()
 
 		part_temp->name = dialog.get_new_name();
 
-		Operation * operation = new OperationNamePartition( devices[current_device],
-		                                                    *selected_partition_ptr, *part_temp );
-		operation->icon = Utils::mk_pixbuf(*this, Gtk::Stock::EXECUTE, Gtk::ICON_SIZE_MENU);
+		std::unique_ptr<Operation> operation = std::make_unique<OperationNamePartition>(
+		                        m_devices[m_current_device],
+		                        *selected_partition_ptr,
+		                        *part_temp);
+		operation->m_icon = Utils::mk_pixbuf(*this, Gtk::Stock::EXECUTE, Gtk::ICON_SIZE_MENU);
 
 		delete part_temp;
 		part_temp = nullptr;
 
-		Add_Operation( devices[current_device], operation );
-		// Try to merge this name partition operation with all previous
-		// operations.
-		merge_operations( MERGE_LAST_WITH_ANY );
+		add_operation(m_devices[m_current_device], std::move(operation));
 
 		show_operationslist();
 	}
 }
+
 
 void Win_GParted::activate_change_uuid()
 {
@@ -3322,7 +3309,7 @@ void Win_GParted::activate_change_uuid()
 		                           Gtk::MESSAGE_WARNING,
 		                           Gtk::BUTTONS_OK,
 		                           true );
-		Glib::ustring tmp_msg = "" ;
+		Glib::ustring tmp_msg;
 		for ( i = 1 ; filesystem_object->get_custom_text( CTEXT_CHANGE_UUID_WARNING, i ) != "" ; i++ )
 		{
 			if ( i > 1 )
@@ -3348,31 +3335,32 @@ void Win_GParted::activate_change_uuid()
 			temp_filesystem_ptn.uuid = UUID_RANDOM;
 	}
 
-	Operation * operation = new OperationChangeUUID( devices[current_device],
-	                                                 *selected_partition_ptr, *temp_ptn );
-	operation->icon = Utils::mk_pixbuf(*this, Gtk::Stock::EXECUTE, Gtk::ICON_SIZE_MENU);
+	std::unique_ptr<Operation> operation = std::make_unique<OperationChangeUUID>(
+	                        m_devices[m_current_device],
+	                        *selected_partition_ptr,
+	                        *temp_ptn);
+	operation->m_icon = Utils::mk_pixbuf(*this, Gtk::Stock::EXECUTE, Gtk::ICON_SIZE_MENU);
 
 	delete temp_ptn;
 	temp_ptn = nullptr;
 
-	Add_Operation( devices[current_device], operation );
-	// Try to merge this change UUID operation with all previous operations.
-	merge_operations( MERGE_LAST_WITH_ANY );
+	add_operation(m_devices[m_current_device], std::move(operation));
 
 	show_operationslist() ;
 }
 
+
 void Win_GParted::activate_undo()
 {
 	//when undoing a creation it's safe to decrease the newcount by one
-	if ( operations .back() ->type == OPERATION_CREATE )
+	if (m_operations.back()->m_type == OPERATION_CREATE)
 		new_count-- ;
 
-	remove_operation() ;		
-	
+	remove_operation(REMOVE_LAST);
+
 	Refresh_Visual();
-	
-	if ( ! operations .size() )
+
+	if (! m_operations.size())
 		close_operationslist() ;
 
 	//FIXME:  A slight flicker may be introduced by this extra display refresh.
@@ -3383,34 +3371,33 @@ void Win_GParted::activate_undo()
 	drawingarea_visualdisk .queue_draw() ;
 }
 
-void Win_GParted::remove_operation( int index, bool remove_all ) 
-{
-	if ( remove_all )
-	{
-		for ( unsigned int t = 0 ; t < operations .size() ; t++ )
-			delete operations[ t ] ;
 
-		operations .clear() ;
-	}
-	else if ( index == -1  && operations .size() > 0 )
+void Win_GParted::remove_operation(OperationRemoveType rmtype, int index)
+{
+	switch (rmtype)
 	{
-		delete operations .back() ;
-		operations .pop_back() ;
-	}
-	else if ( index > -1 && index < static_cast<int>( operations .size() ) )
-	{
-		delete operations[ index ] ;
-		operations .erase( operations .begin() + index ) ;
+		case REMOVE_ALL:
+			m_operations.clear();
+			break;
+		case REMOVE_LAST:
+			if (m_operations.size() > 0)
+				m_operations.pop_back();
+			break;
+		case REMOVE_AT:
+			if (0 <= index && index < static_cast<int>(m_operations.size()))
+				m_operations.erase(m_operations.begin() + index);
+			break;
 	}
 }
+
 
 int Win_GParted::partition_in_operation_queue_count( const Partition & partition )
 {
 	int operation_count = 0 ;
 
-	for ( unsigned int t = 0 ; t < operations .size() ; t++ )
+	for (unsigned int t = 0; t < m_operations.size(); t++)
 	{
-		if ( partition.get_path() == operations[t]->get_partition_original().get_path() )
+		if (partition.get_path() == m_operations[t]->get_partition_original().get_path())
 			operation_count++ ;
 	}
 
@@ -3471,7 +3458,7 @@ void Win_GParted::activate_apply()
 	{
 		dialog .hide() ; //hide confirmationdialog
 
-		Dialog_Progress dialog_progress(devices, operations);
+		Dialog_Progress dialog_progress(m_devices, m_operations);
 		dialog_progress .set_transient_for( *this ) ;
 		dialog_progress .signal_apply_operation .connect(
 			sigc::mem_fun(gparted_core, &GParted_Core::apply_operation_to_disk) ) ;
@@ -3484,12 +3471,12 @@ void Win_GParted::activate_apply()
 		while ( response == Gtk::RESPONSE_CANCEL || response == Gtk::RESPONSE_OK ) ;
 		
 		dialog_progress .hide() ;
-		
+
 		//wipe operations...
-		remove_operation( -1, true ) ;
+		remove_operation(REMOVE_ALL);
 		hbox_operations .clear() ;
 		close_operationslist() ;
-							
+
 		//reset new_count to 1
 		new_count = 1 ;
 		
@@ -3544,10 +3531,10 @@ bool Win_GParted::remove_non_empty_lvm2_pv_dialog( const OperationType optype )
 	// text in the dialog.
 	Gtk::Box * msg_area = dialog .get_message_area() ;
 
-	Gtk::Separator *hsep(manage(new Gtk::Separator(Gtk::ORIENTATION_HORIZONTAL)));
+	Gtk::Separator* hsep(Gtk::manage(new Gtk::Separator(Gtk::ORIENTATION_HORIZONTAL)));
 	msg_area ->pack_start( * hsep ) ;
 
-	Gtk::Grid *grid(manage(new Gtk::Grid()));
+	Gtk::Grid* grid(Gtk::manage(new Gtk::Grid()));
 	grid->set_column_spacing(10);
 	msg_area->pack_start(*grid);
 
@@ -3563,18 +3550,8 @@ bool Win_GParted::remove_non_empty_lvm2_pv_dialog( const OperationType optype )
 	Gtk::Label *label_members = Utils::mk_label("<b>" + Glib::ustring(members_label) + "</b>",
 	                                            true, false, false, Gtk::ALIGN_START);
 	grid->attach(*label_members, 0, 1, 1, 1);
-
-	Glib::ustring members_str = "" ;
-	if ( ! members .empty() )
-	{
-		for ( unsigned int i = 0 ; i < members .size() ; i ++ )
-		{
-			if ( i > 0 )
-				members_str += "\n" ;
-			members_str += members[i] ;
-		}
-	}
-	Gtk::Label *value_members = Utils::mk_label(members_str, true, false, true, Gtk::ALIGN_START);
+	Gtk::Label *value_members = Utils::mk_label(Glib::build_path("\n", members),
+	                                            true, false, true, Gtk::ALIGN_START);
 	grid->attach(*value_members, 1, 1, 1, 1);
 	value_members->get_accessible()->add_relationship(Atk::RELATION_LABELLED_BY,
 	                                                  label_members->get_accessible());
@@ -3587,4 +3564,4 @@ bool Win_GParted::remove_non_empty_lvm2_pv_dialog( const OperationType optype )
 	return false ;
 }
 
-} // GParted
+}  // namespace GParted

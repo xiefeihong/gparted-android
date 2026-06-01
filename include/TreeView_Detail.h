@@ -23,13 +23,14 @@
 #include <gtkmm/treeview.h>
 #include <gtkmm/treestore.h>
 #include <gtkmm/entry.h>
-
 #include <gtkmm/stock.h>
 #include <gdkmm/pixbuf.h>
+#include <sigc++/signal.h>
 
 
 namespace GParted
 {
+
 
 class TreeView_Detail : public Gtk::TreeView
 {
@@ -50,8 +51,8 @@ private:
 	                      bool & show_mountpoints,
 	                      bool & show_labels,
 	                      const Gtk::TreeRow & parent_row = Gtk::TreeRow() );
-	bool set_selected( Gtk::TreeModel::Children rows,
-	                   const Partition * partition_ptr, bool inside_extended = false );
+	bool set_selected_by_ptn(Gtk::TreeModel::Children rows,
+	                         const Partition* partition_ptr, bool inside_extended = false);
 	void create_row( const Gtk::TreeRow & treerow,
 	                 const Partition & partition,
 	                 bool & show_names,
@@ -62,14 +63,13 @@ private:
 	bool on_button_press_event( GdkEventButton * event );
 	void on_row_activated( const Gtk::TreeModel::Path & path, Gtk::TreeViewColumn * column ) ;
 	void on_selection_changed() ;
-	
-	Glib::RefPtr<Gtk::TreeStore> treestore_detail;
-	Glib::RefPtr<Gtk::TreeSelection> treeselection;
 
-	bool block ;
+	Glib::RefPtr<Gtk::TreeStore>     m_treestore_detail;
+	Glib::RefPtr<Gtk::TreeSelection> m_treeselection;
+	bool                             m_block;
 
 	//columns for this treeview
-	struct treeview_detail_Columns : public Gtk::TreeModelColumnRecord             
+	struct TreeView_Detail_Columns : public Gtk::TreeModelColumnRecord
 	{
 		Gtk::TreeModelColumn<Glib::ustring> path;
 		Gtk::TreeModelColumn<Glib::ustring> name;
@@ -84,19 +84,21 @@ private:
 		Gtk::TreeModelColumn< Glib::RefPtr<Gdk::Pixbuf> > icon2 ;
 		Gtk::TreeModelColumn<Glib::ustring> flags;
 		Gtk::TreeModelColumn<const Partition *> partition_ptr;  // Hidden column.  (Alias to element in
-		                                                        // Win_GParted::display_partitions[] vector).
+		                                                        // Win_GParted::m_display_device.partitions[] vector).
 
-		treeview_detail_Columns()
+		TreeView_Detail_Columns()
 		{
 			add( path ); add( name ); add(fsname); add( mountpoint ); add( label );
 			add( size ); add( used ); add( unused ); add( color );
 			add( icon1 ); add( icon2 ); add( flags ); add( partition_ptr );
 		}
 	};
-	
-	treeview_detail_Columns treeview_detail_columns;
+
+	TreeView_Detail_Columns m_treeview_detail_columns;
 };
 
-} //GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_TREEVIEW_DETAIL_H */

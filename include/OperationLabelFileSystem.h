@@ -17,12 +17,16 @@
 #ifndef GPARTED_OPERATIONLABELFILESYSTEM_H
 #define GPARTED_OPERATIONLABELFILESYSTEM_H
 
+
+#include "Device.h"
 #include "Operation.h"
 #include "Partition.h"
 #include "PartitionVector.h"
 
+
 namespace GParted
 {
+
 
 class OperationLabelFileSystem : public Operation
 {
@@ -30,18 +34,19 @@ public:
 	OperationLabelFileSystem( const Device & device,
 	                          const Partition & partition_orig,
 	                          const Partition & partition_new );
-	virtual ~OperationLabelFileSystem();
+
+	OperationLabelFileSystem(const OperationLabelFileSystem& src) = delete;             // Copy construction prohibited
+	OperationLabelFileSystem& operator=(const OperationLabelFileSystem& rhs) = delete;  // Copy assignment prohibited
 
 	void apply_to_visual( PartitionVector & partitions );
 
 private:
-	OperationLabelFileSystem( const OperationLabelFileSystem & src );              // Not implemented copy constructor
-	OperationLabelFileSystem & operator=( const OperationLabelFileSystem & rhs );  // Not implemented copy assignment operator
-
 	void create_description() ;
 	bool merge_operations( const Operation & candidate );
-} ;
+};
 
-} //GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_OPERATIONLABELFILESYSTEM_H */

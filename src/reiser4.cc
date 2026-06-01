@@ -15,16 +15,23 @@
  *  along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
+
 #include "reiser4.h"
+
 #include "FileSystem.h"
+#include "OperationDetail.h"
 #include "Partition.h"
+#include "Utils.h"
 
 #include <glibmm/miscutils.h>
 #include <glibmm/shell.h>
+#include <glibmm/ustring.h>
+#include <stdio.h>
 
 
 namespace GParted
 {
+
 
 FS reiser4::get_filesystem_support()
 {
@@ -67,8 +74,10 @@ FS reiser4::get_filesystem_support()
 
 void reiser4::set_used_sectors(Partition& partition)
 {
-	exit_status = Utils::execute_command("debugfs.reiser4 " + Glib::shell_quote(partition.get_path()),
-	                                     output, error, true);
+	Glib::ustring output;
+	Glib::ustring error;
+	int exit_status = Utils::execute_command("debugfs.reiser4 " + Glib::shell_quote(partition.get_path()),
+	                        output, error, true);
 	if (exit_status != 0)
 	{
 		if (! output.empty())
@@ -105,6 +114,8 @@ void reiser4::set_used_sectors(Partition& partition)
 
 void reiser4::read_label( Partition & partition )
 {
+	Glib::ustring output;
+	Glib::ustring error;
 	if ( ! Utils::execute_command( "debugfs.reiser4 " + Glib::shell_quote( partition.get_path() ),
 	                               output, error, true )                                           )
 	{
@@ -131,8 +142,10 @@ void reiser4::read_label( Partition & partition )
 
 void reiser4::read_uuid( Partition & partition )
 {
-	exit_status = Utils::execute_command("debugfs.reiser4 " + Glib::shell_quote( partition.get_path()),
-	                                     output, error, true);
+	Glib::ustring output;
+	Glib::ustring error;
+	int exit_status = Utils::execute_command("debugfs.reiser4 " + Glib::shell_quote( partition.get_path()),
+	                        output, error, true);
 	if (exit_status != 0)
 	{
 		if (! output.empty())
@@ -153,16 +166,19 @@ void reiser4::read_uuid( Partition & partition )
 
 bool reiser4::create( const Partition & new_partition, OperationDetail & operationdetail )
 {
-	return ! execute_command( "mkfs.reiser4 --force --yes --label " +
-	                          Glib::shell_quote( new_partition.get_filesystem_label() ) +
-	                          " " + Glib::shell_quote( new_partition.get_path() ),
-	                          operationdetail, EXEC_CHECK_STATUS|EXEC_CANCEL_SAFE );
+	return ! operationdetail.execute_command("mkfs.reiser4 --force --yes --label " +
+	                        Glib::shell_quote(new_partition.get_filesystem_label()) +
+	                        " " + Glib::shell_quote(new_partition.get_path()),
+	                        EXEC_CHECK_STATUS|EXEC_CANCEL_SAFE);
 }
+
 
 bool reiser4::check_repair( const Partition & partition, OperationDetail & operationdetail )
 {
-	return ! execute_command( "fsck.reiser4 --yes --fix --quiet " + Glib::shell_quote( partition.get_path() ),
-	                          operationdetail, EXEC_CHECK_STATUS|EXEC_CANCEL_SAFE );
+	return ! operationdetail.execute_command("fsck.reiser4 --yes --fix --quiet " +
+	                        Glib::shell_quote(partition.get_path()),
+	                        EXEC_CHECK_STATUS|EXEC_CANCEL_SAFE);
 }
 
-} //GParted
+
+}  // namespace GParted

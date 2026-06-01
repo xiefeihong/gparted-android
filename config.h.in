@@ -3,16 +3,9 @@
 /* Define to 1 when help documentation is built */
 #undef ENABLE_HELP_DOC
 
-/* Define to 1 to enable deletion of old partitions before creating a loop
-   table workaround */
-#undef ENABLE_LOOP_DELETE_OLD_PTNS_WORKAROUND
-
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
 #undef ENABLE_NLS
-
-/* Define to 1 if online resize is enabled */
-#undef ENABLE_ONLINE_RESIZE
 
 /* description */
 #undef GETTEXT_PACKAGE
@@ -25,8 +18,8 @@
    the CoreFoundation framework. */
 #undef HAVE_CFPREFERENCESCOPYAPPVALUE
 
-/* define if the compiler supports basic C++11 syntax */
-#undef HAVE_CXX11
+/* define if the compiler supports basic C++14 syntax */
+#undef HAVE_CXX14
 
 /* Define if the GNU dcgettext() function is already present or preinstalled.
    */
@@ -53,7 +46,8 @@
 /* Define to 1 if you have the 'parted' library (-lparted). */
 #undef HAVE_LIBPARTED
 
-/* Define to 1 if have libparted fs resize capability */
+/* Define to 1 if you have the 'parted-fs-resize' library
+   (-lparted-fs-resize). */
 #undef HAVE_LIBPARTED_FS_RESIZE
 
 /* Define to 1 if you have the 'uuid' library (-luuid). */

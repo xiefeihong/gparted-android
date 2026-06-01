@@ -19,17 +19,17 @@
 #ifndef GPARTED_FILESYSTEM_H
 #define GPARTED_FILESYSTEM_H
 
-#include "Operation.h"
+#include "OperationDetail.h"
 #include "Partition.h"
 #include "PipeCapture.h"
 #include "Utils.h"
 
-#include <fstream>
-#include <sys/stat.h>
-#include <sigc++/slot.h>
+#include <glibmm/ustring.h>
+
 
 namespace GParted
 {
+
 
 enum CUSTOM_TEXT
 {
@@ -89,26 +89,6 @@ struct FS
 	}
 };
 
-enum ExecFlags
-{
-	EXEC_NONE            = 1 << 0,
-	EXEC_CHECK_STATUS    = 1 << 1,  // Set the status of the command in the operation
-	                                // details based on the exit status being zero or
-	                                // non-zero.  Must either use this flag when calling
-	                                // ::execute_command() or call ::set_status()
-	                                // afterwards.
-	EXEC_CANCEL_SAFE     = 1 << 2,
-	EXEC_PROGRESS_STDOUT = 1 << 3,  // Run progress tracking callback after reading new
-	                                // data on stdout from command.
-	EXEC_PROGRESS_STDERR = 1 << 4,  // Same but for stderr.
-	EXEC_PROGRESS_TIMED  = 1 << 5   // Run progress tracking callback periodically.
-};
-
-inline ExecFlags operator|( ExecFlags lhs, ExecFlags rhs )
-	{ return static_cast<ExecFlags>( static_cast<unsigned>(lhs) | static_cast<unsigned>(rhs) ); }
-
-inline ExecFlags operator&( ExecFlags lhs, ExecFlags rhs )
-	{ return static_cast<ExecFlags>( static_cast<unsigned>(lhs) & static_cast<unsigned>(rhs) ); }
 
 class FileSystem
 {
@@ -120,7 +100,7 @@ public:
 	static const Glib::ustring & get_generic_text( CUSTOM_TEXT ttype, int index = 0 );
 
 	virtual FS get_filesystem_support() = 0 ;
-	virtual FS_Limits get_filesystem_limits( const Partition & partition ) const  { return fs_limits; };
+	virtual FS_Limits get_filesystem_limits(const Partition& partition) const  { return m_fs_limits; };
 	virtual bool is_busy( const Glib::ustring & path ) { return false ; } ;
 	virtual void set_used_sectors( Partition & partition ) {};
 	virtual void read_label( Partition & partition ) {};
@@ -142,43 +122,17 @@ public:
 	virtual bool remove( const Partition & partition, OperationDetail & operationdetail ) { return true; };
 
 protected:
-	typedef sigc::slot<void, OperationDetail *> StreamSlot;
-	typedef sigc::slot<bool, OperationDetail *> TimedSlot;
+	static Glib::ustring mk_temp_dir(const Glib::ustring& infix, OperationDetail& operationdetail);
+	static void rm_temp_dir(const Glib::ustring& dir_name, OperationDetail& operationdetail);
 
-	int execute_command( const Glib::ustring & command, OperationDetail & operationdetail,
-	                     ExecFlags flags = EXEC_NONE );
-	int execute_command(const Glib::ustring& command, const char *input, OperationDetail& operationdetail,
-	                    ExecFlags flags = EXEC_NONE);
-	int execute_command( const Glib::ustring & command, OperationDetail & operationdetail,
-	                     ExecFlags flags,
-	                     StreamSlot stream_progress_slot );
-	int execute_command( const Glib::ustring & command, OperationDetail & operationdetail,
-	                     ExecFlags flags,
-	                     TimedSlot timed_progress_slot );
-	void set_status( OperationDetail & operationdetail, bool success );
-	void execute_command_eof();
-	Glib::ustring mk_temp_dir( const Glib::ustring & infix, OperationDetail & operationdetail ) ;
-	void rm_temp_dir( const Glib::ustring dir_name, OperationDetail & operationdetail ) ;
+	FS_Limits m_fs_limits;  // File system minimum and maximum size limits.  In derived
+	                        // classes either assign fixed values in get_filesystem_support()
+	                        // or implement get_filesystem_limits() for dynamic values.
 
-	FS_Limits fs_limits;  // File system minimum and maximum size limits.  In derived
-	                      // classes either assign fixed values in get_filesystem_support()
-	                      // or implement get_filesystem_limits() for dynamic values.
-
-	//those are used in several places..
-	Glib::ustring output, error ;
-	int exit_status ;
-
-private:
-	int execute_command_internal(const Glib::ustring& command, const char *input,
-	                             OperationDetail& operationdetail,
-	                             ExecFlags flags,
-	                             StreamSlot stream_progress_slot,
-	                             TimedSlot timed_progress_slot);
-	void store_exit_status( GPid pid, int status );
-	bool running;
-	int pipecount;
 };
 
-} //GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_FILESYSTEM_H */

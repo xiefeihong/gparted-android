@@ -17,12 +17,18 @@
 #ifndef GPARTED_OPERATIONCOPY_H
 #define GPARTED_OPERATIONCOPY_H
 
+
+#include "Device.h"
 #include "Operation.h"
 #include "Partition.h"
 #include "PartitionVector.h"
 
+#include <memory>
+
+
 namespace GParted
 {
+
 
 class OperationCopy : public Operation
 {
@@ -31,7 +37,9 @@ public:
 		       const Partition & partition_orig,
 		       const Partition & partition_new,
 		       const Partition & partition_copied ) ;
-	virtual ~OperationCopy();
+
+	OperationCopy(const OperationCopy& src) = delete;             // Copy construction prohibited
+	OperationCopy& operator=(const OperationCopy& rhs) = delete;  // Copy assignment prohibited
 
 	Partition & get_partition_copied();
 	const Partition & get_partition_copied() const;
@@ -39,15 +47,14 @@ public:
 	void apply_to_visual( PartitionVector & partitions );
 
 private:
-	OperationCopy( const OperationCopy & src );              // Not implemented copy constructor
-	OperationCopy & operator=( const OperationCopy & rhs );  // Not implemented copy assignment operator
-
 	void create_description() ;
 	bool merge_operations( const Operation & candidate );
 
-	Partition * partition_copied;
+	const std::unique_ptr<Partition> m_partition_copied;
 };
 
-} //GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_OPERATIONCOPY_H */

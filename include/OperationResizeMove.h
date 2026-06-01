@@ -17,12 +17,16 @@
 #ifndef GPARTED_OPERATIONRESIZEMOVE_H
 #define GPARTED_OPERATIONRESIZEMOVE_H
 
+
+#include "Device.h"
 #include "Operation.h"
 #include "Partition.h"
 #include "PartitionVector.h"
 
+
 namespace GParted
 {
+
 
 class OperationResizeMove : public Operation
 {
@@ -30,14 +34,13 @@ public:
 	OperationResizeMove( const Device & device,
 			     const Partition & partition_orig,
 			     const Partition & partition_new ) ;
-	virtual ~OperationResizeMove();
+
+	OperationResizeMove(const OperationResizeMove& src) = delete;             // Copy construction prohibited
+	OperationResizeMove& operator=(const OperationResizeMove& rhs) = delete;  // Copy assignment prohibited
 
 	void apply_to_visual( PartitionVector & partitions );
 
 private:
-	OperationResizeMove( const OperationResizeMove & src );              // Not implemented copy constructor
-	OperationResizeMove & operator=( const OperationResizeMove & rhs );  // Not implemented copy assignment operator
-
 	void create_description() ;
 	bool merge_operations( const Operation & candidate );
 
@@ -47,6 +50,8 @@ private:
 	void remove_adjacent_unallocated( PartitionVector & partitions, int index_orig );
 };
 
-} //GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_OPERATIONRESIZEMOVE_H */

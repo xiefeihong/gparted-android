@@ -30,148 +30,155 @@
 #include <gtkmm/main.h>
 #include <gtkmm/messagedialog.h>
 #include <gtkmm/filechooserdialog.h>
+#include <sigc++/signal.h>
 #include <vector>
+#include <algorithm>
 
 
 namespace GParted
 {
 
-Dialog_Progress::Dialog_Progress(const std::vector<Device>& devices, const std::vector<Operation *>& operations)
- : m_devices(devices), m_curr_op(0)
+
+Dialog_Progress::Dialog_Progress(const std::vector<Device>& devices, const OperationVector& operations)
+   // Create some icons here, instead of recreating them every time
+ : m_icon_execute(Utils::mk_pixbuf(*this, Gtk::Stock::EXECUTE,        Gtk::ICON_SIZE_LARGE_TOOLBAR)),
+   m_icon_success(Utils::mk_pixbuf(*this, Gtk::Stock::APPLY,          Gtk::ICON_SIZE_LARGE_TOOLBAR)),
+   m_icon_error  (Utils::mk_pixbuf(*this, Gtk::Stock::DIALOG_ERROR,   Gtk::ICON_SIZE_LARGE_TOOLBAR)),
+   m_icon_info   (Utils::mk_pixbuf(*this, Gtk::Stock::INFO,           Gtk::ICON_SIZE_LARGE_TOOLBAR)),
+   m_icon_warning(Utils::mk_pixbuf(*this, Gtk::Stock::DIALOG_WARNING, Gtk::ICON_SIZE_LARGE_TOOLBAR)),
+   m_devices(devices), m_operations(operations),
+   m_fraction(1.0 / operations.size()),
+   m_success(true), m_cancel(false),
+   m_curr_op(0), m_warnings(0), m_cancel_countdown(0)
 {
 	this ->set_title( _("Applying pending operations") ) ;
-	this ->operations = operations ;
-	succes = true ;
-	cancel = false ;
-	warnings = 0 ;
-
-	fraction = 1.00 / operations .size() ;
 	this->property_default_width() = 700;
 
-	{
-		Gtk::Box *vbox(manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL)));
+	// WH (Widget Hierarchy): this->get_content_area() / vbox
+	Gtk::Box* vbox(Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL)));
+	vbox->set_border_width(10);
+	vbox->set_spacing(5);
+	this->get_content_area()->pack_start(*vbox, Gtk::PACK_EXPAND_WIDGET);
 
-		vbox->set_border_width(10);
-		this->get_content_area()->pack_start(*vbox, Gtk::PACK_EXPAND_WIDGET);
+	// WH: this->get_content_area() / vbox / "Depending on the number..."
+	Glib::ustring str_temp(_("Depending on the number and type of operations this might take a long time."));
+	str_temp += "\n";
+	vbox->pack_start(*Utils::mk_label(str_temp), Gtk::PACK_SHRINK);
 
-		Glib::ustring str_temp(_("Depending on the number and type of operations this might take a long time."));
-		str_temp += "\n";
-		vbox->pack_start(*Utils::mk_label(str_temp), Gtk::PACK_SHRINK);
+	// WH: this->get_content_area() / vbox / m_label_current
+	m_label_current.set_alignment(Gtk::ALIGN_START);
+	vbox->pack_start(m_label_current, Gtk::PACK_SHRINK);
 
-		label_current.set_alignment(Gtk::ALIGN_START);
-		vbox->pack_start(label_current, Gtk::PACK_SHRINK);
+	// WH: this->get_content_area() / vbox / m_progressbar_current
+	m_progressbar_current.set_pulse_step(0.01);
+	m_progressbar_current.set_show_text();
+	vbox->pack_start(m_progressbar_current, Gtk::PACK_SHRINK);
 
-		progressbar_current.set_pulse_step(0.01);
-		progressbar_current.set_show_text();
-		vbox->pack_start(progressbar_current, Gtk::PACK_SHRINK);
+	// WH: this->get_content_area() / vbox / m_label_current_sub
+	m_label_current_sub.set_alignment(Gtk::ALIGN_START);
+	vbox->pack_start(m_label_current_sub, Gtk::PACK_SHRINK);
 
-		label_current_sub.set_alignment(Gtk::ALIGN_START);
-		vbox->pack_start(label_current_sub, Gtk::PACK_SHRINK);
+	// WH: this->get_content_area() / vbox / "Completed Operations:"
+	vbox->pack_start(*Utils::mk_label("<b>" + Glib::ustring(_("Completed Operations:")) + "</b>"),
+	                 Gtk::PACK_SHRINK);
 
-		vbox->pack_start(*Utils::mk_label("<b>" + Glib::ustring(_("Completed Operations:")) + "</b>"),
-					Gtk::PACK_SHRINK);
+	// WH: this->get_content_area() / vbox / m_progressbar_all
+	m_progressbar_all.set_show_text();
+	vbox->pack_start(m_progressbar_all, Gtk::PACK_SHRINK);
 
-		progressbar_all.set_show_text();
-		vbox->pack_start(progressbar_all, Gtk::PACK_SHRINK);
+	// WH: this->get_content_area() / vbox / m_expander_details
+	m_expander_details.set_label("<b>" + Glib::ustring(_("Details")) + "</b>");
+	m_expander_details.set_use_markup(true);
+	vbox->pack_start(m_expander_details, Gtk::PACK_EXPAND_WIDGET);
 
-		//create some icons here, instead of recreating them every time
-		icon_execute = Utils::mk_pixbuf(*this, Gtk::Stock::EXECUTE, Gtk::ICON_SIZE_LARGE_TOOLBAR);
-		icon_success = Utils::mk_pixbuf(*this, Gtk::Stock::APPLY, Gtk::ICON_SIZE_LARGE_TOOLBAR);
-		icon_error = Utils::mk_pixbuf(*this, Gtk::Stock::DIALOG_ERROR, Gtk::ICON_SIZE_LARGE_TOOLBAR);
-		icon_info = Utils::mk_pixbuf(*this, Gtk::Stock::INFO, Gtk::ICON_SIZE_LARGE_TOOLBAR);
-		icon_warning = Utils::mk_pixbuf(*this, Gtk::Stock::DIALOG_WARNING, Gtk::ICON_SIZE_LARGE_TOOLBAR);
+	// WH: this->get_content_area() / vbox / m_expander_details / m_scrolledwindow
+	m_scrolledwindow.set_shadow_type(Gtk::SHADOW_ETCHED_IN);
+	m_scrolledwindow.set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
+	m_scrolledwindow.set_size_request (700, 250);
+	m_scrolledwindow.set_vexpand(true);
+	m_expander_details.add(m_scrolledwindow);
 
-		treestore_operations = Gtk::TreeStore::create( treeview_operations_columns);
-		treeview_operations.set_model(treestore_operations);
-		treeview_operations.set_headers_visible(false);
-		treeview_operations.set_rules_hint(true);
-		treeview_operations.set_size_request(700, 250);
-		treeview_operations.append_column("", treeview_operations_columns.operation_description);
-		treeview_operations.append_column("", treeview_operations_columns.elapsed_time);
-		treeview_operations.append_column("", treeview_operations_columns.status_icon);
+	// WH: ... / vbox / m_expander_details / m_scrolledwindow / m_treeview_operations
+	m_treestore_operations = Gtk::TreeStore::create(m_treeview_operations_columns);
+	m_treeview_operations.set_model(m_treestore_operations);
+	m_treeview_operations.set_headers_visible(false);
+	m_treeview_operations.set_rules_hint(true);
+	m_treeview_operations.set_size_request(700, 250);
+	m_treeview_operations.append_column("", m_treeview_operations_columns.operation_description);
+	m_treeview_operations.append_column("", m_treeview_operations_columns.elapsed_time);
+	m_treeview_operations.append_column("", m_treeview_operations_columns.status_icon);
 
-		treeview_operations.get_column(0)->set_expand(true);
-		treeview_operations.get_column(0)->set_cell_data_func(
-			*(treeview_operations.get_column(0)->get_first_cell()),
+	m_treeview_operations.get_column(0)->set_expand(true);
+	m_treeview_operations.get_column(0)->set_cell_data_func(
+			*(m_treeview_operations.get_column(0)->get_first_cell()),
 			sigc::mem_fun(*this, &Dialog_Progress::on_cell_data_description) );
+	m_scrolledwindow.add(m_treeview_operations);
 
-		//fill 'er up
-		for (unsigned int i = 0; i < operations.size(); ++i)
-		{
-			this->operations[i]->operation_detail.set_description(operations[i]->description, FONT_BOLD);
-			this->operations[i]->operation_detail.set_treepath(Utils::num_to_str(i));
+	m_cancelbutton = this->add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
 
-			treerow = *(treestore_operations->append());
-			treerow[treeview_operations_columns.operation_description] =
-				this->operations[i]->operation_detail.get_description();
-		}
+	// Fill 'er up
+	for (unsigned int i = 0; i < m_operations.size(); ++i)
+	{
+		m_operations[i]->m_operation_detail.set_description(m_operations[i]->m_description, FONT_BOLD);
+		m_operations[i]->m_operation_detail.set_treepath(Utils::num_to_str(i));
 
-		scrolledwindow.set_shadow_type(Gtk::SHADOW_ETCHED_IN);
-		scrolledwindow.set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
-		scrolledwindow.set_size_request (700, 250);
-		scrolledwindow.add(treeview_operations);
-
-		expander_details.set_label("<b>" + Glib::ustring(_("Details")) + "</b>");
-		expander_details.set_use_markup(true);
-		expander_details.add(scrolledwindow);
-
-		vbox ->pack_start(expander_details, Gtk::PACK_EXPAND_WIDGET);
-		vbox ->set_spacing(5);
+		Gtk::TreeRow treerow = *(m_treestore_operations->append());
+		treerow[m_treeview_operations_columns.operation_description] =
+		                m_operations[i]->m_operation_detail.get_description();
 	}
 
-	cancelbutton = this ->add_button( Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL );
-	
 	this ->signal_show() .connect( sigc::mem_fun(*this, &Dialog_Progress::on_signal_show) );
 	this ->show_all_children() ;
 }
 
+
 void Dialog_Progress::on_signal_update( const OperationDetail & operationdetail ) 
 {
-	Gtk::TreeModel::iterator iter = treestore_operations ->get_iter( operationdetail .get_treepath() ) ;
+	Gtk::TreeModel::iterator iter = m_treestore_operations->get_iter(operationdetail.get_treepath());
 
 	//i added the second check after get_iter() in gtk+-2.10 seems to behave differently from gtk+-2.8 
-	if ( iter && treestore_operations ->get_string( iter ) == operationdetail .get_treepath() )
+	if (iter && m_treestore_operations->get_string(iter) == operationdetail.get_treepath())
 	{
 		Gtk::TreeRow treerow = *iter ;
 
-		treerow[ treeview_operations_columns .operation_description ] = operationdetail .get_description() ;
-		treerow[ treeview_operations_columns .elapsed_time ] = operationdetail .get_elapsed_time() ;
+		treerow[m_treeview_operations_columns.operation_description] = operationdetail.get_description();
+		treerow[m_treeview_operations_columns.elapsed_time] = operationdetail.get_elapsed_time();
 
 		switch ( operationdetail .get_status() )
 		{
 			case STATUS_EXECUTE:
-				treerow[ treeview_operations_columns .status_icon ] = icon_execute ;
+				treerow[m_treeview_operations_columns.status_icon] = m_icon_execute;
 				break ;
 			case STATUS_SUCCESS:
-				treerow[treeview_operations_columns.status_icon] = icon_success;
+				treerow[m_treeview_operations_columns.status_icon] = m_icon_success;
 				break ;
 			case STATUS_ERROR:
-				treerow[ treeview_operations_columns .status_icon ] = icon_error ;
+				treerow[m_treeview_operations_columns.status_icon] = m_icon_error;
 				break ;
 			case STATUS_INFO:
-				treerow[ treeview_operations_columns .status_icon ] = icon_info ;
+				treerow[m_treeview_operations_columns.status_icon] = m_icon_info;
 				break ;
 			case STATUS_WARNING:
-				treerow[treeview_operations_columns.status_icon] = icon_warning;
-				warnings++ ;
+				treerow[m_treeview_operations_columns.status_icon] = m_icon_warning;
+				m_warnings++;
 				break ;
 			case STATUS_NONE:
 				static_cast< Glib::RefPtr<Gdk::Pixbuf> >(
-					treerow[ treeview_operations_columns .status_icon ] ) .clear() ;
+					treerow[m_treeview_operations_columns.status_icon]).clear();
 				break ;
 		}
 
 		//update the gui elements..
 		if ( operationdetail .get_status() == STATUS_EXECUTE )
-			label_current_sub_text = operationdetail .get_description() ;
+			m_label_current_sub_text = operationdetail.get_description();
 
 		const ProgressBar& progressbar_src = operationdetail.get_progressbar();
 		if ( progressbar_src.running() )
 		{
 			if ( pulsetimer.connected() )
 				pulsetimer.disconnect();
-			progressbar_current.set_fraction( progressbar_src.get_fraction() );
-			progress_text = progressbar_src.get_text();
+			m_progressbar_current.set_fraction(progressbar_src.get_fraction());
+			m_progress_text = progressbar_src.get_text();
 		}
 		else
 		{
@@ -179,7 +186,7 @@ void Dialog_Progress::on_signal_update( const OperationDetail & operationdetail 
 			{
 				pulsetimer = Glib::signal_timeout().connect(
 				                sigc::mem_fun( *this, &Dialog_Progress::pulsebar_pulse ), 100 );
-				progress_text.clear();
+				m_progress_text.clear();
 			}
 		}
 		update_gui_elements();
@@ -188,102 +195,107 @@ void Dialog_Progress::on_signal_update( const OperationDetail & operationdetail 
 	{
 		unsigned int pos = operationdetail .get_treepath() .rfind( ":" ) ;
 		if ( pos < operationdetail .get_treepath() .length() )
-			iter = treestore_operations ->get_iter( operationdetail .get_treepath() 
-							.substr( 0, operationdetail .get_treepath() .rfind( ":" ) ) ) ;
+			iter = m_treestore_operations->get_iter(operationdetail.get_treepath().substr(
+			                        0, operationdetail.get_treepath().rfind(":")));
 		else
-			iter = treestore_operations ->get_iter( operationdetail .get_treepath() ) ;
+			iter = m_treestore_operations->get_iter(operationdetail.get_treepath());
 
 		if ( iter)
 		{
-			treestore_operations ->append( static_cast<Gtk::TreeRow>( *iter) .children() ) ;
+			m_treestore_operations->append(static_cast<Gtk::TreeRow>(*iter).children());
 			on_signal_update( operationdetail ) ;
 		}
 	}
 }
 
+
 void Dialog_Progress::update_gui_elements()
 {
-	label_current_sub .set_markup( "<i>" + label_current_sub_text + "</i>\n" ) ;
-	
+	m_label_current_sub.set_markup("<i>" + m_label_current_sub_text + "</i>\n");
+
 	//To ensure progress bar height remains the same, add a space in case message is empty
-	progressbar_current.set_text( progress_text + " " );
+	m_progressbar_current.set_text(m_progress_text + " ");
 }
+
 
 bool Dialog_Progress::pulsebar_pulse()
 {
-	progressbar_current.pulse();
+	m_progressbar_current.pulse();
 	return true;
 }
 
+
 void Dialog_Progress::on_signal_show()
 {
-	for (m_curr_op = 0; m_curr_op < operations.size() && succes && ! cancel; m_curr_op++)
+	for (m_curr_op = 0; m_curr_op < m_operations.size() && m_success && ! m_cancel; m_curr_op++)
 	{
-		operations[m_curr_op]->operation_detail.signal_update.connect(
+		m_operations[m_curr_op]->m_operation_detail.signal_update.connect(
 			sigc::mem_fun( this, &Dialog_Progress::on_signal_update ) ) ;
 
-		label_current.set_markup("<b>" + operations[m_curr_op]->description + "</b>");
+		m_label_current.set_markup("<b>" + m_operations[m_curr_op]->m_description + "</b>");
 
-		progressbar_all.set_text(Glib::ustring::compose(_("%1 of %2 operations completed"),
-		                                                m_curr_op, operations.size()));
-		progressbar_all.set_fraction(fraction * m_curr_op > 1.0 ? 1.0 : fraction * m_curr_op);
-
-		treerow = treestore_operations ->children()[m_curr_op];
+		m_progressbar_all.set_text(Glib::ustring::compose(_("%1 of %2 operations completed"),
+		                                                  m_curr_op, m_operations.size()));
+		m_progressbar_all.set_fraction(std::min(m_fraction * m_curr_op, 1.0));
 
 		//set status to 'execute'
-		operations[m_curr_op]->operation_detail.set_status(STATUS_EXECUTE);
+		m_operations[m_curr_op]->m_operation_detail.set_status(STATUS_EXECUTE);
 
 		//set focus...
-		treeview_operations .set_cursor( static_cast<Gtk::TreePath>( treerow ) ) ;
+		Gtk::TreeRow treerow = m_treestore_operations->children()[m_curr_op];
+		m_treeview_operations.set_cursor(static_cast<Gtk::TreePath>(treerow));
 
-		succes = signal_apply_operation.emit(operations[m_curr_op]);
+		m_success = signal_apply_operation.emit(m_operations[m_curr_op].get());
 
 		//set status (succes/error) for this operation
-		operations[m_curr_op]->operation_detail.set_success_and_capture_errors(succes);
+		m_operations[m_curr_op]->m_operation_detail.set_success_and_capture_errors(m_success);
 	}
-	
+
 	//add save button
 	this ->add_button( _("_Save Details"), Gtk::RESPONSE_OK ) ; //there's no enum for SAVE
 	
 	//replace 'cancel' with 'close'
 	canceltimer.disconnect();
-	delete cancelbutton;
-	cancelbutton = 0;
+	delete m_cancelbutton;
+	m_cancelbutton = nullptr;
 	this ->add_button( Gtk::Stock::CLOSE, Gtk::RESPONSE_CLOSE );
 
 	pulsetimer.disconnect();
 
-	if ( cancel )
+	if (m_cancel)
 	{
-		progressbar_current .set_text( _("Operation cancelled") ) ;
-		progressbar_current .set_fraction( 0.0 ) ;
+		m_progressbar_current.set_text(_("Operation cancelled"));
+		m_progressbar_current.set_fraction(0.0);
 	}
 	else
 	{
 		//hide 'current operation' stuff
-		label_current .hide() ;
-		progressbar_current .hide() ;
-		label_current_sub .hide() ;
+		m_label_current.hide();
+		m_progressbar_current.hide();
+		m_label_current_sub.hide();
 	}
 
 	//deal with succes/error...
-	if ( succes )
+	if (m_success)
 	{
 		Glib::ustring str_temp(_("All operations successfully completed"));
 
-		if ( warnings > 0 )
+		if (m_warnings > 0)
+		{
 			str_temp += " ("
-			         +  Glib::ustring::compose( ngettext("%1 warning", "%1 warnings", warnings), warnings )
+			         +  Glib::ustring::compose(ngettext("%1 warning", "%1 warnings", m_warnings),
+			                                   m_warnings)
 			         +  ")" ;
+		}
 
-		progressbar_all .set_text( str_temp ) ;
-		progressbar_all .set_fraction( 1.0 ) ;
+		m_progressbar_all.set_text(str_temp);
+		m_progressbar_all.set_fraction(1.0);
 	}
 	else 
 	{
-		expander_details .set_expanded( true ) ;
+		m_expander_details.set_expanded(true);
 
-		if ( ! cancel )
+		if (! m_cancel)
 		{
 			Gtk::MessageDialog dialog( *this,
 						   _("An error occurred while applying the operations"),
@@ -313,19 +325,23 @@ void Dialog_Progress::on_signal_show()
 void Dialog_Progress::on_cell_data_description( Gtk::CellRenderer * renderer, const Gtk::TreeModel::iterator & iter )
 {
 	dynamic_cast<Gtk::CellRendererText *>( renderer ) ->property_markup() = 
-		static_cast<Gtk::TreeRow>( *iter )[ treeview_operations_columns .operation_description ] ;
+		static_cast<Gtk::TreeRow>(*iter)[m_treeview_operations_columns.operation_description];
 }
+
 
 bool Dialog_Progress::cancel_timeout()
 {
-	if (--cancel_countdown) {
+	if (--m_cancel_countdown)
+	{
 		/*TO TRANSLATORS: looks like  Force Cancel (5)
 		 *  where the number represents a count down in seconds until the button is enabled */
-		cancelbutton->set_label( Glib::ustring::compose( _("Force Cancel (%1)"), cancel_countdown ) );
-	} else {
-		cancelbutton->set_label( _("Force Cancel") );
+		m_cancelbutton->set_label(Glib::ustring::compose(_("Force Cancel (%1)"), m_cancel_countdown));
+	}
+	else
+	{
+		m_cancelbutton->set_label(_("Force Cancel"));
 		canceltimer.disconnect();
-		cancelbutton->set_sensitive();
+		m_cancelbutton->set_sensitive();
 		return false;
 	}
 	return true;
@@ -345,22 +361,27 @@ void Dialog_Progress::on_cancel()
 	dialog .add_button( _("Continue Operation"), Gtk::RESPONSE_NONE ) ;
 	dialog .add_button( _("Cancel Operation"), Gtk::RESPONSE_CANCEL ) ;
 	
-	if ( !cancel || dialog .run() == Gtk::RESPONSE_CANCEL )
+	if (! m_cancel || dialog.run() == Gtk::RESPONSE_CANCEL)
 	{
-		cancelbutton->set_sensitive( false );
-		if (!cancel) {
-			cancel_countdown = 5;
+		m_cancelbutton->set_sensitive(false);
+		if (! m_cancel)
+		{
+			m_cancel_countdown = 5;
 			/*TO TRANSLATORS: looks like  Force Cancel (5)
 			 *  where the number represents a count down in seconds until the button is enabled */
-			cancelbutton->set_label( Glib::ustring::compose( _("Force Cancel (%1)"), cancel_countdown ) );
+			m_cancelbutton->set_label(Glib::ustring::compose(_("Force Cancel (%1)"), m_cancel_countdown));
 			canceltimer = Glib::signal_timeout().connect(
 				sigc::mem_fun(*this, &Dialog_Progress::cancel_timeout), 1000 );
 		}
-		else cancelbutton->set_label( _("Force Cancel") );
-		operations[m_curr_op]->operation_detail.signal_cancel.emit(cancel);
-		cancel = true;
+		else
+		{
+			m_cancelbutton->set_label(_("Force Cancel"));
+		}
+		m_operations[m_curr_op]->m_operation_detail.signal_cancel.emit(m_cancel);
+		m_cancel = true;
 	}
 }
+
 
 void Dialog_Progress::on_save()
 {
@@ -405,10 +426,10 @@ void Dialog_Progress::on_save()
 			}
 
 			//Write out each operation
-			for (unsigned int i = 0; i < operations.size(); i++)
+			for (unsigned int i = 0; i < m_operations.size(); i++)
 			{
 				out << "<p>========================================</p>" << std::endl;
-				write_operation_details(operations[i]->operation_detail, out);
+				write_operation_details(m_operations[i]->m_operation_detail, out);
 			}
 
 			//Write out proper HTML finish
@@ -486,7 +507,7 @@ void Dialog_Progress::write_partition_details(const Partition& partition, std::o
 	    << "<td>" << Partition::get_partition_type_string(partition.type) << "</td>"
 	    << "<td class='number_col'>" << partition.sector_start << "</td>"
 	    << "<td class='number_col'>" << partition.sector_end << "</td>"
-	    << "<td>" << Glib::build_path(", ", partition.flags) << "</td>"
+	    << "<td>" << Glib::build_path(", ", partition.get_flags()) << "</td>"
 	    << "<td>" << partition.name << "</td>"
 	    << "<td>" << partition.get_filesystem_string() << "</td>"
 	    << "<td>" << partition.get_filesystem_label() << "</td>"
@@ -567,15 +588,15 @@ void Dialog_Progress::write_operation_details(const OperationDetail& operationde
 	}
 	
 	out << std::endl << "</td>" << std::endl << "</tr>" << std::endl ;
-	
-	if ( operationdetail .get_childs(). size() )
+
+	if (operationdetail.get_children().size())
 	{
 		out << "<tr>" << std::endl
 		<< "<td>&nbsp;&nbsp;&nbsp;&nbsp;</td>" << std::endl
 		<< "<td>" << std::endl ;
 
-		for (unsigned int i = 0; i < operationdetail.get_childs().size(); i++)
-			write_operation_details(*(operationdetail.get_childs()[i]), out);
+		for (unsigned int i = 0; i < operationdetail.get_children().size(); i++)
+			write_operation_details(*(operationdetail.get_children()[i]), out);
 
 		out << "</td>" << std::endl << "</tr>" << std::endl ;
 	}
@@ -606,8 +627,8 @@ bool Dialog_Progress::on_delete_event( GdkEventAny * event )
 
 Dialog_Progress::~Dialog_Progress()
 {
-	delete cancelbutton;
+	delete m_cancelbutton;
 }
 
 
-}//GParted
+}  // namespace GParted

@@ -22,6 +22,7 @@
 
 #include <map>
 #include <vector>
+#include <memory>
 
 
 namespace GParted
@@ -32,7 +33,6 @@ class SupportedFileSystems
 {
 public:
 	SupportedFileSystems();
-	~SupportedFileSystems();
 
 	void find_supported_filesystems();
 	FileSystem* get_fs_object(FSType fstype) const;
@@ -41,7 +41,7 @@ public:
 	bool supported_filesystem(FSType fstype) const;
 
 private:
-	typedef std::map<FSType, FileSystem *> FSObjectsMap;
+	typedef std::map<FSType, std::unique_ptr<FileSystem>> FSObjectsMap;
 
 	std::vector<FS> m_fs_support;
 	FSObjectsMap    m_fs_objects;
@@ -49,6 +49,7 @@ private:
 };
 
 
-} //GParted
+}  // namespace GParted
+
 
 #endif /* GPARTED_SUPPORTEDFILESYSTEMS_H */

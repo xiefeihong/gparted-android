@@ -26,37 +26,111 @@
 #include <glibmm/ustring.h>
 #include <glibmm/iochannel.h>
 
-namespace GParted {
 
-const size_t READBUF_SIZE = 64*KIBIBYTE;
-
-
-const gunichar UTF8_PARTIAL = (gunichar)-2;
-const gunichar UTF8_INVALID = (gunichar)-1;
-
-
-PipeCapture::PipeCapture( int fd, Glib::ustring &buffer ) : fill_offset( 0 ),
-                                                            cursor( 0 ),
-                                                            line_start( 0 ),
-                                                            callerbuf( buffer )
+namespace GParted
 {
-	readbuf = new char[READBUF_SIZE];
-	callerbuf.clear();
-	callerbuf_uptodate = true;
+
+
+namespace  // unnamed
+{
+
+
+static const size_t READBUF_SIZE = 64*KIBIBYTE;
+
+
+static const gunichar UTF8_PARTIAL = (gunichar)-2;
+static const gunichar UTF8_INVALID = (gunichar)-1;
+
+
+static int utf8_char_length(unsigned char firstbyte)
+{
+	// Recognise the size of FSS-UTF (1992) / UTF-8 (1993) characters given the first
+	// byte.  Characters can be up to 6 bytes.  (Later UTF-8 (2003) limited characters
+	// to 4 bytes and 21-bits of Unicode code-space).
+	// Reference:
+	//     https://en.wikipedia.org/wiki/UTF-8
+	if ((firstbyte & 0x80) == 0x00)       // 0xxxxxxx - 1 byte UTF-8 char
+		return 1;
+	else if ((firstbyte & 0xE0) == 0xC0)  // 110xxxxx - First byte of a 2 byte UTF-8 char
+		return 2;
+	else if ((firstbyte & 0xF0) == 0xE0)  // 1110xxxx - First byte of a 3 byte UTF-8 char
+		return 3;
+	else if ((firstbyte & 0xF8) == 0xF0)  // 11110xxx - First byte of a 4 byte UTF-8 char
+		return 4;
+	else if ((firstbyte & 0xFC) == 0xF8)  // 111110xx - First byte of a 5 byte UTF-8 char
+		return 5;
+	else if ((firstbyte & 0xFE) == 0xFC)  // 1111110x - First byte of a 6 byte UTF-8 char
+		return 6;
+	else if ((firstbyte & 0xC0) == 0x80)  // 10xxxxxx - Continuation byte
+		return -1;
+	else                                  // Invalid byte
+		return -1;
+}
+
+
+// GLib's g_utf8_get_char_validated() always considers strings as being NUL terminated,
+// even when max_len is specified, hence can't read NUL characters.  This wrapper can read
+// NUL characters when max_len is specified.
+// Reference:
+//     https://developer.gnome.org/glib/stable/glib-Unicode-Manipulation.html#g-utf8-get-char-validated
+static gunichar get_utf8_char_validated(const char* p, gssize max_len)
+{
+	gunichar uc = g_utf8_get_char_validated(p, max_len);
+	if (uc == UTF8_PARTIAL && max_len > 0)
+	{
+		// Report NUL character as such.
+		if (*p == '\0')
+			return '\0';
+
+		// If g_utf8_get_char_validated() found a NUL byte in the middle of a
+		// multi-byte character, even when there are more bytes available as
+		// specified by max_len, it reports a partial UTF-8 character.  Report
+		// this case as an invalid character instead.
+		int len = utf8_char_length(*p);
+		if (len == -1 || (gssize)len <= max_len)
+			uc = UTF8_INVALID;
+	}
+	return uc;
+}
+
+
+static void append_unichar_vector_to_utf8(std::string& str, const std::vector<gunichar>& ucvec)
+{
+	const size_t MAX_UTF8_BYTES = 6;
+	char buf[MAX_UTF8_BYTES];
+	for (unsigned int i = 0; i < ucvec.size(); i++)
+	{
+		int bytes_written = g_unichar_to_utf8(ucvec[i], buf);
+		str.append(buf, bytes_written);
+	}
+}
+
+
+}  // unnamed namespace
+
+
+PipeCapture::PipeCapture(int fd, Glib::ustring& buffer)
+ : m_readbuf(64*KIBIBYTE),  // Construct vector of 64K chars (and zero initialise)
+   m_fill_offset(0), m_cursor(0), m_line_start(0), m_callerbuf(buffer)
+{
+	m_callerbuf.clear();
+	m_callerbuf_uptodate = true;
 	// tie fd to string
 	// make channel
-	channel = Glib::IOChannel::create_from_fd( fd );
-	channel->set_encoding("");
+	m_channel = Glib::IOChannel::create_from_fd(fd);
+	m_channel->set_encoding("");
 }
+
 
 void PipeCapture::connect_signal()
 {
 	// connect handler to signal input/output
-	g_io_add_watch( channel->gobj(),
-	                GIOCondition(G_IO_IN | G_IO_ERR | G_IO_HUP),
-	                _OnReadable,
-	                this );
+	g_io_add_watch(m_channel->gobj(),
+	               GIOCondition(G_IO_IN | G_IO_ERR | G_IO_HUP),
+	               _OnReadable,
+	               this);
 }
+
 
 gboolean PipeCapture::_OnReadable( GIOChannel *source,
 				   GIOCondition condition,
@@ -76,35 +150,36 @@ bool PipeCapture::OnReadable( Glib::IOCondition condition )
 	//
 	// Data model:
 	//
-	//                 fill_offset
-	//                 v
-	//     readbuf    "XXXX......................"
-	//                 ^   ^
-	//                 |   end_ptr
-	//                 read_ptr
+	//                   m_fill_offset
+	//                   v
+	//     m_readbuf    "XXXX......................"
+	//                   ^   ^
+	//                   |   end_ptr
+	//                   read_ptr
 	//
-	//     linevec    "Current line.  Text progress bar: XXXXXXXX--------"
-	//                                                           ^
-	//                                                           cursor
+	//     m_linevec    "Current line.  Text progress bar: XXXXXXXX--------"
+	//                                                             ^
+	//                                                             m_cursor
 	//
-	//     capturebuf "First line\n
-	//                 Current line.  Text progress bar: XXXX-----------"
-	//                 ^
-	//                 line_start
+	//     m_capturebuf "First line\n
+	//                   Current line.  Text progress bar: XXXX-----------"
+	//                   ^
+	//                   m_line_start
 	//
 	// Processing details:
-	// Bytes are read into readbuf.  Valid UTF-8 character byte sequences are
+	// Bytes are read into m_readbuf.  Valid UTF-8 character byte sequences are
 	// recognised and, applying a simple line discipline, added into the vector of
-	// characters storing the current line, linevec.  (Linevec uses UCS-4 encoding for
-	// fixed sized values accessible in constant time via pointer arithmetic).  When
-	// a new line character is encountered the complete current line, or when readbuf
-	// is drained the partial current line, is pasted into capturebuf at the offset
-	// where the last line starts.  (Capturebuf stores UTF-8 encoded characters in a
-	// std::string for constant time access to line_start offset).  When readbuf
-	// is drained and there are registered update callbacks, capturebuf is copied into
-	// callerbuf and signal_update slot fired.  (Callerbuf stores UTF-8 encoded
-	// characters in a Glib::ustring).  When EOF is encountered capturebuf is copied
-	// into callerbuf if required and signal_eof slot fired.
+	// characters storing the current line, m_linevec.  (m_linevec uses UCS-4 encoding
+	// for fixed sized values accessible in constant time via pointer arithmetic).
+	// When a new line character is encountered the complete current line, or when
+	// m_readbuf is drained the partial current line, is pasted into m_capturebuf at
+	// the offset where the last line starts.  (m_capturebuf stores UTF-8 encoded
+	// characters in a std::string for constant time access to m_line_start offset).
+	// When m_readbuf is drained and there are registered update callbacks,
+	// m_capturebuf is copied into m_callerbuf and signal_update slot fired.
+	// (m_callerbuf stores UTF-8 encoded characters in a Glib::ustring).  When EOF is
+	// encountered m_capturebuf is copied into m_callerbuf if required and signal_eof
+	// slot fired.
 	//
 	// Golden rule:
 	// Use Glib::ustrings as little as possible for large amounts of data!
@@ -122,12 +197,12 @@ bool PipeCapture::OnReadable( Glib::IOCondition condition )
 	//    have to be moved in memory.
 
 	gsize bytes_read;
-	Glib::IOStatus status = channel->read( readbuf + fill_offset, READBUF_SIZE - fill_offset, bytes_read );
+	Glib::IOStatus status = m_channel->read(m_readbuf.data() + m_fill_offset, READBUF_SIZE - m_fill_offset, bytes_read);
 	if ( status == Glib::IO_STATUS_NORMAL )
 	{
-		const char * read_ptr = readbuf;
-		const char * end_ptr = readbuf + fill_offset + bytes_read;
-		fill_offset = 0;
+		const char* read_ptr = m_readbuf.data();
+		const char* end_ptr = m_readbuf.data() + m_fill_offset + bytes_read;
+		m_fill_offset = 0;
 		while ( read_ptr < end_ptr )
 		{
 			gunichar uc = get_utf8_char_validated(read_ptr, end_ptr - read_ptr);
@@ -136,8 +211,8 @@ bool PipeCapture::OnReadable( Glib::IOCondition condition )
 				// Partial UTF-8 character at end of read buffer.  Copy to
 				// start of read buffer.
 				size_t bytes_remaining = end_ptr - read_ptr;
-				memcpy( readbuf, read_ptr, bytes_remaining );
-				fill_offset = bytes_remaining;
+				memcpy(m_readbuf.data(), read_ptr, bytes_remaining);
+				m_fill_offset = bytes_remaining;
 				break;
 			}
 			else if ( uc == UTF8_INVALID )
@@ -162,27 +237,27 @@ bool PipeCapture::OnReadable( Glib::IOCondition condition )
 
 			if ( uc == '\b' )
 			{
-				if ( cursor > 0 )
-					cursor --;
+				if (m_cursor > 0)
+					m_cursor --;
 			}
 			else if ( uc == '\r' )
 			{
-				cursor = 0;
+				m_cursor = 0;
 			}
 			else if ( uc == '\n' )
 			{
 				// Append char to current line; paste current line to
 				// capture buffer; reset current line.
-				linevec.push_back( '\n' );
-				cursor ++;
+				m_linevec.push_back('\n');
+				m_cursor ++;
 
-				capturebuf.resize( line_start );
-				append_unichar_vector_to_utf8( capturebuf, linevec );
-				line_start = capturebuf.size();
-				callerbuf_uptodate = false;
+				m_capturebuf.resize(m_line_start);
+				append_unichar_vector_to_utf8(m_capturebuf, m_linevec);
+				m_line_start = m_capturebuf.size();
+				m_callerbuf_uptodate = false;
 
-				linevec.clear();
-				cursor = 0;
+				m_linevec.clear();
+				m_cursor = 0;
 			}
 			else if ( uc == '\x01' || uc == '\x02' )
 			{
@@ -191,33 +266,33 @@ bool PipeCapture::OnReadable( Glib::IOCondition condition )
 			}
 			else
 			{
-				if ( cursor < linevec.size() )
+				if (m_cursor < m_linevec.size())
 				{
 					// Replace char in current line.
-					linevec[cursor] = uc;
-					cursor ++;
+					m_linevec[m_cursor] = uc;
+					m_cursor ++;
 				}
 				else
 				{
 					// Append char to current line.
-					linevec.push_back( uc );
-					cursor ++;
+					m_linevec.push_back(uc);
+					m_cursor ++;
 				}
 			}
 		}
 
 		// Paste partial line to capture buffer.
-		capturebuf.resize( line_start );
-		append_unichar_vector_to_utf8( capturebuf, linevec );
-		callerbuf_uptodate = false;
+		m_capturebuf.resize(m_line_start);
+		append_unichar_vector_to_utf8(m_capturebuf, m_linevec);
+		m_callerbuf_uptodate = false;
 
 		if ( ! signal_update.empty() )
 		{
 			// Performance optimisation, especially for large capture buffers:
 			// only copy capture buffer to callers buffer and fire update
 			// callbacks when there are any registered update callbacks.
-			callerbuf = capturebuf;
-			callerbuf_uptodate = true;
+			m_callerbuf = m_capturebuf;
+			m_callerbuf_uptodate = true;
 			signal_update.emit();
 		}
 		return true;
@@ -228,82 +303,15 @@ bool PipeCapture::OnReadable( Glib::IOCondition condition )
 		std::cerr << "Pipe IOChannel read failed" << std::endl;
 	}
 
-	if ( ! callerbuf_uptodate )
+	if (! m_callerbuf_uptodate)
 	{
-		callerbuf = capturebuf;
-		callerbuf_uptodate = true;
+		m_callerbuf = m_capturebuf;
+		m_callerbuf_uptodate = true;
 	}
 	// signal completion
 	signal_eof.emit();
 	return false;
 }
 
-void PipeCapture::append_unichar_vector_to_utf8( std::string & str, const std::vector<gunichar> & ucvec )
-{
-	const size_t MAX_UTF8_BYTES = 6;
-	char buf[MAX_UTF8_BYTES];
-	for ( unsigned int i = 0 ; i < ucvec.size() ; i ++ )
-	{
-		int bytes_written = g_unichar_to_utf8( ucvec[i], buf );
-		str.append( buf, bytes_written );
-	}
-}
 
-
-// GLib's g_utf8_get_char_validated() always considers strings as being NUL terminated,
-// even when max_len is specified, hence can't read NUL characters.  This wrapper can read
-// NUL characters when max_len is specified.
-// Reference:
-//     https://developer.gnome.org/glib/stable/glib-Unicode-Manipulation.html#g-utf8-get-char-validated
-gunichar PipeCapture::get_utf8_char_validated(const char *p, gssize max_len)
-{
-	gunichar uc = g_utf8_get_char_validated(p, max_len);
-	if (uc == UTF8_PARTIAL && max_len > 0)
-	{
-		// Report NUL character as such.
-		if (*p == '\0')
-			return '\0';
-
-		// If g_utf8_get_char_validated() found a NUL byte in the middle of a
-		// multi-byte character, even when there are more bytes available as
-		// specified by max_len, it reports a partial UTF-8 character.  Report
-		// this case as an invalid character instead.
-		int len = utf8_char_length(*p);
-		if (len == -1 || (gssize)len <= max_len)
-			uc = UTF8_INVALID;
-	}
-	return uc;
-}
-
-
-int PipeCapture::utf8_char_length( unsigned char firstbyte )
-{
-	// Recognise the size of FSS-UTF (1992) / UTF-8 (1993) characters given the first
-	// byte.  Characters can be up to 6 bytes.  (Later UTF-8 (2003) limited characters
-	// to 4 bytes and 21-bits of Unicode code-space).
-	// Reference:
-	//     https://en.wikipedia.org/wiki/UTF-8
-	if ( ( firstbyte & 0x80 ) == 0x00 )       // 0xxxxxxx - 1 byte UTF-8 char
-		return 1;
-	else if ( ( firstbyte & 0xE0 ) == 0xC0 )  // 110xxxxx - First byte of a 2 byte UTF-8 char
-		return 2;
-	else if ( ( firstbyte & 0xF0 ) == 0xE0 )  // 1110xxxx - First byte of a 3 byte UTF-8 char
-		return 3;
-	else if ( ( firstbyte & 0xF8 ) == 0xF0 )  // 11110xxx - First byte of a 4 byte UTF-8 char
-		return 4;
-	else if ( ( firstbyte & 0xFC ) == 0xF8 )  // 111110xx - First byte of a 5 byte UTF-8 char
-		return 5;
-	else if ( ( firstbyte & 0xFE ) == 0xFC )  // 1111110x - First byte of a 6 byte UTF-8 char
-		return 6;
-	else if ( ( firstbyte & 0xC0 ) == 0x80 )  // 10xxxxxx - Continuation byte
-		return -1;
-	else                                      // Invalid byte
-		return -1;
-}
-
-PipeCapture::~PipeCapture()
-{
-	delete[] readbuf;
-}
-
-} // namespace GParted
+}  // namespace GParted

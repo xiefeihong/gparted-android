@@ -18,8 +18,10 @@
 #include "PartitionLUKS.h"
 #include "Utils.h"
 
+
 namespace GParted
 {
+
 
 PartitionLUKS::PartitionLUKS() : header_size( 0 )
 {
@@ -28,9 +30,6 @@ PartitionLUKS::PartitionLUKS() : header_size( 0 )
 	// initialise the encrypted member variable of type Partition.
 }
 
-PartitionLUKS::~PartitionLUKS()
-{
-}
 
 PartitionLUKS * PartitionLUKS::clone() const
 {
@@ -251,4 +250,5 @@ const Glib::ustring PartitionLUKS::get_filesystem_string() const
 	return Utils::get_encrypted_string();
 }
 
-} //GParted
+
+}  // namespace GParted

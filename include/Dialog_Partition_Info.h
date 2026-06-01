@@ -32,14 +32,15 @@
 
 #define BORDER 8
 
+
 namespace GParted
 {
+
 
 class Dialog_Partition_Info : public Gtk::Dialog
 {
 public:
 	Dialog_Partition_Info( const Partition & partition );
-	~Dialog_Partition_Info();
 
 private:
 	void init_drawingarea() ;
@@ -48,7 +49,7 @@ private:
 	// Signal handler
 	bool drawingarea_on_draw(const Cairo::RefPtr<Cairo::Context>& cr);
 
-	const Partition & partition;  // (Alias to element in Win_GParted::display_partitions[] vector).
+	const Partition& partition;  // (Alias to element in Win_GParted::m_display_device.partitions[] vector).
 
 	Gtk::Box *hbox;
 	Gtk::DrawingArea drawingarea ;
@@ -67,6 +68,8 @@ private:
 	int used, unused, unallocated ;
 };
 
-} //GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_DIALOG_PARTITION_INFO_H */

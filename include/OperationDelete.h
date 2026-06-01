@@ -17,25 +17,28 @@
 #ifndef GPARTED_OPERATIONDELETE_H
 #define GPARTED_OPERATIONDELETE_H
 
+
+#include "Device.h"
 #include "Operation.h"
 #include "Partition.h"
 #include "PartitionVector.h"
 
+
 namespace GParted
 {
+
 
 class OperationDelete : public Operation
 {
 public:
 	OperationDelete( const Device & device, const Partition & partition_orig ) ;
-	virtual ~OperationDelete();
+
+	OperationDelete(const OperationDelete& src) = delete;             // Copy construction prohibited
+	OperationDelete& operator=(const OperationDelete& rhs) = delete;  // Copy assignment prohibited
 
 	void apply_to_visual( PartitionVector & partitions );
 
 private:
-	OperationDelete( const OperationDelete & src );              // Not implemented copy constructor
-	OperationDelete & operator=( const OperationDelete & rhs );  // Not implemented copy assignment operator
-
 	Partition & get_partition_new();
 	const Partition & get_partition_new() const;
 
@@ -44,6 +47,8 @@ private:
 	void remove_original_and_adjacent_unallocated( PartitionVector & partitions, int index_orig );
 };
 
-} //GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_OPERATIONDELETE_H */

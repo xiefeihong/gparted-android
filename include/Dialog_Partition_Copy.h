@@ -24,8 +24,10 @@
 #include "FileSystem.h"
 #include "Partition.h"
 
+
 namespace GParted
 {
+
 
 class Dialog_Partition_Copy : public Dialog_Base_Partition
 {
@@ -34,17 +36,18 @@ public:
 	                      const FS_Limits& fs_limits,
 	                      const Partition& selected_partition,
 	                      const Partition& copied_partition);
-	~Dialog_Partition_Copy();
 
-	const Partition & Get_New_Partition();
+	Dialog_Partition_Copy(const Dialog_Partition_Copy& src) = delete;             // Copy construction prohibited
+	Dialog_Partition_Copy& operator=(const Dialog_Partition_Copy& rhs) = delete;  // Copy assignment prohibited
+
+	const Partition& get_new_partition();
 
 private:
-	Dialog_Partition_Copy( const Dialog_Partition_Copy & src );              // Not implemented copy constructor
-	Dialog_Partition_Copy & operator=( const Dialog_Partition_Copy & rhs );  // Not implemented copy assignment operator
-
 	void set_data( const Partition & selected_partition, const Partition & copied_partition );
 };
 
-}//GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_DIALOG_PARTITION_COPY_H */

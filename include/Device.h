@@ -27,13 +27,12 @@
 
 namespace GParted
 {
-	
+
+
 class Device
 {
-	 
 public:
 	Device() ;
-	~Device() ;
 
 	Device get_copy_without_partitions() const;
 	void set_path( const Glib::ustring & path );
@@ -58,13 +57,17 @@ public:
 	int sector_size ;
 	int max_prims ;
 	int highest_busy ;
-	bool readonly ; 
+	bool readonly;  // Must changes to the partition table be prevented because the OS
+	                // can't be informed of the changes while other partitions are
+			// busy.
 
 private:
 	Glib::ustring path;
 	int max_partition_name_length;  // > 0 => naming of partitions is supported on this device
 };
- 
-} //GParted
+
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_DEVICE_H */

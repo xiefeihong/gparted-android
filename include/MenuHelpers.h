@@ -24,11 +24,17 @@
 #include <gtkmm/imagemenuitem.h>
 #include <gtkmm/separatormenuitem.h>
 #include <gtkmm/checkmenuitem.h>
+#include <sigc++/slot.h>
+
 
 namespace GParted
 {
+
+
 namespace Menu_Helpers
 {
+
+
 typedef sigc::slot<void> CallSlot;
 
 
@@ -97,7 +103,10 @@ public:
 };
 
 
-}//Menu_Helpers
-}//GParted
+}  // namespace Menu_Helpers
+
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_MENUHELPERS_H */

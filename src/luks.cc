@@ -14,18 +14,24 @@
  *  along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
+
+#include "luks.h"
+
 #include "FileSystem.h"
 #include "LUKS_Info.h"
+#include "OperationDetail.h"
+#include "Partition.h"
 #include "PasswordRAMStore.h"
 #include "Utils.h"
-#include "luks.h"
 
 #include <glibmm/miscutils.h>
 #include <glibmm/shell.h>
+#include <glibmm/ustring.h>
 
 
 namespace GParted
 {
+
 
 const Glib::ustring & luks::get_custom_text( CUSTOM_TEXT ttype, int index ) const
 {
@@ -67,13 +73,11 @@ FS luks::get_filesystem_support()
 		// the kernel, which it doesn't need.
 		fs.grow = FS::EXTERNAL;
 
-#ifdef ENABLE_ONLINE_RESIZE
 		if ( Utils::kernel_version_at_least( 3, 6, 0 ) )
 		{
 			fs.online_grow   = FS::EXTERNAL;
 			fs.online_shrink = FS::EXTERNAL;
 		}
-#endif
 	}
 
 	return fs;
@@ -151,7 +155,7 @@ bool luks::resize( const Partition & partition_new, OperationDetail & operationd
 		}
 	}
 
-	Glib::ustring size = "";
+	Glib::ustring size;
 	if ( ! fill_partition )
 		// Cryptsetup resize takes the size of the encryption mapping, not the
 		// size of the underlying block device.  Both device-mapper and cryptsetup
@@ -163,8 +167,9 @@ bool luks::resize( const Partition & partition_new, OperationDetail & operationd
 	if (mapping.key_loc == KEYLOC_KeyRing)
 		pw = PasswordRAMStore::lookup(partition_new.uuid);
 
-	return ! execute_command("cryptsetup -v " + size + "resize " + Glib::shell_quote(mapping.name),
-	                         pw, operationdetail, EXEC_CHECK_STATUS);
+	return ! operationdetail.execute_command("cryptsetup -v " + size + "resize " + Glib::shell_quote(mapping.name),
+	                        pw, EXEC_CHECK_STATUS);
 }
 
-} //GParted
+
+}  // namespace GParted

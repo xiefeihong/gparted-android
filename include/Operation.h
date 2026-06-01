@@ -18,13 +18,23 @@
 #ifndef GPARTED_OPERATION_H
 #define GPARTED_OPERATION_H
 
+
 #include "Device.h"
 #include "OperationDetail.h"
 #include "Partition.h"
 #include "PartitionVector.h"
+#include "Utils.h"
+
+#include <gdkmm/pixbuf.h>
+#include <glibmm/refptr.h>
+#include <glibmm/ustring.h>
+#include <vector>
+#include <memory>
+
 
 namespace GParted
 {
+
 
 enum OperationType {
 	OPERATION_DELETE           = 0,
@@ -38,12 +48,17 @@ enum OperationType {
 	OPERATION_NAME_PARTITION   = 8
 };
 
+
 class Operation
 {
-	
 public:
-	Operation() ;
-	virtual ~Operation() {}
+	Operation(OperationType type, const Device& device, const Partition& partition_orig);
+	Operation(OperationType type, const Device& device, const Partition& partition_orig,
+	                                                    const Partition& partition_new);
+	virtual ~Operation() = default;
+
+	Operation(const Operation& src) = delete;             // Copy construction prohibited
+	Operation& operator=(const Operation& rhs) = delete;  // Copy assignment prohibited
 
 	Partition & get_partition_original();
 	const Partition & get_partition_original() const;
@@ -55,13 +70,12 @@ public:
 	virtual bool merge_operations( const Operation & candidate ) = 0;
 
 	//public variables
-	Device device ;
-	OperationType type ;
+	const OperationType m_type;
+	const Device        m_device;
 
-	Glib::RefPtr<Gdk::Pixbuf> icon ;
-	Glib::ustring description ;
-
-	OperationDetail operation_detail ;
+	Glib::RefPtr<Gdk::Pixbuf> m_icon;
+	Glib::ustring             m_description;
+	OperationDetail           m_operation_detail;
 
 protected:
 	int find_index_original( const PartitionVector & partitions );
@@ -71,22 +85,15 @@ protected:
 	void substitute_new( PartitionVector & partitions );
 	void insert_new( PartitionVector & partitions );
 
-	Partition * partition_original;
-	Partition * partition_new;
-
-private:
-	// Disable compiler generated copy constructor and copy assignment operator by
-	// providing private declarations and no definition.  Code which tries to copy
-	// construct or copy assign this class will fail to compile.
-	// References:
-	// *   Disable copy constructor
-	//     http://stackoverflow.com/questions/6077143/disable-copy-constructor
-	// *   Disable compiler-generated copy-assignment operator [duplicate]
-	//     http://stackoverflow.com/questions/7823845/disable-compiler-generated-copy-assignment-operator
-	Operation( const Operation & src );              // Not implemented copy constructor
-	Operation & operator=( const Operation & rhs );  // Not implemented copy assignment operator
+	const std::unique_ptr<Partition> m_partition_original;
+	std::unique_ptr<Partition>       m_partition_new;
 };
 
-} //GParted
+
+typedef std::vector<std::unique_ptr<Operation>> OperationVector;
+
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_OPERATION_H */

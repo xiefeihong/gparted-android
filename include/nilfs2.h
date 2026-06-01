@@ -18,11 +18,15 @@
 #ifndef GPARTED_NILFS2_H
 #define GPARTED_NILFS2_H
 
+
 #include "FileSystem.h"
+#include "OperationDetail.h"
 #include "Partition.h"
+
 
 namespace GParted
 {
+
 
 class nilfs2 : public FileSystem
 {
@@ -37,6 +41,8 @@ public:
 	bool resize( const Partition & partition_new, OperationDetail & operationdetail, bool fill_partition );
 };
 
-} //GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_NILFS2_H */

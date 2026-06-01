@@ -19,17 +19,16 @@
 
 #include <glibmm/ustring.h>
 
+
 namespace GParted
 {
+
 
 ProgressBar::ProgressBar() : m_running( false ), m_target( 1.0 ), m_progress( 0.0 ), m_fraction( 0.0 ),
                              m_text_mode(PROGRESSBAR_TEXT_TIME_REMAINING)
 {
 }
 
-ProgressBar::~ProgressBar()
-{
-}
 
 void ProgressBar::start( double target, ProgressBar_Text text_mode )
 {
@@ -131,4 +130,5 @@ void ProgressBar::do_update()
 	}
 }
 
-}//GParted
+
+}  // namespace GParted

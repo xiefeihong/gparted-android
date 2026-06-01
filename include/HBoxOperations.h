@@ -24,17 +24,19 @@
 #include <gtkmm/menu.h>
 #include <gtkmm/scrolledwindow.h>
 #include <gtkmm/treeview.h>
+#include <sigc++/signal.h>
+
 
 namespace GParted
 {
+
 
 class HBoxOperations : public Gtk::Box
 {
 public:
 	HBoxOperations() ;
-	~HBoxOperations() ;
 
-	void load_operations(const std::vector<Operation *>& operations);
+	void load_operations(const OperationVector& operations);
 	void clear() ;
 
 	sigc::signal< void > signal_undo ;
@@ -55,20 +57,22 @@ private:
 	Glib::RefPtr<Gtk::ListStore> liststore_operations ;
 	std::map<int, Gtk::MenuItem*> menu_popup_items;
 
-	struct treeview_operations_Columns : public Gtk::TreeModelColumnRecord             
+	struct TreeView_Operations_Columns : public Gtk::TreeModelColumnRecord
 	{
 		Gtk::TreeModelColumn<Glib::ustring> operation_description;
 		Gtk::TreeModelColumn< Glib::RefPtr<Gdk::Pixbuf> > operation_icon;
-				
-		treeview_operations_Columns() 
+
+		TreeView_Operations_Columns()
 		{ 
 			add( operation_description );
 			add( operation_icon );
 		} 
 	};
-	treeview_operations_Columns treeview_operations_columns;
+	TreeView_Operations_Columns m_treeview_operations_columns;
 };
 
-} //GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_HBOXOPERATIONS_H */

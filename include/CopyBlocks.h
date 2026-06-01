@@ -24,8 +24,11 @@
 #ifndef USE_ADB_BACKEND
 #include <parted/parted.h>
 #endif
+#include <vector>
+
 
 namespace GParted {
+
 
 class CopyBlocks
 {
@@ -36,9 +39,9 @@ class CopyBlocks
 	OperationDetail &operationdetail;
 	Byte_Value & total_done;
 	Byte_Value total_length;
-	char *buf;
+	std::vector<char> buf;
 	Byte_Value done;
-#ifndef USE_ADB_BACKEND
+	#ifndef USE_ADB_BACKEND
 	PedDevice *lp_device_src;
 	PedDevice *lp_device_dst;
 #endif
@@ -67,6 +70,8 @@ public:
 	bool copy();
 };
 
-} // namespace GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_COPYBLOCKS_H */

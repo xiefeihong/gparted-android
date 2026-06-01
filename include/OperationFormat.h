@@ -17,12 +17,16 @@
 #ifndef GPARTED_OPERATIONFORMAT_H
 #define GPARTED_OPERATIONFORMAT_H
 
+
+#include "Device.h"
 #include "Operation.h"
 #include "Partition.h"
 #include "PartitionVector.h"
 
+
 namespace GParted
 {
+
 
 class OperationFormat : public Operation
 {
@@ -30,18 +34,19 @@ public:
 	OperationFormat( const Device & device,
 			 const Partition & partition_orig,
 			 const Partition & partition_new ) ;
-	virtual ~OperationFormat();
+
+	OperationFormat(const OperationFormat& src) = delete;             // Copy construction prohibited
+	OperationFormat& operator=(const OperationFormat& rhs) = delete;  // Copy assignment prohibited
 
 	void apply_to_visual( PartitionVector & partitions );
 
 private:
-	OperationFormat( const OperationFormat & src );              // Not implemented copy constructor
-	OperationFormat & operator=( const OperationFormat & rhs );  // Not implemented copy assignment operator
-
 	void create_description() ;
 	bool merge_operations( const Operation & candidate );
-} ;
+};
 
-} //GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_OPERATIONFORMAT_H */

@@ -18,15 +18,23 @@
 #ifndef GPARTED_DIALOGMANAGEFLAGS_H
 #define GPARTED_DIALOGMANAGEFLAGS_H
 
+
 #include "Partition.h"
 
+#include <glibmm/ustring.h>
 #include <gtkmm/dialog.h>
+#include <gtkmm/frame.h>
+#include <gtkmm/label.h>
 #include <gtkmm/treeview.h>
 #include <gtkmm/liststore.h>
+#include <sigc++/signal.h>
+#include <map>
+
 
 namespace GParted
 {
-	
+
+
 class DialogManageFlags : public Gtk::Dialog
 {
 public:
@@ -35,35 +43,40 @@ public:
 	sigc::signal< std::map<Glib::ustring, bool>, const Partition & > signal_get_flags ;
 	sigc::signal< bool, const Partition &, const Glib::ustring &, bool > signal_toggle_flag ;
 
-	bool any_change ;
-	
+	bool m_changed;
+
 private:
 	void load_treeview() ;
 	void on_flag_toggled( const Glib::ustring & path ) ;
-	
-	
-	Gtk::TreeView treeview_flags ;
-	Gtk::TreeRow row ;
-	
-	Glib::RefPtr<Gtk::ListStore> liststore_flags ;
-	
-	struct treeview_flags_Columns : public Gtk::TreeModelColumnRecord             
+	void update_warning();
+
+	Gtk::TreeView m_treeview_flags;
+	Gtk::Frame    m_warning_frame;
+	Gtk::Label    m_warning_message;
+
+	Gtk::TreeRow  m_row;
+
+	Glib::RefPtr<Gtk::ListStore> m_liststore_flags;
+
+	struct TreeView_Flags_Columns : public Gtk::TreeModelColumnRecord
 	{
 		Gtk::TreeModelColumn<Glib::ustring> flag ;
 		Gtk::TreeModelColumn<bool> status ;
 		
-		treeview_flags_Columns()
+		TreeView_Flags_Columns()
 		{
 			add( flag ) ;
 			add( status ) ;
 		}
 	} ;
-	treeview_flags_Columns treeview_flags_columns ;	
+	TreeView_Flags_Columns m_treeview_flags_columns;
 
-	const Partition & partition;  // (Alias to element in Win_GParted::display_partitions[] vector).
-	std::map<Glib::ustring, bool> flag_info ;
+	const Partition& m_partition;  // (Alias to element in Win_GParted::m_display_device.partitions[] vector).
+	std::map<Glib::ustring, bool> m_flag_info;
 };
 
-} //GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_DIALOGMANAGEFLAGS_H */

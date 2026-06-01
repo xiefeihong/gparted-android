@@ -33,12 +33,15 @@
 #include <string.h>
 #include <errno.h>
 #include <string>
-#include <sigc++/sigc++.h>
+#include <sigc++/bind.h>
+#include <sigc++/signal.h>
 #include <glib.h>
 #include <glibmm.h>
 
+
 namespace GParted
 {
+
 
 // Repeat a C++ string count times, where count >= 0.
 static std::string repeat( const std::string & str, size_t count )
@@ -377,5 +380,6 @@ TEST_F( PipeCaptureTest, LineDisciplineSkipCtrlAB )
 	expectedstr = "ijklmn";
 	EXPECT_BINARYSTRINGEQ( expectedstr, capturedstr.raw() );
 }
+
 
 }  // namespace GParted

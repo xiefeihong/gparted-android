@@ -247,11 +247,11 @@ bool PartedParser::parse_partitions(const Glib::ustring& output, Device& device)
 			{
 				Glib::ustring flag_trimmed = trim(Glib::ustring(flag));
 				if (!flag_trimmed.empty())
-					partition->flags.push_back(flag_trimmed);
+					partition->set_flag(flag_trimmed);
 			}
 
 			PartitionType part_type = TYPE_PRIMARY;
-			for (const auto& flag : partition->flags)
+			for (const auto& flag : partition->get_flags())
 			{
 				if (flag == "extended" || flag == "lba")
 				{
@@ -482,6 +482,8 @@ FSType PartedParser::parse_fs_type(const Glib::ustring& fs_name)
 		return FS_ZFS;
 	if (name == "bcache")
 		return FS_BCACHE;
+	if (name == "bcachefs")
+		return FS_BCACHEFS;
 	if (name == "bitlocker")
 		return FS_BITLOCKER;
 	if (name == "iso9660")

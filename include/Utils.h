@@ -16,7 +16,6 @@
  */
  
  
- 
 /* UTILS
  * Some stuff i need in a lot of places so i dropped in all together in one file.
  */
@@ -34,14 +33,17 @@
 #include <iostream>
 #include <ctime>
 #include <vector>
+#include <string>
 
 #define UUID_STRING_LENGTH 36
 //Match RFC 4122 UUID strings.  Exclude Nil UUID (all zeros) by excluding
 //  zero from the version field nibble.
 #define RFC4122_NONE_NIL_UUID_REGEXP "[[:xdigit:]]{8}-[[:xdigit:]]{4}-[1-9a-fA-F][[:xdigit:]]{3}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"
 
+
 namespace GParted
 {
+
 
 typedef long long Sector;
 typedef long long Byte_Value;
@@ -71,46 +73,48 @@ enum FSType
 	FS_EXTENDED        = 6,
 
 	// Fully supported file system types
-	FS_BTRFS           = 7,
-	FS_EXFAT           = 8, /* Also known as fat64 */
-	FS_EXT2            = 9,
-	FS_EXT3            = 10,
-	FS_EXT4            = 11,
-	FS_F2FS            = 12,
-	FS_FAT16           = 13,
-	FS_FAT32           = 14,
-	FS_HFS             = 15,
-	FS_HFSPLUS         = 16,
-	FS_JFS             = 17,
-	FS_LINUX_SWAP      = 18,
-	FS_LUKS            = 19,
-	FS_LVM2_PV         = 20,
-	FS_MINIX           = 21,
-	FS_NILFS2          = 22,
-	FS_NTFS            = 23,
-	FS_REISER4         = 24,
-	FS_REISERFS        = 25,
-	FS_UDF             = 26,
-	FS_XFS             = 27,
+	FS_BCACHEFS        = 7,
+	FS_BTRFS           = 8,
+	FS_EXFAT           = 9, /* Also known as fat64 */
+	FS_EXT2            = 10,
+	FS_EXT3            = 11,
+	FS_EXT4            = 12,
+	FS_F2FS            = 13,
+	FS_FAT16           = 14,
+	FS_FAT32           = 15,
+	FS_HFS             = 16,
+	FS_HFSPLUS         = 17,
+	FS_JFS             = 18,
+	FS_LINUX_SWAP      = 19,
+	FS_LUKS            = 20,
+	FS_LVM2_PV         = 21,
+	FS_MINIX           = 22,
+	FS_NILFS2          = 23,
+	FS_NTFS            = 24,
+	FS_REISER4         = 25,
+	FS_REISERFS        = 26,
+	FS_UDF             = 27,
+	FS_XFS             = 28,
 
 	// Other recognised file system types
-	FS_APFS            = 28,
-	FS_ATARAID         = 29,
-	FS_BCACHE          = 30,
-	FS_BITLOCKER       = 31,
-	FS_GRUB2_CORE_IMG  = 32,
-	FS_ISO9660         = 33,
-	FS_JBD             = 34,
-	FS_LINUX_SWRAID    = 35,
-	FS_LINUX_SWSUSPEND = 36,
-	FS_REFS            = 37,
-	FS_UFS             = 38,
-	FS_ZFS             = 39,
-	FS_EROFS           = 42,
+	FS_APFS            = 29,
+	FS_ATARAID         = 30,
+	FS_BCACHE          = 31,
+	FS_BITLOCKER       = 32,
+	FS_GRUB2_CORE_IMG  = 33,
+	FS_ISO9660         = 34,
+	FS_JBD             = 35,
+	FS_LINUX_SWRAID    = 36,
+	FS_LINUX_SWSUSPEND = 37,
+	FS_REFS            = 38,
+	FS_UFS             = 39,
+	FS_ZFS             = 40,
+
+	FS_EROFS           = 43,
 
 	// Partition space usage colours
-	FS_USED            = 40,
-	FS_UNUSED          = 41
+	FS_USED            = 41,
+	FS_UNUSED          = 42
 } ;
 
 enum SIZE_UNIT
@@ -165,8 +169,9 @@ public:
 	                            Glib::ustring & output,
 	                            Glib::ustring & error,
 				    bool use_C_locale = false );
-	static int get_failure_status( Glib::SpawnError & e );
+	static int get_failure_status(const Glib::SpawnError& e);
 	static int decode_wait_status( int wait_status );
+	static std::string convert_ustring(const Glib::ustring& ustr);
 	static Glib::ustring regexp_label( const Glib::ustring & text
 	                                 , const Glib::ustring & pattern
 	                                 ) ;
@@ -193,6 +198,8 @@ private:
 	static bool get_kernel_version( int & major_ver, int & minor_ver, int & patch_ver ) ;
 };
 
-}//GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_UTILS_H */

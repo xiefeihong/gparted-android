@@ -15,21 +15,27 @@
  *  along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
+
 #include "btrfs.h"
+
 #include "BlockSpecial.h"
 #include "FileSystem.h"
 #include "Mount_Info.h"
+#include "OperationDetail.h"
 #include "Partition.h"
 #include "Utils.h"
 
-#include <ctype.h>
-#include <glibmm/ustring.h>
 #include <glibmm/miscutils.h>
 #include <glibmm/shell.h>
+#include <glibmm/ustring.h>
+#include <map>
+#include <stdio.h>
+#include <vector>
 
 
 namespace GParted
 {
+
 
 // Cache of required btrfs file system device information by device
 // E.g. For a single device btrfs on /dev/sda2 and a three device btrfs
@@ -40,12 +46,17 @@ namespace GParted
 //  btrfs_device_cache[BS("/dev/sdc1")] = {devid=2, members=[BS("/dev/sdd1"), BS("/dev/sdc1"), BS("/dev/sdb1")]}
 //  btrfs_device_cache[BS("/dev/sdd1")] = {devid=3, members=[BS("/dev/sdd1"), BS("/dev/sdc1"), BS("/dev/sdb1")]}
 std::map<BlockSpecial, BTRFS_Device> btrfs_device_cache;
+bool btrfs_found = false;
 
 FS btrfs::get_filesystem_support()
 {
 	FS fs( FS_BTRFS );
 
-	fs .busy = FS::EXTERNAL ;
+	// Always set an initial fallback so at a minimum GParted_Core::is_busy() will use
+	// the built-in file system mounted detection method when the btrfs command is not
+	// found.  This can only determine if the mounting device is mounted or not, not
+	// any of the other members of a multi-device btrfs file system.
+	fs.busy = FS::GPARTED;
 
 	if ( ! Glib::find_program_in_path( "mkfs.btrfs" ) .empty() )
 	{
@@ -53,8 +64,11 @@ FS btrfs::get_filesystem_support()
 		fs.create_with_label = FS::EXTERNAL;
 	}
 
+	btrfs_found = false;
 	if (! Glib::find_program_in_path("btrfs").empty())
 	{
+		btrfs_found = true;
+
 		// Use these btrfs multi-tool sub-commands without further checking for
 		// their availability:
 		//     btrfs check
@@ -64,11 +78,16 @@ FS btrfs::get_filesystem_support()
 		//     btrfs inspect-internal dump-super
 		// as they are all available in btrfs-progs >= 4.5.
 
-		fs.read = FS::EXTERNAL;
-		fs .read_label = FS::EXTERNAL ;
-		fs .read_uuid = FS::EXTERNAL ;
-		fs.check = FS::EXTERNAL;
-		fs.write_label = FS::EXTERNAL;
+		// Perform full busy detection which also handles all members of a
+		// multi-device btrfs file file system.
+		fs.busy = FS::EXTERNAL;
+
+		fs.read               = FS::EXTERNAL;
+		fs.online_read        = FS::EXTERNAL;
+		fs.read_label         = FS::EXTERNAL;
+		fs.read_uuid          = FS::EXTERNAL;
+		fs.check              = FS::EXTERNAL;
+		fs.write_label        = FS::EXTERNAL;
 		fs.online_write_label = FS::EXTERNAL;
 
 		//Resizing of btrfs requires mount, umount and kernel
@@ -87,6 +106,8 @@ FS btrfs::get_filesystem_support()
 
 	if ( ! Glib::find_program_in_path( "btrfstune" ).empty() )
 	{
+		Glib::ustring output;
+		Glib::ustring error;
 		Utils::execute_command( "btrfstune --help", output, error, true );
 		if ( Utils::regexp_label( output + error, "^[[:blank:]]*(-u)[[:blank:]]" ) == "-u" )
 			fs.write_uuid = FS::EXTERNAL;
@@ -98,44 +119,38 @@ FS btrfs::get_filesystem_support()
 		fs.move = FS::GPARTED;
 	}
 
-	fs .online_read = FS::EXTERNAL ;
-#ifdef ENABLE_ONLINE_RESIZE
 	if ( Utils::kernel_version_at_least( 3, 6, 0 ) )
 	{
 		fs .online_grow = fs .grow ;
 		fs .online_shrink = fs .shrink ;
 	}
-#endif
 
-	fs_limits.min_size = 256 * MEBIBYTE;
+	m_fs_limits.min_size = 256 * MEBIBYTE;
 
 	return fs ;
 }
 
+
 bool btrfs::is_busy( const Glib::ustring & path )
 {
-	//A btrfs file system is busy if any of the member devices are mounted.
-	//  WARNING:
-	//  Removal of the mounting device from a btrfs file system makes it impossible to
-	//  determine whether the file system is mounted or not for linux <= 3.4.  This is
-	//  because /proc/mounts continues to show the old device which is no longer a
-	//  member of the file system.  Fixed in linux 3.5 by commit:
-	//      Btrfs: implement ->show_devname
-	//      https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=9c5085c147989d48dfe74194b48affc23f376650
+	// A btrfs file system is busy if any of the member devices are mounted.
 	return ! get_mount_device( path ) .empty() ;
 }
 
+
 bool btrfs::create( const Partition & new_partition, OperationDetail & operationdetail )
 {
-	return ! execute_command( "mkfs.btrfs -L " + Glib::shell_quote( new_partition.get_filesystem_label() ) +
-	                          " " + Glib::shell_quote( new_partition.get_path() ),
-	                          operationdetail, EXEC_CHECK_STATUS );
+	return ! operationdetail.execute_command("mkfs.btrfs -L " +
+	                        Glib::shell_quote(new_partition.get_filesystem_label()) +
+	                        " " + Glib::shell_quote(new_partition.get_path()),
+	                        EXEC_CHECK_STATUS);
 }
+
 
 bool btrfs::check_repair( const Partition & partition, OperationDetail & operationdetail )
 {
-	return ! execute_command("btrfs check " + Glib::shell_quote(partition.get_path()),
-	                         operationdetail, EXEC_CHECK_STATUS);
+	return ! operationdetail.execute_command("btrfs check " + Glib::shell_quote(partition.get_path()),
+	                        EXEC_CHECK_STATUS);
 }
 
 
@@ -188,6 +203,8 @@ void btrfs::set_used_sectors(Partition& partition)
 	// This calculation also ignores that btrfs allocates chunks at the volume manager
 	// level.  So when fully compacted there will be partially filled chunks for
 	// metadata and data for each storage profile (RAID level) not accounted for.
+	Glib::ustring output;
+	Glib::ustring error;
 	Utils::execute_command("btrfs inspect-internal dump-super " + Glib::shell_quote(partition.get_path()),
 		               output, error, true);
 	// btrfs inspect-internal dump-super returns zero exit status for both success and
@@ -249,15 +266,16 @@ bool btrfs::write_label( const Partition & partition, OperationDetail & operatio
 	else
 		path = partition.get_path();
 
-	return ! execute_command("btrfs filesystem label " + Glib::shell_quote(path) +
-	                         " " + Glib::shell_quote(partition.get_filesystem_label()),
-	                         operationdetail, EXEC_CHECK_STATUS);
+	return ! operationdetail.execute_command("btrfs filesystem label " + Glib::shell_quote(path) +
+	                        " " + Glib::shell_quote(partition.get_filesystem_label()),
+	                        EXEC_CHECK_STATUS);
 }
 
 
 bool btrfs::resize( const Partition & partition_new, OperationDetail & operationdetail, bool fill_partition )
 {
 	bool success = true ;
+	int exit_status = 0;
 	const Glib::ustring& path = partition_new.get_path();
 	const BTRFS_Device& btrfs_dev = get_cache_entry(path);
 
@@ -275,9 +293,11 @@ bool btrfs::resize( const Partition & partition_new, OperationDetail & operation
 		mount_point = mk_temp_dir( "", operationdetail ) ;
 		if ( mount_point .empty() )
 			return false ;
-		success &= ! execute_command( "mount -v -t btrfs " + Glib::shell_quote( path ) +
-		                              " " + Glib::shell_quote( mount_point ),
-		                              operationdetail, EXEC_CHECK_STATUS );
+		exit_status = operationdetail.execute_command("mount -v -t btrfs " + Glib::shell_quote(path) +
+		                        " " + Glib::shell_quote(mount_point),
+		                        EXEC_CHECK_STATUS);
+		if (exit_status != 0)
+			success = false;
 	}
 	else
 	{
@@ -299,13 +319,19 @@ bool btrfs::resize( const Partition & partition_new, OperationDetail & operation
 			size = Utils::num_to_str(partition_new.get_byte_length() / KIBIBYTE) + "K";
 		else
 			size = "max" ;
-		success &= ! execute_command("btrfs filesystem resize " + devid_str + ":" + size +
-		                             " " + Glib::shell_quote(mount_point),
-                                             operationdetail, EXEC_CHECK_STATUS);
+		exit_status = operationdetail.execute_command("btrfs filesystem resize " + devid_str + ":" + size +
+		                        " " + Glib::shell_quote(mount_point),
+		                        EXEC_CHECK_STATUS);
+		if (exit_status != 0)
+			success = false;
 
-		if ( ! partition_new .busy )
-			success &= ! execute_command( "umount -v " + Glib::shell_quote( mount_point ),
-			                              operationdetail, EXEC_CHECK_STATUS );
+		if (! partition_new.busy)
+		{
+			exit_status = operationdetail.execute_command("umount -v " + Glib::shell_quote(mount_point),
+			                        EXEC_CHECK_STATUS);
+			if (exit_status != 0)
+				success = false;
+		}
 	}
 
 	if ( ! partition_new .busy )
@@ -317,8 +343,10 @@ bool btrfs::resize( const Partition & partition_new, OperationDetail & operation
 
 void btrfs::read_label(Partition& partition)
 {
-	exit_status = Utils::execute_command("btrfs filesystem label " + Glib::shell_quote(partition.get_path()),
-	                                     output, error, true);
+	Glib::ustring output;
+	Glib::ustring error;
+	int exit_status = Utils::execute_command("btrfs filesystem label " + Glib::shell_quote(partition.get_path()),
+	                        output, error, true);
 	if (exit_status != 0)
 	{
 		if (! output.empty())
@@ -334,6 +362,8 @@ void btrfs::read_label(Partition& partition)
 
 void btrfs::read_uuid(Partition& partition)
 {
+	Glib::ustring output;
+	Glib::ustring error;
 	Utils::execute_command("btrfs inspect-internal dump-super " + Glib::shell_quote(partition.get_path()),
 		               output, error, true);
 	// btrfs inspect-internal dump-super returns zero exit status for both success and
@@ -353,9 +383,10 @@ void btrfs::read_uuid(Partition& partition)
 
 bool btrfs::write_uuid( const Partition & partition, OperationDetail & operationdetail )
 {
-	return ! execute_command( "btrfstune -f -u " + Glib::shell_quote( partition.get_path() ),
-	                          operationdetail, EXEC_CHECK_STATUS );
+	return ! operationdetail.execute_command("btrfstune -f -u " + Glib::shell_quote(partition.get_path()),
+	                        EXEC_CHECK_STATUS);
 }
+
 
 void btrfs::clear_cache()
 {
@@ -400,11 +431,19 @@ std::vector<Glib::ustring> btrfs::get_members( const Glib::ustring & path )
 //Return btrfs device cache entry, incrementally loading cache as required
 const BTRFS_Device & btrfs::get_cache_entry( const Glib::ustring & path )
 {
+	static BTRFS_Device not_found_btrfs_dev = {-1, };
+	if (! btrfs_found)
+		// Without the btrfs command it can't be executed to discover the devices
+		// in a btrfs file system and so btrfs_device_cache is never populated.
+		// Hence returning not found record even before searching the cache.
+		return not_found_btrfs_dev;
+
 	std::map<BlockSpecial, BTRFS_Device>::const_iterator bd_iter = btrfs_device_cache.find( BlockSpecial( path ) );
 	if ( bd_iter != btrfs_device_cache .end() )
 		return bd_iter ->second ;
 
-	Glib::ustring output, error ;
+	Glib::ustring output;
+	Glib::ustring error;
 	std::vector<int> devid_list ;
 	std::vector<Glib::ustring> path_list ;
 	Utils::execute_command("btrfs filesystem show " + Glib::shell_quote(path), output, error, true);
@@ -448,9 +487,8 @@ const BTRFS_Device & btrfs::get_cache_entry( const Glib::ustring & path )
 		return bd_iter ->second ;
 
 	//If for any reason we fail to parse the information return an "unknown" record
-	static BTRFS_Device btrfs_dev = { -1, } ;
-	return btrfs_dev ;
+	return not_found_btrfs_dev;
 }
 
 
-} //GParted
+}  // namespace GParted

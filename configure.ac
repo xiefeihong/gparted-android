@@ -1,4 +1,4 @@
-AC_INIT([gparted],[1.6.0],[https://gitlab.gnome.org/GNOME/gparted/issues])
+AC_INIT([gparted],[1.8.1],[https://gitlab.gnome.org/GNOME/gparted/issues])
 AC_PREREQ([2.50])
 
 AC_CONFIG_SRCDIR([src/main.cc])
@@ -60,14 +60,7 @@ AM_GNU_GETTEXT([external])
 
 
 dnl======================
-dnl checks for libs
-dnl======================
-AC_CHECK_LIB([uuid], [uuid_generate], [], AC_MSG_ERROR([*** libuuid not found.]))
-AC_CHECK_LIB([dl], [dlopen], [], AC_MSG_ERROR([*** libdl not found.]))
-
-
-dnl======================
-dnl check whether to use ADB backend instead of libparted
+dnl ADB backend for Android
 dnl======================
 AC_ARG_ENABLE(
 	[adb-backend],
@@ -75,8 +68,7 @@ AC_ARG_ENABLE(
 		[--enable-adb-backend],
 		[use ADB backend instead of libparted for Android recovery @<:@default=disabled@:>@]),
 	[enable_adb_backend=$enableval],
-	[enable_adb_backend=no]
-)
+	[enable_adb_backend=no])
 
 AC_MSG_CHECKING([whether to use ADB backend for Android])
 if test "x$enable_adb_backend" = xyes; then
@@ -90,15 +82,24 @@ fi
 AM_CONDITIONAL([USE_ADB_BACKEND], [test "x$enable_adb_backend" = xyes])
 
 
+dnl======================
+dnl checks for libs
+dnl======================
+AC_CHECK_LIB([uuid], [uuid_generate], [], AC_MSG_ERROR([*** libuuid not found.]))
+AC_CHECK_LIB([dl], [dlopen], [], AC_MSG_ERROR([*** libdl not found.]))
 if test "x$enable_adb_backend" != xyes; then
 AC_CHECK_LIB([parted], [ped_device_read], [], AC_MSG_ERROR([*** libparted not found.]))
+AC_CHECK_LIB([parted-fs-resize], [ped_file_system_resize], [],
+             AC_MSG_ERROR([*** libparted-fs-resize not found.]))
+fi
 
 
 dnl Check for minimum required libparted version.
 dnl 1) Check using pkg-config.
 dnl    (Older distros tend to not provide pkg-config information for libparted).
 dnl 2) Check by linking and running a program to report libparted version directly.
-LIBPARTED_REQUIRED_VERSION='2.2'
+if test "x$enable_adb_backend" != xyes; then
+LIBPARTED_REQUIRED_VERSION='3.2'
 AC_MSG_CHECKING([for libparted >= $LIBPARTED_REQUIRED_VERSION (querying pkg-config)])
 LIBPARTED_REQUIRED_INT=`echo "$LIBPARTED_REQUIRED_VERSION" |
 	$AWK -F. '{print $1 * 1000000 + $2 * 10000 + $3}'`
@@ -146,82 +147,7 @@ int main()
 		[AC_MSG_ERROR([*** Error querying libparted version.  Check config.log for details.])]
 	)]
 )
-
-
-dnl Check for libparted 2.0 to 3.0 inclusive for a bug where loop table
-dnl creation doesn't delete old partitions.
-LIBPARTED_MIN_WANTED_VERSION='2.0'
-LIBPARTED_MAX_WANTED_VERSION='3.0'
-AC_MSG_CHECKING([for $LIBPARTED_MIN_WANTED_VERSION <= libparted <= $LIBPARTED_MAX_WANTED_VERSION (loop table creation doesn't delete old partitions)])
-LIBPARTED_MIN_WANTED_INT=`echo "$LIBPARTED_MIN_WANTED_VERSION" |
-	$AWK -F. '{print $1 * 1000000 + $2 * 10000 + $3}'`
-LIBPARTED_MAX_WANTED_INT=`echo "$LIBPARTED_MAX_WANTED_VERSION" |
-	$AWK -F. '{print $1 * 1000000 + $2 * 10000 + $3}'`
-if test "$LIBPARTED_MIN_WANTED_INT" -le "$LIBPARTED_FOUND_INT" -a \
-        "$LIBPARTED_FOUND_INT" -le "$LIBPARTED_MAX_WANTED_INT"; then
-	need_loop_delete_old_ptns_workaround=yes
-	AC_DEFINE([ENABLE_LOOP_DELETE_OLD_PTNS_WORKAROUND], 1,
-	          [Define to 1 to enable deletion of old partitions before creating a loop table workaround])
-	AC_MSG_RESULT([(cached) yes])
-else
-	need_loop_delete_old_ptns_workaround=no
-	AC_MSG_RESULT([(cached) no])
 fi
-
-
-dnl Check for ped_file_system_resize() function to determine the existence
-dnl of the API in the original parted library.  Available in parted <= 2.4.
-dnl
-dnl NOTE:
-dnl For AC_CHECK_LIB the default action-if-found ($3) includes extending
-dnl LIBS with the newly found library ($1) thus:
-dnl     LIBS="-l$1 $LIBS"
-dnl
-dnl As the default action-if-found is overridden, LIBS isn't extended so
-dnl saving and restoring LIBS isn't required.
-have_old_lp_fs_resize_api=no
-AC_CHECK_LIB(
-	[parted], [ped_file_system_resize],
-	[have_old_lp_fs_resize_api=yes]
-)
-fi  dnl End of if test "x$enable_adb_backend" != xyes
-
-
-if test "x$enable_adb_backend" != xyes; then
-dnl If not already found, check for ped_file_system_resize() function in
-dnl the parted-fs-resize library to determine the need to use the new
-dnl library.  Available in parted >= 3.1.
-have_new_lp_fs_resize_lib=no
-AS_IF(
-	[test "x$have_old_lp_fs_resize_api" != xyes],
-	[AC_CHECK_LIB(
-		[parted-fs-resize], [ped_file_system_resize],
-		[have_new_lp_fs_resize_lib=yes
-		 LIBS="-lparted-fs-resize $LIBS"
-		]
-	)]
-)
-
-
-dnl Check for libparted >= 3.2 for online resize support.
-LIBPARTED_WANTED_VERSION='3.2'
-AC_MSG_CHECKING([for libparted >= $LIBPARTED_WANTED_VERSION (online resize)])
-LIBPARTED_WANTED_INT=`echo "$LIBPARTED_WANTED_VERSION" |
-	$AWK -F. '{print $1 * 1000000 + $2 * 10000 + $3}'`
-if test "$LIBPARTED_FOUND_INT" -ge "$LIBPARTED_WANTED_INT"; then
-	have_online_resize=yes
-	AC_MSG_RESULT([(cached) yes])
-else
-	have_online_resize=no
-	AC_MSG_RESULT([(cached) no])
-fi
-
-
-dnl Check if have libparted fs resize capability
-if test [ ${have_old_lp_fs_resize_api} = yes -o ${have_new_lp_fs_resize_lib} = yes ]; then
-	AC_DEFINE([HAVE_LIBPARTED_FS_RESIZE], [1], [Define to 1 if have libparted fs resize capability])
-fi
-fi  dnl End of second if test "x$enable_adb_backend" != xyes
 
 
 dnl gthread
@@ -239,8 +165,8 @@ dnl Check for glibmm minimum required version.
 PKG_CHECK_MODULES([GLIBMM], [glibmm-2.4 >= 2.32.0])
 
 
-dnl Require C++11 compilation.
-AX_CXX_COMPILE_STDCXX_11()
+dnl Require C++14 compilation.
+AX_CXX_COMPILE_STDCXX_14()
 
 
 dnl Check for gtkmm >= 3.22 to determine availability of Gtk::ScrolledWindow::set_propagate_natural_width().
@@ -331,27 +257,6 @@ else
 fi
 
 
-dnl======================
-dnl check whether to enable online resize support
-dnl======================
-AC_ARG_ENABLE(
-	[online-resize],
-	AS_HELP_STRING(
-		[--enable-online-resize],
-		[enable online resize support @<:@default=auto@:>@]),
-	[enable_online_resize=$enableval],
-	[enable_online_resize=$have_online_resize]
-)
-
-AC_MSG_CHECKING([whether online resize support is enabled])
-if test "x$enable_online_resize" = xyes; then
-	AC_DEFINE([ENABLE_ONLINE_RESIZE], [1], [Define to 1 if online resize is enabled])
-	AC_MSG_RESULT([yes])
-else
-	AC_MSG_RESULT([no])
-fi
-
-
 dnl Check whether to explicitly grant root access to the display.
 AC_ARG_ENABLE(
 	[xhost-root],
@@ -398,18 +303,9 @@ echo "                         Installing into prefix  :  $prefix"
 echo ""
 echo "                      Build help documentation?  :  $enable_doc"
 echo ""
-echo "                Use ADB backend for Android?  :  $enable_adb_backend"
-echo ""
 echo "           Use native libparted dmraid support?  :  $enable_libparted_dmraid"
 echo ""
 echo "   Explicitly grant root access to the display?  :  $enable_xhost_root"
-echo ""
-echo "       --- Features Based On Libparted Version ---"
-echo "       Need delete old partitions before"
-echo "              creating a loop table workaround?  :  $need_loop_delete_old_ptns_workaround"
-echo "   Have old libparted file system resizing API?  :  $have_old_lp_fs_resize_api"
-echo "   Have new libparted file system resizing LIB?  :  $have_new_lp_fs_resize_lib"
-echo "                  Enable online resize support?  :  $enable_online_resize"
 echo ""
 echo " If all settings are OK, type make and then (as root) make install"
 echo "========================================================================"

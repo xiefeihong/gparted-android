@@ -55,10 +55,10 @@ a. Pre-built Binary
    package for GParted.  Instructions on how to install GParted on
    some distributions is given below:
 
-      CentOS/RHEL
-      -----------
+      RHEL
+      ----
       su -
-      yum install gparted
+      dnf install gparted
 
       Debian or Ubuntu
       ----------------
@@ -94,11 +94,11 @@ b. Building from Source
       gtkmm3
       gettext
       polkit
-      yelp-tools          - required if help documentation is to be built
+      yelp-tools         - required if help documentation is to be built
 
-   On CentOS/RHEL, these dependencies may be obtained by running the
-   following command as root:
-      yum install gnome-common yelp-tools glib2-devel gcc-c++ \
+   On RHEL, these dependencies may be obtained by running the following
+   command as root:
+      dnf install gnome-common yelp-tools glib2-devel gcc-c++ \
                   libuuid-devel parted-devel gtkmm30-devel make \
                   polkit-devel gettext-devel
 
@@ -139,20 +139,6 @@ b. Building from Source
    If you wish to build this package to use native libparted /dev/mapper
    dmraid support use the --enable-libparted-dmraid flag:
       E.g., ./configure --enable-libparted-dmraid
-
-   If you wish to build this package with online resize support then
-   the following is required:
-      a)  Linux kernel version 3.6 or higher.
-      b)  Libparted with online resize support.  Either:
-          i)  Libparted version 3.2 or later which includes online
-              resize support as standard.  In this case GParted is
-              automatically built with online resize support.
-          ii) Online resize support back ported into an earlier version
-              of libparted.  This is only known to be included in Debian
-              and derived distributions with parted version 2.3-14 and
-              higher.  In this case online resize support must be
-              specifically enabled with the --enable-online-resize flag:
-                E.g., ./configure --enable-online-resize
 
    If you wish to build GParted to allow it to use xhost to grant root
    access to the X11 server use the --enable-xhost-root flag.  This is
@@ -265,6 +251,7 @@ devices and partitions.  When available, it uses each file system's
 specific commands.  The following optional file system specific packages
 provide this support:
 
+   bcachefs-tools
    btrfs-progs / btrfs-tools
    e2fsprogs
    exfatprogs
@@ -317,7 +304,6 @@ system.  These commands include:
 
    blkid           - [mandatory requirement] used to detect file systems
                      libparted doesn't, read UUIDs and volume labels
-   hdparm          - used to query disk device serial numbers
    udisks          - used to prevent automounting of file systems
    hal-lock        - used to prevent automounting of file systems
    pkexec          - used to acquire root privileges in gparted shell
@@ -335,7 +321,8 @@ system.  These commands include:
    xdg-su          - alternatively used to acquire root privileges in
                      gparted shell script wrapper, last choice if
                      available when gparted source is configured
-   udevadm         - used in dmraid to query udev name
+   udevadm         - used to wait for udev rule execution and querying
+                     udev device properties
    yelp            - used to display help manual
                      (requires gvfs to be able to launch yelp)
    xhost           - used to grant root access to the X11 server, only

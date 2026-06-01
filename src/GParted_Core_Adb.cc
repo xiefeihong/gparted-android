@@ -58,7 +58,6 @@
 namespace GParted
 {
 
-SupportedFileSystems* GParted_Core::supported_filesystems = nullptr;
 Glib::Thread* GParted_Core::mainthread = nullptr;
 
 
@@ -128,15 +127,12 @@ GParted_Core::GParted_Core()
 
 	find_supported_core();
 
-	supported_filesystems = new SupportedFileSystems();
+	supported_filesystems = std::make_unique<SupportedFileSystems>();
 	supported_filesystems->find_supported_filesystems();
 }
 
 GParted_Core::~GParted_Core()
 {
-	delete supported_filesystems;
-	supported_filesystems = nullptr;
-
 	delete g_parted_parser;
 	g_parted_parser = nullptr;
 	delete g_parted_cmd;
@@ -153,6 +149,7 @@ Glib::ustring GParted_Core::get_version_and_config_string()
 	str += Glib::ustring("libparted: none (ADB parted backend)\n");
 	return str;
 }
+
 
 // --- Device Scanning ---
 
@@ -188,7 +185,7 @@ void GParted_Core::set_devices(std::vector<Device>& devices)
 		std::vector<Glib::ustring> dmraid_devices;
 		if (dmraid.is_dmraid_supported())
 		{
-			dmraid.get_devices(dmraid_devices);
+			dmraid_devices = DMRaid::get_devices();
 			for (unsigned int k = 0; k < dmraid_devices.size(); k++)
 			{
 				set_thread_status_message(
@@ -280,9 +277,9 @@ void GParted_Core::set_devices(std::vector<Device>& devices)
 	g_scan_cache.valid = true;
 
 	FS_Info::clear_cache();
-	const std::vector<Glib::ustring>& device_and_partition_paths =
-		Proc_Partitions_Info::get_device_and_partition_paths_for(device_paths);
-	FS_Info::load_cache_for_paths(device_and_partition_paths);
+	const std::vector<DeviceAndPartitionNames> device_and_partition_paths =
+		Proc_Partitions_Info::get_device_and_partition_names_for(device_paths);
+	FS_Info::load_cache_for_device_and_partition_names(device_and_partition_paths);
 	Mount_Info::load_cache();
 	LVM2_PV_Info::clear_cache();
 	btrfs::clear_cache();
@@ -705,6 +702,16 @@ bool GParted_Core::valid_partition(const Device& device, Partition& partition,
 }
 
 
+Glib::ustring GParted_Core::check_logical_esp_warning(PartitionType ptntype, bool esp_flag)
+{
+	return "";
+}
+
+void GParted_Core::compose_partition_flags(Partition& partition, const Glib::ustring& disktype)
+{
+}
+
+
 // --- File Systems ---
 
 const std::vector<FS>& GParted_Core::get_filesystems() const
@@ -805,74 +812,74 @@ bool GParted_Core::apply_operation_to_disk(Operation* operation)
 {
 	bool success = false;
 
-	switch (operation->type)
+	switch (operation->m_type)
 	{
 		case OPERATION_DELETE:
 			success =    calibrate_partition(operation->get_partition_original(),
-			                                 operation->operation_detail)
+			                                 operation->m_operation_detail)
 			          && delete_partition(operation->get_partition_original(),
-			                              operation->operation_detail);
+			                              operation->m_operation_detail);
 			break;
 
 		case OPERATION_CREATE:
-			success = create(operation->get_partition_new(), operation->operation_detail);
+			success = create(operation->get_partition_new(), operation->m_operation_detail);
 			break;
 
 		case OPERATION_RESIZE_MOVE:
 			success = calibrate_partition(operation->get_partition_original(),
-			                              operation->operation_detail);
+			                              operation->m_operation_detail);
 			if (!success) break;
 			operation->get_partition_new().set_path(
 				operation->get_partition_original().get_path());
 			success = resize_move(operation->get_partition_original(),
 			                      operation->get_partition_new(),
-			                      operation->operation_detail);
+			                      operation->m_operation_detail);
 			break;
 
 		case OPERATION_FORMAT:
 			success = calibrate_partition(operation->get_partition_new(),
-			                              operation->operation_detail);
+			                              operation->m_operation_detail);
 			if (!success) break;
 			operation->get_partition_original().set_path(
 				operation->get_partition_new().get_path());
 			success =    remove_filesystem(operation->get_partition_original().get_filesystem_partition(),
-			                               operation->operation_detail)
+			                               operation->m_operation_detail)
 			          && format(operation->get_partition_new().get_filesystem_partition(),
-			                    operation->operation_detail);
+			                    operation->m_operation_detail);
 			break;
 
 		case OPERATION_COPY:
 		{
 			OperationCopy* copy_op = static_cast<OperationCopy*>(operation);
 			success =    calibrate_partition(copy_op->get_partition_copied(),
-			                                 copy_op->operation_detail)
+			                                 copy_op->m_operation_detail)
 			          && remove_filesystem(copy_op->get_partition_original().get_filesystem_partition(),
-			                               copy_op->operation_detail)
+			                               copy_op->m_operation_detail)
 			          && copy(copy_op->get_partition_copied(),
 			                  copy_op->get_partition_new(),
-			                  copy_op->operation_detail);
+			                  copy_op->m_operation_detail);
 			break;
 		}
 
 		case OPERATION_LABEL_FILESYSTEM:
 			success =    calibrate_partition(operation->get_partition_new(),
-			                                 operation->operation_detail)
+			                                 operation->m_operation_detail)
 			          && label_filesystem(operation->get_partition_new().get_filesystem_partition(),
-			                              operation->operation_detail);
+			                              operation->m_operation_detail);
 			break;
 
 		case OPERATION_NAME_PARTITION:
 			success =    calibrate_partition(operation->get_partition_new(),
-			                                 operation->operation_detail)
+			                                 operation->m_operation_detail)
 			          && name_partition(operation->get_partition_new(),
-			                            operation->operation_detail);
+			                            operation->m_operation_detail);
 			break;
 
 		case OPERATION_CHANGE_UUID:
 			success =    calibrate_partition(operation->get_partition_new(),
-			                                 operation->operation_detail)
+			                                 operation->m_operation_detail)
 			          && change_filesystem_uuid(operation->get_partition_new().get_filesystem_partition(),
-			                                    operation->operation_detail);
+			                                    operation->m_operation_detail);
 			break;
 
 		default:
@@ -931,7 +938,7 @@ bool GParted_Core::create_partition(Partition& new_partition, OperationDetail& o
 			break;
 	}
 
-	Glib::ustring fs_name = "ext2";  // Default for parted
+	Glib::ustring fs_name = "ext2";
 	switch (new_partition.fstype)
 	{
 		case FS_EXT2:   fs_name = "ext2"; break;
@@ -954,7 +961,7 @@ bool GParted_Core::create_partition(Partition& new_partition, OperationDetail& o
 
 	if (success)
 	{
-		new_partition.partition_number = 0;  // Will be assigned by parted
+		new_partition.partition_number = 0;
 
 		if (new_partition.fstype != FS_EXTENDED && new_partition.fstype != FS_UNALLOCATED)
 		{
@@ -1207,7 +1214,7 @@ bool GParted_Core::get_disk(PedDevice* lp_device, PedDisk*& lp_disk)
 }
 
 bool GParted_Core::get_device_and_disk(const Glib::ustring& device_path,
-                                       PedDevice*& lp_device, PedDisk*& lp_disk, bool flush)
+                                       PedDevice*& lp_device, PedDisk*& lp_disk)
 {
 	lp_device = nullptr;
 	lp_disk = nullptr;
@@ -1629,7 +1636,25 @@ void GParted_Core::set_device_one_partition(Device& device, PedDevice* lp_device
 void GParted_Core::set_device_partitions(Device& device, PedDevice* lp_device, PedDisk* lp_disk)
 {
 }
-#endif
+
+bool GParted_Core::set_partition_type_using_flag(PedPartition* lp_partition, PedPartitionFlag flag, PedPartitionFlag other_flag)
+{
+	return true;
+}
+
+bool GParted_Core::set_partition_flag(PedPartition* lp_partition, const Partition& partition,
+                                      const Glib::ustring& checked_flag, const Glib::ustring& flag_to_set, bool check_state)
+{
+	return true;
+}
+
+bool GParted_Core::set_partition_type_using_fstype(PedPartition* lp_partition, const Glib::ustring& fstype)
+{
+	return true;
+}
+#endif // USE_ADB_BACKEND
+
+std::unique_ptr<SupportedFileSystems> GParted_Core::supported_filesystems;
 
 } // namespace GParted
 

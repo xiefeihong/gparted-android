@@ -39,20 +39,19 @@ class DialogFeatures : public Gtk::Dialog
 {
 public:
 	DialogFeatures();
-	~DialogFeatures();
 
 	void load_filesystems(const std::vector<FS>& fss);
 
 private:
 	void load_one_filesystem(const FS& fs);
 
-	Gtk::Frame legend_frame;
-	Gtk::TreeView treeview_filesystems;
-	Gtk::TreeRow treerow;
-	Gtk::ScrolledWindow filesystems_scrolled ;
-	Glib::RefPtr<Gtk::ListStore> liststore_filesystems;
+	Gtk::Frame                   m_legend_frame;
+	Gtk::TreeView                m_treeview_filesystems;
+	Gtk::TreeRow                 m_treerow;
+	Gtk::ScrolledWindow          m_filesystems_scrolled;
+	Glib::RefPtr<Gtk::ListStore> m_liststore_filesystems;
 
-	struct treeview_filesystems_Columns : public Gtk::TreeModelColumnRecord
+	struct TreeView_FileSystems_Columns : public Gtk::TreeModelColumnRecord
 	{
 		Gtk::TreeModelColumn<Glib::ustring> fsname;
 		Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> create;
@@ -68,7 +67,7 @@ private:
 		Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> uuid;
 		Gtk::TreeModelColumn<Glib::ustring> software;
 
-		treeview_filesystems_Columns()
+		TreeView_FileSystems_Columns()
 		{ 
 			add(fsname);
 			add(create);
@@ -86,12 +85,15 @@ private:
 		}
 	};
 
-	treeview_filesystems_Columns treeview_filesystems_columns;
+	TreeView_FileSystems_Columns m_treeview_filesystems_columns;
 
-	Glib::RefPtr<Gdk::Pixbuf> icon_yes, icon_no, icon_blank;
+	Glib::RefPtr<Gdk::Pixbuf> m_icon_yes;
+	Glib::RefPtr<Gdk::Pixbuf> m_icon_no;
+	Glib::RefPtr<Gdk::Pixbuf> m_icon_blank;
 };
 
 
-} //GParted
+}  // namespace GParted
+
 
 #endif /* GPARTED_DIALOGFEATURES_H */

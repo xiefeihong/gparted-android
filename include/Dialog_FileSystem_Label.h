@@ -24,20 +24,23 @@
 #include <gtkmm/dialog.h>
 #include <gtkmm/entry.h>
 
+
 namespace GParted
 {
+
 
 class Dialog_FileSystem_Label : public Gtk::Dialog
 {
 public:
 	Dialog_FileSystem_Label( const Partition & partition );
-	~Dialog_FileSystem_Label();
 	Glib::ustring get_new_label();
 
 private:
 	Gtk::Entry *entry;
 };
 
-} //GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_DIALOG_FILESYSTEM_LABEL_H */

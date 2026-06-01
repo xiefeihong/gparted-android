@@ -23,14 +23,17 @@
 #ifndef GPARTED_PARTITION_H
 #define GPARTED_PARTITION_H
 
-#include "Utils.h"
+
 #include "PartitionVector.h"
+#include "Utils.h"
 
 #include <glibmm/ustring.h>
+#include <vector>
+
 
 namespace GParted
 {
-	
+
 
 enum PartitionType {
 	TYPE_PRIMARY       = 0,  // Primary partition on a partitioned drive
@@ -63,12 +66,15 @@ class PartitionVector;  // mutually recursive classes.
                         // *   recursive definition in CPP
                         //     http://stackoverflow.com/questions/4300420/recursive-definition-in-cpp
 
+
 class Partition
 {
 public:
 	Partition() ;
-	virtual ~Partition();
+	virtual ~Partition() = default;
 	virtual Partition * clone() const;
+
+	Partition& operator=(Partition& rhs) = delete;  // Copy assignment prohibited
 
 	void Reset() ;
 	
@@ -122,6 +128,12 @@ public:
 	bool filesystem_label_known() const;
 	const Glib::ustring& get_filesystem_label() const;
 	void set_filesystem_label( const Glib::ustring & filesystem_label );
+	bool is_flag_set(const Glib::ustring& flag) const;
+	void set_only_flag(const Glib::ustring& flag);
+	void set_flag(const Glib::ustring& flag);
+	void clear_all_flags();
+	const std::vector<Glib::ustring>& get_flags() const;
+	void set_flags(const std::vector<Glib::ustring>& flags);
 
 	// Message accessors.  Messages are stored locally and accessed globally.
 	// Stored locally means the messages are stored in the Partition object to which
@@ -169,7 +181,6 @@ public:
 	bool inside_extended;
 	bool busy;
 	bool fs_readonly;  // Is the file system mounted read-only?
-	std::vector<Glib::ustring> flags ;
 
 	PartitionVector logicals;
 
@@ -180,19 +191,20 @@ public:
 	Byte_Value fs_block_size;  // Block size of of the file system, or -1 when unknown.
 
 private:
-	Partition & operator=( Partition & rhs );  // Not implemented copy assignment operator
-
 	static void get_usage_triple_helper( Sector stot, Sector s1, Sector s2, Sector s3, int imax, int & i1, int & i2, int & i3 ) ;
 
 	Sector calc_significant_unallocated_sectors() const ;
 
 	Glib::ustring path;
+	std::vector<Glib::ustring> m_flags;
 	std::vector<Glib::ustring> mountpoints ;
 	bool have_filesystem_label;
 	Glib::ustring filesystem_label;
 	std::vector<Glib::ustring> messages;
 };
 
-}//GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_PARTITION_H */

@@ -1,4 +1,141 @@
 ============================
+GParted 1.8.1   (2026-03-17)
+============================
+
+Release Notes
+-------------
+  This release of GParted includes enhancements, bug fixes and
+  language translation updates.
+
+### Key changes include:
+
+  * Implement blkid false detection of whole disk ZFS workaround
+
+Bug Fixes
+---------
+  * Replace use of new[]ed char buffer with vector (!156)
+  * Implement blkid false detection of whole disk ZFS workaround (#310, !157)
+
+Code Credits
+------------
+  Code enhancements are courtesy of Mike Fleetwood.
+
+Translations (new/updated)
+--------------------------
+  hu(Balázs Úr), oc(Quentin PAGÈS)
+
+Dependencies (new/updated)
+--------------------------
+  * n/a
+
+
+============================
+GParted 1.8.0   (2026-01-26)
+============================
+
+Release Notes
+-------------
+  This release of GParted includes enhancements, bug fixes and
+  language translation updates.
+
+### Key changes include:
+
+  * Fix crash due to not checking for failure to load icon
+  * Fix hangs setting FAT label when matches a root folder entry
+  * Erase file system signatures before all FileSystem copies
+
+Bug Fixes
+---------
+  * Move FileSystem::execute_command() to OperationDetail class (!132)
+  * Fix Google Test compilation against GCC 15 libstdc++ (#281, !133)
+  * Fix crash in CommandStatus when compiled without optimization (#283, !134)
+  * Refactor DMRaid to static class, make mutating getters ret-by-val (!135)
+  * Fix crash due to not checking for failure to load icon (#282, !136)
+  * Fix hangs setting FAT label when matches a root folder entry (#272, !137)
+  * Require C++14 compilation and update to Google Test 1.16.0 (!138)
+  * Create mount points in a private temporary working directory (!139)
+  * Fix GParted displays error messages along with the FAT label (#286, !140)
+  * Fix configure script detect of C++14 without AX_CXX_COMPILE_STDCXX_14 (!141)
+  * Fix UI label not updated if newer job queued for same partition (#117, !142)
+  * Convert SupportedFS to smart pointers, remove empty class destructors (!143)
+  * Replace all uses of malloc() with vector(char) (!144)
+  * Convert Operations to smart pointers (!145)
+  * Fix GPT partition type GUID not copied in copy/paste (#288)
+  * Maintain EFI System Partition type when copying to new partition (!146)
+  * Fix expansion of details in Applying pending operations dialog (#168, !147)
+  * Display a warning for logical EFI System Partitions ESPs (#291, !148)
+  * Use fixed width font to show command output in operation details (#72, !149)
+  * Stop disabling 64-bit on ext4 file systems < 16 TiB (#295, !150)
+  * Convert Dialog_Base_Partition to use smart pointers (!151)
+  * Update main window screenshot in GParted Manual and its translations (!152)
+  * Erase file system signatures before all FS copies (#297, !153)
+  * Set LBA flag for create FAT16/32, extended part on MSDOS table (#300, !154)
+
+Code Credits
+------------
+  Code enhancements are courtesy of Mike Fleetwood.
+
+Translations (new/updated)
+--------------------------
+  be(Vasil Pupkin), id(Andika Triwidada), ja(Takayuki KUSANO),
+  kk(Baurzhan Muftakhidinov), lt(Aurimas Černius),
+  pt_BR(Álvaro Burns, Juliano de Souza Camargo), ru(Sergej A.),
+  sk(Dušan Kazik), sl(Martin Srebotnjak), sr(Мирослав Николић),
+  sv(Anders Jonsson), th(Aefgh Threenine), tr(Sabri Ünal, Emin Tufan Çetin),
+  uk(Yuri Chornoivan), zn_CH(luming zh)
+
+Dependencies (new/updated)
+--------------------------
+  * n/a
+
+
+============================
+GParted 1.7.0   (2025-01-30)
+============================
+
+Release Notes
+-------------
+  This release of GParted includes enhancements, bug fixes and
+  language translation updates.
+
+### Key changes include:
+
+  * Recognise NBDs (Network Block Devices)
+  * Add support for Bcachefs (experimental), single device file systems only
+  * Prevent GParted probe starting LVM Volume Groups
+  * Increase minimum required version of libparted to 3.2
+
+Bug Fixes
+---------
+  * Recognise NBDs (Network Block Devices) (#247, !122)
+  * Update CI jobs for Ubuntu 24.04 LTS and use Rocky Linux 8 (!124)
+  * Read exFAT file system usage from exfatprogs >= 1.2.3 (#261, !125)
+  * Fix serial number for my USB key showing binary data (#263, !126)
+  * Add support for Bcachefs, single device file systems only (#234, !123)
+  * Prevent GParted probe starting LVM Volume Groups (#259, !127)
+  * Fix hang searching partitions when btrfs-progs not installed (#271, !130)
+  * Increase minimum required version of libparted to 3.2 (!131)
+
+Code Credits
+------------
+  Code enhancements are courtesy of Mike Fleetwood.
+
+Translations (new/updated)
+--------------------------
+  be(Yuras Shumovich, Vasil Pupkin), cs(Daniel Rusek),
+  da(Alan Mortensen), de(Jürgen Benvenuti), he(Yaron Shahrabani),
+  hi(Scrambled 777), hu(Balázs Úr), ka(Ekaterine Papava),
+  lt(Aurimas Černius), lv(Rūdolfs Mazurs), pl(Piotr Drąg),
+  pt(Hugo Carvalho), pt_BR(Rafael Fontenelle), ro(Daniel Șerbănescu),
+  ru(Sergej A.), sl(Martin Srebotnjak), sr(Мирослав Николић),
+  sv(Anders Jonsson), uk(Yuri Chornoivan), zh_CN(Luming Zh)
+
+Dependencies (new/updated)
+--------------------------
+  * libparted >= 3.2
+
+
+============================
 GParted 1.6.0   (2024-02-26)
 ============================
 

@@ -23,14 +23,15 @@
 
 #include <glibmm/ustring.h>
 
+
 namespace GParted
 {
+
 
 class PartitionLUKS : public Partition
 {
 public:
 	PartitionLUKS();
-	virtual ~PartitionLUKS();
 	virtual PartitionLUKS * clone() const;
 	Partition * clone_as_plain() const;
 
@@ -66,6 +67,8 @@ private:
 	Sector header_size;  // Size of the LUKS header (everything up to the start of the mapping)
 };
 
-}//GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_PARTITIONLUKS_H */

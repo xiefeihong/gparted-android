@@ -16,22 +16,26 @@
 
 #include "HBoxOperations.h"
 #include "MenuHelpers.h"
+#include "Operation.h"
 #include "Utils.h"
 
 #include <gtkmm/stock.h>
+#include <sigc++/signal.h>
+
 
 namespace GParted
 {
+
 
 HBoxOperations::HBoxOperations()
  : Gtk::Box(Gtk::ORIENTATION_HORIZONTAL)
 {
 	//create listview for pending operations
-	liststore_operations = Gtk::ListStore::create( treeview_operations_columns );
+	liststore_operations = Gtk::ListStore::create(m_treeview_operations_columns);
 	treeview_operations .set_model( liststore_operations );
 	treeview_operations .set_headers_visible( false );
-	treeview_operations .append_column( "", treeview_operations_columns .operation_icon );
-	treeview_operations .append_column( "", treeview_operations_columns .operation_description );
+	treeview_operations.append_column("", m_treeview_operations_columns.operation_icon);
+	treeview_operations.append_column("", m_treeview_operations_columns.operation_description);
 	treeview_operations .get_selection() ->set_mode( Gtk::SELECTION_NONE ) ;
 	treeview_operations .signal_button_press_event() .connect( 
 		sigc::mem_fun( *this, &HBoxOperations::on_signal_button_press_event ), false ) ;
@@ -44,34 +48,34 @@ HBoxOperations::HBoxOperations()
 
 	//create popupmenu
 	Gtk::MenuItem *item;
-	item = manage(new GParted::Menu_Helpers::ImageMenuElem(
+	item = Gtk::manage(new GParted::Menu_Helpers::ImageMenuElem(
 		_("_Undo Last Operation"), 
 		*Utils::mk_image(Gtk::Stock::UNDO, Gtk::ICON_SIZE_MENU),
 		sigc::mem_fun(*this, &HBoxOperations::on_undo)));
 	menu_popup.append(*item);
 	menu_popup_items[0] = item;
 
-	item = manage(new GParted::Menu_Helpers::ImageMenuElem(
+	item = Gtk::manage(new GParted::Menu_Helpers::ImageMenuElem(
 		_("_Clear All Operations"), 
 		*Utils::mk_image(Gtk::Stock::CLEAR, Gtk::ICON_SIZE_MENU),
 		sigc::mem_fun(*this, &HBoxOperations::on_clear)));
 	menu_popup.append(*item);
 	menu_popup_items[1] = item;
 
-	item = manage(new GParted::Menu_Helpers::ImageMenuElem(
+	item = Gtk::manage(new GParted::Menu_Helpers::ImageMenuElem(
 		_("_Apply All Operations"), 
 		*Utils::mk_image(Gtk::Stock::APPLY, Gtk::ICON_SIZE_MENU),
 		sigc::mem_fun(*this, &HBoxOperations::on_apply)));
 	menu_popup.append(*item);
 	menu_popup_items[2] = item;
 
-	menu_popup.append(*manage(new GParted::Menu_Helpers::SeparatorElem()));
-	menu_popup.append(*manage(new GParted::Menu_Helpers::StockMenuElem(
+	menu_popup.append(*Gtk::manage(new GParted::Menu_Helpers::SeparatorElem()));
+	menu_popup.append(*Gtk::manage(new GParted::Menu_Helpers::StockMenuElem(
 		Gtk::Stock::CLOSE, sigc::mem_fun(*this, &HBoxOperations::on_close))));
 }
 
 
-void HBoxOperations::load_operations(const std::vector<Operation *>& operations)
+void HBoxOperations::load_operations(const OperationVector& operations)
 {
 	liststore_operations ->clear();
 
@@ -79,10 +83,10 @@ void HBoxOperations::load_operations(const std::vector<Operation *>& operations)
 	for ( unsigned int t = 0 ; t < operations .size(); t++ )
 	{	
 		treerow = *( liststore_operations ->append() );
-		treerow[ treeview_operations_columns .operation_description ] = operations[ t ] ->description ;
-		treerow[ treeview_operations_columns .operation_icon ] = operations[ t ] ->icon ;
+		treerow[m_treeview_operations_columns.operation_description] = operations[t]->m_description;
+		treerow[m_treeview_operations_columns.operation_icon]        = operations[t]->m_icon;
 	}
-		
+
 	//make scrollwindow focus on the last operation in the list	
 	if ( liststore_operations ->children() .size() > 0 )
 		treeview_operations .set_cursor( static_cast<Gtk::TreePath>( static_cast<Gtk::TreeRow>( 
@@ -129,10 +133,5 @@ void HBoxOperations::on_close()
 	signal_close .emit() ;
 }
 
-HBoxOperations::~HBoxOperations() 
-{
-}
 
-} //GParted
-
-
+}  // namespace GParted

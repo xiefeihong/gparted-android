@@ -14,20 +14,24 @@
  *  along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
+
 #include "udf.h"
+
 #include "FileSystem.h"
+#include "OperationDetail.h"
 #include "Partition.h"
 #include "Utils.h"
 
-#include <stddef.h>
-#include <stdlib.h>
-#include <glibmm/ustring.h>
 #include <glibmm/miscutils.h>
 #include <glibmm/shell.h>
+#include <glibmm/ustring.h>
+#include <stddef.h>
+#include <stdlib.h>
 
 
 namespace GParted
 {
+
 
 const Byte_Value MIN_UDF_BLOCKS = 300;
 const Byte_Value MAX_UDF_BLOCKS = (1LL << 32) - 1;
@@ -41,15 +45,16 @@ FS udf::get_filesystem_support()
 	fs.copy = FS::GPARTED;
 	fs.online_read = FS::GPARTED;
 
-	old_mkudffs = false;
 	if ( ! Glib::find_program_in_path( "mkudffs" ).empty() )
 	{
 		fs.create = FS::EXTERNAL;
 		fs.create_with_label = FS::EXTERNAL;
 
 		// Detect old mkudffs prior to version 1.1 by lack of --label option.
+		Glib::ustring output;
+		Glib::ustring error;
 		Utils::execute_command( "mkudffs --help", output, error, true );
-		old_mkudffs = Utils::regexp_label( output + error, "--label" ).empty();
+		m_old_mkudffs = Utils::regexp_label(output + error, "--label").empty();
 	}
 
 	if ( ! Glib::find_program_in_path( "udfinfo" ).empty() )
@@ -80,8 +85,10 @@ FS_Limits udf::get_filesystem_limits( const Partition & partition ) const
 
 void udf::set_used_sectors( Partition & partition )
 {
-	exit_status = Utils::execute_command( "udfinfo --utf8 " + Glib::shell_quote( partition.get_path() ),
-	                                      output, error, true );
+	Glib::ustring output;
+	Glib::ustring error;
+	int exit_status = Utils::execute_command("udfinfo --utf8 " + Glib::shell_quote(partition.get_path()),
+	                        output, error, true);
 	if ( exit_status != 0 )
 	{
 		if ( ! output.empty() )
@@ -131,6 +138,8 @@ void udf::set_used_sectors( Partition & partition )
 
 void udf::read_label( Partition & partition )
 {
+	Glib::ustring output;
+	Glib::ustring error;
 	if ( ! Utils::execute_command( "udflabel --utf8 " + Glib::shell_quote( partition.get_path() ),
 	                               output, error, true )                                           )
 	{
@@ -146,15 +155,19 @@ void udf::read_label( Partition & partition )
 	}
 }
 
+
 bool udf::write_label( const Partition & partition, OperationDetail & operationdetail )
 {
-	return ! execute_command( "udflabel --utf8 " + Glib::shell_quote( partition.get_path() ) +
-	                          " " + Glib::shell_quote( partition.get_filesystem_label() ),
-	                          operationdetail, EXEC_CHECK_STATUS );
+	return ! operationdetail.execute_command("udflabel --utf8 " + Glib::shell_quote(partition.get_path()) +
+	                        " " + Glib::shell_quote(partition.get_filesystem_label()),
+	                        EXEC_CHECK_STATUS);
 }
+
 
 void udf::read_uuid( Partition & partition )
 {
+	Glib::ustring output;
+	Glib::ustring error;
 	if ( ! Utils::execute_command( "udfinfo --utf8 " + Glib::shell_quote( partition.get_path() ),
 	                               output, error, true )                                          )
 	{
@@ -170,11 +183,14 @@ void udf::read_uuid( Partition & partition )
 	}
 }
 
+
 bool udf::write_uuid( const Partition & partition, OperationDetail & operationdetail )
 {
-	return ! execute_command( "udflabel --utf8 --uuid=random " + Glib::shell_quote( partition.get_path() ),
-	                          operationdetail, EXEC_CHECK_STATUS );
+	return ! operationdetail.execute_command("udflabel --utf8 --uuid=random " +
+	                        Glib::shell_quote(partition.get_path()),
+	                        EXEC_CHECK_STATUS);
 }
+
 
 bool udf::create( const Partition & new_partition, OperationDetail & operationdetail )
 {
@@ -205,7 +221,7 @@ bool udf::create( const Partition & new_partition, OperationDetail & operationde
 		// Mkudffs from udftools prior to version 1.1 damages the label if it
 		// contains non-ASCII characters.  Therefore do not allow a label with
 		// such characters with old versions of mkudffs.
-		if ( old_mkudffs && ! contains_only_ascii( label ) )
+		if (m_old_mkudffs && ! contains_only_ascii(label))
 		{
 			operationdetail.add_child( OperationDetail(
 				_("mkudffs prior to version 1.1 does not support non-ASCII characters in the label."),
@@ -247,11 +263,11 @@ bool udf::create( const Partition & new_partition, OperationDetail & operationde
 
 	// TODO: Add GUI option for choosing different optical disks and UDF revision.
 	// For now format as UDF revision 2.01 for hard disk media type.
-	return ! execute_command( "mkudffs --utf8 --media-type=hd --udfrev=0x201 " +
-	                          blocksize_args + label_args + Glib::shell_quote( new_partition.get_path() ),
-	                          operationdetail,
-	                          EXEC_CHECK_STATUS|EXEC_CANCEL_SAFE );
+	return ! operationdetail.execute_command("mkudffs --utf8 --media-type=hd --udfrev=0x201 " +
+	                        blocksize_args + label_args + Glib::shell_quote(new_partition.get_path()),
+	                        EXEC_CHECK_STATUS|EXEC_CANCEL_SAFE);
 }
+
 
 // Private methods
 
@@ -279,4 +295,5 @@ size_t udf::find_first_non_latin1( const Glib::ustring & str )
 	return Glib::ustring::npos;
 }
 
-} //GParted
+
+}  // namespace GParted

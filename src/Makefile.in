@@ -103,7 +103,7 @@ libexec_PROGRAMS = gpartedbin$(EXEEXT)
 subdir = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_cxx_compile_stdcxx.m4 \
-	$(top_srcdir)/m4/ax_cxx_compile_stdcxx_11.m4 \
+	$(top_srcdir)/m4/ax_cxx_compile_stdcxx_14.m4 \
 	$(top_srcdir)/m4/gettext.m4 $(top_srcdir)/m4/iconv.m4 \
 	$(top_srcdir)/m4/intlmacosx.m4 $(top_srcdir)/m4/lib-ld.m4 \
 	$(top_srcdir)/m4/lib-link.m4 $(top_srcdir)/m4/lib-prefix.m4 \
@@ -139,11 +139,12 @@ am__gpartedbin_SOURCES_DIST = BCache_Info.cc BlockSpecial.cc \
 	PartitionLUKS.cc PartitionVector.cc PasswordRAMStore.cc \
 	PipeCapture.cc Proc_Partitions_Info.cc ProgressBar.cc \
 	SupportedFileSystems.cc SWRaid_Info.cc TreeView_Detail.cc \
-	Utils.cc Win_GParted.cc btrfs.cc exfat.cc ext2.cc f2fs.cc \
-	fat16.cc hfs.cc hfsplus.cc jfs.cc linux_swap.cc lvm2_pv.cc \
-	luks.cc main.cc minix.cc nilfs2.cc ntfs.cc reiser4.cc \
-	reiserfs.cc udf.cc xfs.cc GParted_Core_Adb.cc adb/AdbClient.cc \
-	adb/PartedCommand.cc adb/PartedParser.cc GParted_Core.cc
+	Utils.cc Win_GParted.cc bcachefs.cc btrfs.cc exfat.cc ext2.cc \
+	f2fs.cc fat16.cc hfs.cc hfsplus.cc jfs.cc linux_swap.cc \
+	lvm2_pv.cc luks.cc main.cc minix.cc nilfs2.cc ntfs.cc \
+	reiser4.cc reiserfs.cc udf.cc xfs.cc GParted_Core_Adb.cc \
+	adb/AdbClient.cc adb/PartedCommand.cc adb/PartedParser.cc \
+	GParted_Core.cc
 am__dirstamp = $(am__leading_dot)dirstamp
 @USE_ADB_BACKEND_TRUE@am__objects_1 = GParted_Core_Adb.$(OBJEXT) \
 @USE_ADB_BACKEND_TRUE@	adb/AdbClient.$(OBJEXT) \
@@ -176,11 +177,11 @@ am_gpartedbin_OBJECTS = BCache_Info.$(OBJEXT) BlockSpecial.$(OBJEXT) \
 	Proc_Partitions_Info.$(OBJEXT) ProgressBar.$(OBJEXT) \
 	SupportedFileSystems.$(OBJEXT) SWRaid_Info.$(OBJEXT) \
 	TreeView_Detail.$(OBJEXT) Utils.$(OBJEXT) \
-	Win_GParted.$(OBJEXT) btrfs.$(OBJEXT) exfat.$(OBJEXT) \
-	ext2.$(OBJEXT) f2fs.$(OBJEXT) fat16.$(OBJEXT) hfs.$(OBJEXT) \
-	hfsplus.$(OBJEXT) jfs.$(OBJEXT) linux_swap.$(OBJEXT) \
-	lvm2_pv.$(OBJEXT) luks.$(OBJEXT) main.$(OBJEXT) \
-	minix.$(OBJEXT) nilfs2.$(OBJEXT) ntfs.$(OBJEXT) \
+	Win_GParted.$(OBJEXT) bcachefs.$(OBJEXT) btrfs.$(OBJEXT) \
+	exfat.$(OBJEXT) ext2.$(OBJEXT) f2fs.$(OBJEXT) fat16.$(OBJEXT) \
+	hfs.$(OBJEXT) hfsplus.$(OBJEXT) jfs.$(OBJEXT) \
+	linux_swap.$(OBJEXT) lvm2_pv.$(OBJEXT) luks.$(OBJEXT) \
+	main.$(OBJEXT) minix.$(OBJEXT) nilfs2.$(OBJEXT) ntfs.$(OBJEXT) \
 	reiser4.$(OBJEXT) reiserfs.$(OBJEXT) udf.$(OBJEXT) \
 	xfs.$(OBJEXT) $(am__objects_1) $(am__objects_2)
 gpartedbin_OBJECTS = $(am_gpartedbin_OBJECTS)
@@ -239,11 +240,12 @@ am__depfiles_remade = ./$(DEPDIR)/BCache_Info.Po \
 	./$(DEPDIR)/Proc_Partitions_Info.Po ./$(DEPDIR)/ProgressBar.Po \
 	./$(DEPDIR)/SWRaid_Info.Po ./$(DEPDIR)/SupportedFileSystems.Po \
 	./$(DEPDIR)/TreeView_Detail.Po ./$(DEPDIR)/Utils.Po \
-	./$(DEPDIR)/Win_GParted.Po ./$(DEPDIR)/btrfs.Po \
-	./$(DEPDIR)/exfat.Po ./$(DEPDIR)/ext2.Po ./$(DEPDIR)/f2fs.Po \
-	./$(DEPDIR)/fat16.Po ./$(DEPDIR)/hfs.Po ./$(DEPDIR)/hfsplus.Po \
-	./$(DEPDIR)/jfs.Po ./$(DEPDIR)/linux_swap.Po \
-	./$(DEPDIR)/luks.Po ./$(DEPDIR)/lvm2_pv.Po ./$(DEPDIR)/main.Po \
+	./$(DEPDIR)/Win_GParted.Po ./$(DEPDIR)/bcachefs.Po \
+	./$(DEPDIR)/btrfs.Po ./$(DEPDIR)/exfat.Po ./$(DEPDIR)/ext2.Po \
+	./$(DEPDIR)/f2fs.Po ./$(DEPDIR)/fat16.Po ./$(DEPDIR)/hfs.Po \
+	./$(DEPDIR)/hfsplus.Po ./$(DEPDIR)/jfs.Po \
+	./$(DEPDIR)/linux_swap.Po ./$(DEPDIR)/luks.Po \
+	./$(DEPDIR)/lvm2_pv.Po ./$(DEPDIR)/main.Po \
 	./$(DEPDIR)/minix.Po ./$(DEPDIR)/nilfs2.Po ./$(DEPDIR)/ntfs.Po \
 	./$(DEPDIR)/reiser4.Po ./$(DEPDIR)/reiserfs.Po \
 	./$(DEPDIR)/udf.Po ./$(DEPDIR)/xfs.Po \
@@ -345,7 +347,7 @@ GTHREAD_CFLAGS = @GTHREAD_CFLAGS@
 GTHREAD_LIBS = @GTHREAD_LIBS@
 GTKMM_CFLAGS = @GTKMM_CFLAGS@
 GTKMM_LIBS = @GTKMM_LIBS@
-HAVE_CXX11 = @HAVE_CXX11@
+HAVE_CXX14 = @HAVE_CXX14@
 HELP_DIR = @HELP_DIR@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
@@ -488,10 +490,11 @@ gpartedbin_SOURCES = BCache_Info.cc BlockSpecial.cc CopyBlocks.cc \
 	PartitionLUKS.cc PartitionVector.cc PasswordRAMStore.cc \
 	PipeCapture.cc Proc_Partitions_Info.cc ProgressBar.cc \
 	SupportedFileSystems.cc SWRaid_Info.cc TreeView_Detail.cc \
-	Utils.cc Win_GParted.cc btrfs.cc exfat.cc ext2.cc f2fs.cc \
-	fat16.cc hfs.cc hfsplus.cc jfs.cc linux_swap.cc lvm2_pv.cc \
-	luks.cc main.cc minix.cc nilfs2.cc ntfs.cc reiser4.cc \
-	reiserfs.cc udf.cc xfs.cc $(am__append_1) $(am__append_2)
+	Utils.cc Win_GParted.cc bcachefs.cc btrfs.cc exfat.cc ext2.cc \
+	f2fs.cc fat16.cc hfs.cc hfsplus.cc jfs.cc linux_swap.cc \
+	lvm2_pv.cc luks.cc main.cc minix.cc nilfs2.cc ntfs.cc \
+	reiser4.cc reiserfs.cc udf.cc xfs.cc $(am__append_1) \
+	$(am__append_2)
 gpartedbin_LDADD = $(GTHREAD_LIBS) $(GTKMM_LIBS)
 all: all-am
 
@@ -647,6 +650,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TreeView_Detail.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Utils.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Win_GParted.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bcachefs.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/btrfs.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/exfat.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ext2.Po@am__quote@ # am--include-marker
@@ -889,6 +893,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/TreeView_Detail.Po
 	-rm -f ./$(DEPDIR)/Utils.Po
 	-rm -f ./$(DEPDIR)/Win_GParted.Po
+	-rm -f ./$(DEPDIR)/bcachefs.Po
 	-rm -f ./$(DEPDIR)/btrfs.Po
 	-rm -f ./$(DEPDIR)/exfat.Po
 	-rm -f ./$(DEPDIR)/ext2.Po
@@ -1009,6 +1014,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/TreeView_Detail.Po
 	-rm -f ./$(DEPDIR)/Utils.Po
 	-rm -f ./$(DEPDIR)/Win_GParted.Po
+	-rm -f ./$(DEPDIR)/bcachefs.Po
 	-rm -f ./$(DEPDIR)/btrfs.Po
 	-rm -f ./$(DEPDIR)/exfat.Po
 	-rm -f ./$(DEPDIR)/ext2.Po

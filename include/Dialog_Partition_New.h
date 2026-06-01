@@ -18,17 +18,22 @@
 #ifndef GPARTED_DIALOG_PARTITION_NEW_H
 #define GPARTED_DIALOG_PARTITION_NEW_H
 
-#include "Dialog_Base_Partition.h"
+
 #include "Device.h"
+#include "Dialog_Base_Partition.h"
+#include "FileSystem.h"
 #include "OptionComboBox.h"
 #include "Partition.h"
 #include "Utils.h"
 
+#include <gtkmm/entry.h>
 #include <gtkmm/grid.h>
+#include <vector>
 
 
 namespace GParted
 {
+
 
 class Dialog_Partition_New : public Dialog_Base_Partition
 {
@@ -40,13 +45,12 @@ public:
 	                     const std::vector<FS> & FILESYSTEMS );
 	~Dialog_Partition_New();
 
-	const Partition & Get_New_Partition();
+	Dialog_Partition_New(const Dialog_Partition_New& src) = delete;             // Copy construction prohibited
+	Dialog_Partition_New& operator=(const Dialog_Partition_New& rhs) = delete;  // Copy assignment prohibited
+
+	const Partition& get_new_partition();
 
 private:
-	Dialog_Partition_New( const Dialog_Partition_New & src );              // Not implemented copy constructor
-	Dialog_Partition_New & operator=( const Dialog_Partition_New & rhs );  // Not implemented copy assignment operator
-
-
 	void set_data( const Device & device,
 	               const Partition & partition,
 	               bool any_extended,
@@ -70,6 +74,8 @@ private:
 	int default_fs;
 };
 
-} //GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_DIALOG_PARTITION_NEW_H */

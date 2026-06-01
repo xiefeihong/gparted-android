@@ -19,11 +19,15 @@
 #ifndef GPARTED_REISER4_H
 #define GPARTED_REISER4_H
 
+
 #include "FileSystem.h"
+#include "OperationDetail.h"
 #include "Partition.h"
+
 
 namespace GParted
 {
+
 
 class reiser4 : public FileSystem
 {
@@ -36,6 +40,8 @@ public:
 	bool check_repair( const Partition & partition, OperationDetail & operationdetail ) ;
 };
 
-} //GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_REISER4_H */

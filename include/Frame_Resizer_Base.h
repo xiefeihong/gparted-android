@@ -36,7 +36,7 @@ public:
 	};
 
 	Frame_Resizer_Base() ;
-	~Frame_Resizer_Base() ;
+	virtual ~Frame_Resizer_Base() = default;
 
 	void set_rgb_partition_color(const Gdk::RGBA& color);
 	void override_default_rgb_unused_color(const Gdk::RGBA& color);
@@ -89,8 +89,7 @@ protected:
 	
 	Glib::RefPtr<Gdk::Cursor> cursor_resize;
 	Glib::RefPtr<Gdk::Cursor> cursor_move;
-	
-	int temp_x, temp_y ;
+
 	bool fixed_start; //a fixed start disables moving the start and thereby the whole move functionality..
 
 private:
@@ -99,6 +98,7 @@ private:
 };
 
 
-} //GParted
+}  // namespace GParted
+
 
 #endif /* GPARTED_FRAME_RESIZER_BASE_H */

@@ -28,15 +28,16 @@
 
 #include <glibmm/ustring.h>
 
+
 namespace GParted
 {
+
 
 class BlockSpecial
 {
 public:
 	BlockSpecial();
 	BlockSpecial( const Glib::ustring & name );
-	~BlockSpecial();
 
 	Glib::ustring m_name;   // E.g. Block special file {"/dev/sda1", 8, 1},
 	unsigned long m_major;  // plain file {"FILENAME", 0, 0} and empty object
@@ -54,6 +55,8 @@ public:
 bool operator==( const BlockSpecial & lhs, const BlockSpecial & rhs );
 bool operator<( const BlockSpecial & lhs, const BlockSpecial & rhs );
 
-}//GParted
+
+}  // namespace GParted
+
 
 #endif /* GPARTED_BLOCKSPECIAL_H */

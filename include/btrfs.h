@@ -19,12 +19,19 @@
 #ifndef GPARTED_BTRFS_H
 #define GPARTED_BTRFS_H
 
-#include "FileSystem.h"
+
 #include "BlockSpecial.h"
+#include "FileSystem.h"
+#include "OperationDetail.h"
 #include "Partition.h"
+
+#include <glibmm/ustring.h>
+#include <vector>
+
 
 namespace GParted
 {
+
 
 struct BTRFS_Device
 {
@@ -55,6 +62,7 @@ private:
 };
 
 
-} //GParted
+}  // namespace GParted
+
 
 #endif /* GPARTED_BTRFS_H */
